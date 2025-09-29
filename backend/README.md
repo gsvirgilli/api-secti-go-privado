@@ -1,4 +1,4 @@
-# App Mobile - SUKATECH
+# Backend - SUKATECH
 
 Apresentar a visão de negócios e as tecnologias utilizadas.
 

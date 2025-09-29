@@ -1,41 +1,44 @@
-# SUKATECH  - Grupo 07 
+# SUKATECH - Sistema de Controle de Cursos
 
-## 📋 Sobre o Programa SUKATECH
+## Equipe
+| Nome | GitHub |
+| :--- | :--- |
+| Delvo | [@delvoresende1](https://github.com/delvoresende1) |
+| Guilherme Silva Virgilli | [@gsvirgilli](https://github.com/gsvirgilli) |
+| Joyce Beatriz | [@joycebeatriz](https://github.com/joycebeatriz) |
+| Mariana | [@landimariana](https://github.com/landimariana) |
+| Ubiratan | - |
 
-O Sukatech é um programa do Governo de Goiás que alia sustentabilidade e desenvolvimento social, oferecendo cursos gratuitos de tecnologia e recondicionamento de equipamentos eletrônicos.
+## Visão geral da Solução
+O Sukatech é um programa do Governo de Goiás que alia sustentabilidade e desenvolvimento social, oferecendo cursos gratuitos de tecnologia e recondicionamento de equipamentos eletrônicos. Este sistema visa facilitar o controle e gerenciamento dos cursos oferecidos pelo programa, proporcionando uma plataforma integrada para estudantes, instrutores e administradores.
 
-📖 **Mais informações:** [Programa Sukatech - Governo de Goiás](https://goias.gov.br/inovacao/programa-sukatech/)
 
 ## 🚀 Tecnologias
 
-- Frontend: React/JavaScript
+- Frontend: React/TypeScript
 - Backend: Em desenvolvimento
-- Banco de Dados: Em definição
+- Banco de Dados: Em desenvolvimento
 
 ## 📁 Estrutura do Projeto
 
-- `documentação fase inicial/` - Documentos de requisitos e arquitetura
-- `entrega 04-setembro/` - Primeira entrega com código e documentação
-- `Código/` - Código fonte do frontend
+- `documentacao/` - Documentação do projeto
+- `frontend/` - Aplicação web
+- `backend/` - Aplicação backend
+- `app/` - Aplicativo mobile (futuro)
+- `documentação/Fase inicial/` - Documentos de requisitos e arquitetura
+- `documentação/Segunda entrega/` - Etapa com código e documentação
 
 ## 📚 Documentação
 
-Consulte a pasta `documentação fase inicial/` para:
+Consulte as pastas `documentacao/` e `documentação/Fase inicial/` para:
 - Requisitos do software
 - Arquitetura técnica
 - Cronograma do projeto
 - Backlog inicial
 
-## 👥 Equipe
+## 👥 Contatos
 
 **Professor Orientador UFG:** Dr. Jacson Rodrigues
-
-**Membros do Grupo 07:**
-- Delvo
-- Joyce
-- Ubiratan
-- Guilherme
-- Mariana
 
 **Contato Principal Sukatech:**
 - **Thiago Angelino** (Secti)
