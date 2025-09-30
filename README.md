@@ -7,7 +7,7 @@
 | Guilherme Silva Virgilli | [@gsvirgilli](https://github.com/gsvirgilli) |
 | Joyce Beatriz | [@joycebeatriz](https://github.com/joycebeatriz) |
 | Mariana | [@landimariana](https://github.com/landimariana) |
-| Ubiratan | - |
+| Ubiratan | [@ubiratanpaniago](https://github.com/ubiratanpaniago) |
 
 ## Visão geral da Solução
 O Sukatech é um programa do Governo de Goiás que alia sustentabilidade e desenvolvimento social, oferecendo cursos gratuitos de tecnologia e recondicionamento de equipamentos eletrônicos. Este sistema visa facilitar o controle e gerenciamento dos cursos oferecidos pelo programa, proporcionando uma plataforma integrada para estudantes, instrutores e administradores.
@@ -44,4 +44,5 @@ Consulte as pastas `documentacao/` e `documentação/Fase inicial/` para:
 - **Thiago Angelino** (Secti)
 - **Vinícius** (Programando o Futuro)
 - **Elisabeth Lemos** (Sukatech)
+
 
