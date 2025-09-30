@@ -1,23 +1,16 @@
-import type { NextFunction, Request, Response } from 'express';
-import { ZodSchema } from 'zod';
-import { AppError } from '../utils/AppError.js';
+import type { Request, Response, NextFunction } from 'express';
+import type { ZodObject, ZodRawShape } from 'zod';
 
-type Schemas = {
-  body?: ZodSchema;
-  query?: ZodSchema;
-  params?: ZodSchema;
-};
-
-export function validateRequest(schemas: Schemas) {
-  return (req: Request, _res: Response, next: NextFunction) => {
+export const validateRequest = (schema: ZodObject<ZodRawShape>) =>
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
-      if (schemas.body) req.body = schemas.body.parse(req.body);
-      if (schemas.query) req.query = schemas.query.parse(req.query);
-      if (schemas.params) req.params = schemas.params.parse(req.params);
+      await schema.parseAsync({
+        body: req.body,
+        query: req.query,
+        params: req.params,
+      });
       return next();
-    } catch (error: any) {
-      throw new AppError('Validation failed', 400, error?.issues ?? error);
+    } catch (error) {
+      return res.status(400).json(error);
     }
   };
-}
-
