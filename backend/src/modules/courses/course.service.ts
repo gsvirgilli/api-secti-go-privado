@@ -1,0 +1,165 @@
+import Course, { CourseAttributes, CourseCreationAttributes } from './course.model.js';
+import { AppError } from '../../utils/AppError.js';
+import { Op } from 'sequelize';
+
+export interface CourseFilters {
+  nome?: string;
+  carga_horaria_min?: number;
+  carga_horaria_max?: number;
+}
+
+class CourseService {
+  /**
+   * Buscar todos os cursos com filtros opcionais
+   */
+  async findAll(filters: CourseFilters = {}) {
+    const whereClause: any = {};
+
+    // Filtro por nome (busca parcial)
+    if (filters.nome) {
+      whereClause.nome = {
+        [Op.like]: `%${filters.nome}%`
+      };
+    }
+
+    // Filtro por carga horária
+    if (filters.carga_horaria_min || filters.carga_horaria_max) {
+      whereClause.carga_horaria = {};
+      
+      if (filters.carga_horaria_min) {
+        whereClause.carga_horaria[Op.gte] = filters.carga_horaria_min;
+      }
+      
+      if (filters.carga_horaria_max) {
+        whereClause.carga_horaria[Op.lte] = filters.carga_horaria_max;
+      }
+    }
+
+    return await Course.findAll({
+      where: whereClause,
+      order: [['nome', 'ASC']]
+    });
+  }
+
+  /**
+   * Buscar curso por ID
+   */
+  async findById(id: number): Promise<Course> {
+    const course = await Course.findByPk(id);
+    
+    if (!course) {
+      throw new AppError('Curso não encontrado', 404);
+    }
+    
+    return course;
+  }
+
+  /**
+   * Buscar curso por nome (exato)
+   */
+  async findByName(nome: string): Promise<Course | null> {
+    return await Course.findOne({
+      where: { nome }
+    });
+  }
+
+  /**
+   * Criar novo curso
+   */
+  async create(courseData: CourseCreationAttributes): Promise<Course> {
+    // Verificar se já existe curso com o mesmo nome
+    const existingCourse = await this.findByName(courseData.nome);
+    
+    if (existingCourse) {
+      throw new AppError('Já existe um curso com este nome', 409);
+    }
+
+    try {
+      return await Course.create(courseData);
+    } catch (error: any) {
+      if (error.name === 'SequelizeValidationError') {
+        const messages = error.errors.map((err: any) => err.message);
+        throw new AppError(`Erro de validação: ${messages.join(', ')}`, 400);
+      }
+      throw new AppError('Erro interno do servidor', 500);
+    }
+  }
+
+  /**
+   * Atualizar curso
+   */
+  async update(id: number, courseData: Partial<CourseCreationAttributes>): Promise<Course> {
+    const course = await this.findById(id);
+
+    // Se está atualizando o nome, verificar se não existe outro curso com o mesmo nome
+    if (courseData.nome && courseData.nome !== course.nome) {
+      const existingCourse = await this.findByName(courseData.nome);
+      
+      if (existingCourse) {
+        throw new AppError('Já existe um curso com este nome', 409);
+      }
+    }
+
+    try {
+      await course.update(courseData);
+      return course;
+    } catch (error: any) {
+      if (error.name === 'SequelizeValidationError') {
+        const messages = error.errors.map((err: any) => err.message);
+        throw new AppError(`Erro de validação: ${messages.join(', ')}`, 400);
+      }
+      throw new AppError('Erro interno do servidor', 500);
+    }
+  }
+
+  /**
+   * Deletar curso
+   */
+  async delete(id: number): Promise<void> {
+    const course = await this.findById(id);
+    
+    // TODO: Verificar se o curso tem turmas ativas antes de deletar
+    // Esta verificação será implementada quando criarmos o módulo de turmas
+    
+    await course.destroy();
+  }
+
+  /**
+   * Verificar se curso existe
+   */
+  async exists(id: number): Promise<boolean> {
+    const count = await Course.count({
+      where: { id }
+    });
+    
+    return count > 0;
+  }
+
+  /**
+   * Obter estatísticas dos cursos
+   */
+  async getStatistics() {
+    const total = await Course.count();
+    
+    const avgCargaHoraria = await Course.findOne({
+      attributes: [
+        [Course.sequelize!.fn('AVG', Course.sequelize!.col('carga_horaria')), 'media']
+      ],
+      raw: true
+    }) as any;
+
+    const maxCargaHoraria = await Course.max('carga_horaria');
+    const minCargaHoraria = await Course.min('carga_horaria');
+
+    return {
+      total,
+      carga_horaria: {
+        media: Math.round(avgCargaHoraria?.media || 0),
+        maxima: maxCargaHoraria || 0,
+        minima: minCargaHoraria || 0
+      }
+    };
+  }
+}
+
+export default new CourseService();
