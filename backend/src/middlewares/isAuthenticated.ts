@@ -1,10 +1,12 @@
 import type { NextFunction, Request, Response } from 'express';
+import type { AuthUser } from '../types/dtos/auth.dto.js';
 import { verifyJwt } from '../utils/jwt.js';
 import { AppError } from '../utils/AppError.js';
 
+// Extensão de tipo do Express para incluir nosso AuthUser
 declare module 'express-serve-static-core' {
   interface Request {
-    user?: { id: string; [key: string]: unknown };
+    user?: AuthUser;
   }
 }
 
@@ -16,8 +18,8 @@ export function isAuthenticated(req: Request, _res: Response, next: NextFunction
 
   const token = authHeader.replace('Bearer ', '').trim();
   try {
-    const payload = verifyJwt<{ sub: string } & Record<string, unknown>>(token);
-    req.user = { id: payload.sub, ...payload };
+  const payload = verifyJwt<{ sub: string } & Record<string, unknown>>(token);
+  req.user = { id: payload.sub, ...payload } as AuthUser;
     return next();
   } catch {
     throw new AppError('Invalid token', 401);

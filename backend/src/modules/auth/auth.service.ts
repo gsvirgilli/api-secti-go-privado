@@ -9,7 +9,7 @@ export class AuthService {
 
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      throw new Error('Este email já está em uso.');
+      throw new (await import('../../utils/AppError.js')).AppError('Este email já está em uso.', 409);
     }
 
     const senha_hash = await bcrypt.hash(senha, 8);
@@ -29,12 +29,12 @@ export class AuthService {
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      throw new Error('Email ou senha inválidos.');
+      throw new (await import('../../utils/AppError.js')).AppError('Email ou senha inválidos.', 401);
     }
 
     const isPasswordCorrect = await bcrypt.compare(senha, user.senha_hash);
     if (!isPasswordCorrect) {
-      throw new Error('Email ou senha inválidos.');
+      throw new (await import('../../utils/AppError.js')).AppError('Email ou senha inválidos.', 401);
     }
 
     const token = signJwt({ sub: String(user.id), role: user.role });

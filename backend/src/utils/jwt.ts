@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { env } from '../config/environment.js';
 
 type JwtPayload = {
@@ -7,14 +7,17 @@ type JwtPayload = {
 };
 
 export function signJwt(payload: Omit<JwtPayload, 'sub'> & { sub: string }, options?: jwt.SignOptions) {
-  return jwt.sign(payload, env.JWT_SECRET, {
-    expiresIn: env.JWT_EXPIRES_IN,
-    ...options,
-  });
+  const secret: jwt.Secret = env.JWT_SECRET as unknown as jwt.Secret;
+  const finalOptions = { ...(options as any) };
+  if (finalOptions.expiresIn === undefined) {
+    finalOptions.expiresIn = env.JWT_EXPIRES_IN;
+  }
+  return jwt.sign(payload, secret, finalOptions as jwt.SignOptions);
 }
 
 export function verifyJwt<T extends object = JwtPayload>(token: string): T {
-  return jwt.verify(token, env.JWT_SECRET) as T;
+  const secret: jwt.Secret = env.JWT_SECRET as unknown as jwt.Secret;
+  return jwt.verify(token, secret) as T;
 }
 
 export function decodeJwt<T extends object = JwtPayload>(token: string): T | null {

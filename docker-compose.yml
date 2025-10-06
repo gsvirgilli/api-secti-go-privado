@@ -12,6 +12,10 @@ services:
       # Preserva node_modules instalado na imagem (evita que o bind mount do host o sobrescreva)
       - /usr/app/node_modules
 
+    # Evita erro de permissão no entrypoint devido ao bind mount; executa via shell
+    entrypoint: ["sh", "./entrypoint.sh"]
+    command: ["npm", "run", "dev"]
+
     depends_on:
       db:
         condition: service_healthy

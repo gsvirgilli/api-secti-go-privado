@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import authRouter from '../modules/auth/auth.routes.js';
+import usersRouter from '../modules/users/user.routes.js';
 import { isAuthenticated } from '../middlewares/isAuthenticated.js';
 
 const router = Router();
 
 router.use('/auth', authRouter);
+router.use('/users', usersRouter);
 // No futuro, adicionaremos outras rotas aqui:
 // router.use('/cursos', cursoRouter);
 
