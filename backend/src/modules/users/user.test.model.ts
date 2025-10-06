@@ -1,5 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
-import { testSequelize } from '../../config/database.test.js';
+import { testSequelize } from '../../config/database.test.config.js';
 
 export interface UserTestAttributes {
   id: number;

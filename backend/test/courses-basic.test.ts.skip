@@ -1,12 +1,18 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import { app } from '../src/app.js';
+import { createTestApp } from './setup/test-app.js';
+import { teardownTestDatabase } from '../src/config/database.test.js';
+import type { Application } from 'express';
 
 describe('Courses API - Basic Tests', () => {
+  let app: Application;
   let authToken: string;
 
   beforeAll(async () => {
-    // Criar usuário de teste via API (usando o banco real temporariamente)
+    // Criar app de teste com banco SQLite
+    app = await createTestApp();
+
+    // Criar usuário de teste via API (agora usando SQLite)
     const registerResponse = await request(app)
       .post('/api/auth/register')
       .send({
@@ -28,6 +34,11 @@ describe('Courses API - Basic Tests', () => {
     console.log('Login response:', loginResponse.status, loginResponse.body);
     authToken = loginResponse.body.token;
     console.log('Auth token:', authToken);
+  });
+
+  afterAll(async () => {
+    // Fechar conexão do banco de teste
+    await teardownTestDatabase();
   });
 
   describe('Autenticação', () => {

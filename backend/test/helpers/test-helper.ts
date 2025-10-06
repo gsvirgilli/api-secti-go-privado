@@ -1,4 +1,4 @@
-import { testSequelize, setupTestDatabase, teardownTestDatabase } from '../../src/config/database.test.js';
+import { testSequelize, setupTestDatabase, teardownTestDatabase } from '../../src/config/database.test.config.js';
 import UserTest from '../../src/modules/users/user.test.model.js';
 import CourseTest from '../../src/modules/courses/course.test.model.js';
 import bcrypt from 'bcryptjs';
