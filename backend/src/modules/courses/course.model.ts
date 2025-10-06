@@ -17,14 +17,14 @@ export interface CourseCreationAttributes {
 }
 
 class Course extends Model<CourseAttributes, CourseCreationAttributes> implements CourseAttributes {
-  public id!: number;
-  public nome!: string;
-  public carga_horaria!: number;
-  public descricao?: string;
+  declare id: number;
+  declare nome: string;
+  declare carga_horaria: number;
+  declare descricao?: string;
   
   // Timestamps automáticos
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 Course.init({

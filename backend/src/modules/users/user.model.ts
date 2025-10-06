@@ -1,11 +1,33 @@
 import { Model, DataTypes } from 'sequelize';
 import { sequelize } from '../../config/database.js';
 
-class User extends Model {
-  public id!: number;
-  public email!: string;
-  public senha_hash!: string;
-  public role!: string;
+export interface UserAttributes {
+  id: number;
+  nome: string;
+  email: string;
+  senha_hash: string;
+  role: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface UserCreationAttributes {
+  nome: string;
+  email: string;
+  senha_hash: string;
+  role?: string;
+}
+
+class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
+  declare id: number;
+  declare nome: string;
+  declare email: string;
+  declare senha_hash: string;
+  declare role: string;
+  
+  // Timestamps automáticos
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 User.init({
@@ -13,6 +35,10 @@ User.init({
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
+  },
+  nome: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
   },
   email: {
     type: DataTypes.STRING(100),

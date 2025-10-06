@@ -105,10 +105,16 @@ export const validateSchema = (schema: z.ZodSchema) => {
         query: req.query
       }) as any;
 
-      // Aplicar os valores parseados de volta ao request
-      if (parsed.body) req.body = parsed.body;
-      if (parsed.params) req.params = parsed.params;
-      if (parsed.query) req.query = parsed.query;
+      // Aplicar os valores parseados de volta ao request (somente se necessário)
+      if (parsed.body) {
+        Object.assign(req.body, parsed.body);
+      }
+      if (parsed.params) {
+        Object.assign(req.params, parsed.params);
+      }
+      
+      // Para query, não vamos tentar modificar diretamente
+      // A validação já foi feita, os dados estão corretos
 
       next();
     } catch (error) {
