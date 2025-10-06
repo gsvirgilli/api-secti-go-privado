@@ -15,9 +15,10 @@ export class AuthService {
     const senha_hash = await bcrypt.hash(senha, 8);
 
     const newUser = await User.create({
+      nome: userData.nome,
       email,
       senha_hash,
-      role,
+      role: userData.role || 'INSTRUTOR',
     });
 
     const { senha_hash: _omit, ...safeUser } = (newUser.toJSON?.() ?? newUser) as any;
@@ -35,6 +36,11 @@ export class AuthService {
     const isPasswordCorrect = await bcrypt.compare(senha, user.senha_hash);
     if (!isPasswordCorrect) {
       throw new (await import('../../utils/AppError.js')).AppError('Email ou senha inválidos.', 401);
+    }
+
+    // Garantir que o ID está presente
+    if (!user.id) {
+      throw new (await import('../../utils/AppError.js')).AppError('Erro interno: ID do usuário não encontrado.', 500);
     }
 
     const token = signJwt({ sub: String(user.id), role: user.role });
