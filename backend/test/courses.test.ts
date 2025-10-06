@@ -1,44 +1,32 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import { app } from '../src/app.js';
-import { sequelize } from '../src/config/database.js';
-import Course from '../src/modules/courses/course.model.js';
+import { TestHelper, CourseTest } from './helpers/test-helper.js';
 
 describe('Courses API', () => {
   let authToken: string;
   let testCourseId: number;
 
   beforeAll(async () => {
-    // Sincronizar banco de dados de teste
-    await sequelize.sync({ force: true });
-
+    // Setup banco de dados de teste
+    await TestHelper.setupDatabase();
+    
     // Criar usuário de teste e obter token
-    const userResponse = await request(app)
-      .post('/api/auth/register')
-      .send({
-        nome: 'Test User',
-        email: 'test@example.com',
-        senha: 'password123',
-        tipo: 'ADMIN'
-      });
-
-    const loginResponse = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email: 'test@example.com',
-        senha: 'password123'
-      });
-
-    authToken = loginResponse.body.data.token;
+    const { token } = await TestHelper.createTestUser({
+      nome: 'Admin User',
+      email: 'admin@test.com',
+      role: 'ADMIN'
+    });
+    authToken = token;
   });
 
   afterAll(async () => {
-    await sequelize.close();
+    await TestHelper.teardownDatabase();
   });
 
   beforeEach(async () => {
-    // Limpar tabela de cursos antes de cada teste
-    await Course.destroy({ where: {} });
+    // Limpar dados antes de cada teste
+    await TestHelper.clearDatabase();
   });
 
   describe('POST /api/courses', () => {
@@ -83,10 +71,7 @@ describe('Courses API', () => {
       };
 
       // Criar primeiro curso
-      await request(app)
-        .post('/api/courses')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(courseData);
+      await TestHelper.createTestCourse(courseData);
 
       // Tentar criar curso com mesmo nome
       const response = await request(app)
@@ -113,11 +98,9 @@ describe('Courses API', () => {
   describe('GET /api/courses', () => {
     beforeEach(async () => {
       // Criar cursos de teste
-      await Course.bulkCreate([
-        { nome: 'Python Básico', carga_horaria: 20, descricao: 'Introdução ao Python' },
-        { nome: 'Python Avançado', carga_horaria: 40, descricao: 'Python para experts' },
-        { nome: 'Java Fundamentals', carga_horaria: 60, descricao: 'Curso de Java' }
-      ]);
+      await TestHelper.createTestCourse({ nome: 'Python Básico', carga_horaria: 20, descricao: 'Introdução ao Python' });
+      await TestHelper.createTestCourse({ nome: 'Python Avançado', carga_horaria: 40, descricao: 'Python para experts' });
+      await TestHelper.createTestCourse({ nome: 'Java Fundamentals', carga_horaria: 60, descricao: 'Curso de Java' });
     });
 
     it('deve listar todos os cursos', async () => {
@@ -152,7 +135,7 @@ describe('Courses API', () => {
 
   describe('GET /api/courses/:id', () => {
     beforeEach(async () => {
-      const course = await Course.create({
+      const course = await TestHelper.createTestCourse({
         nome: 'Node.js Masterclass',
         carga_horaria: 50,
         descricao: 'Curso completo de Node.js'
@@ -191,7 +174,7 @@ describe('Courses API', () => {
 
   describe('PUT /api/courses/:id', () => {
     beforeEach(async () => {
-      const course = await Course.create({
+      const course = await TestHelper.createTestCourse({
         nome: 'Angular Basics',
         carga_horaria: 35,
         descricao: 'Introdução ao Angular'
@@ -240,7 +223,7 @@ describe('Courses API', () => {
 
   describe('DELETE /api/courses/:id', () => {
     beforeEach(async () => {
-      const course = await Course.create({
+      const course = await TestHelper.createTestCourse({
         nome: 'Vue.js Fundamentals',
         carga_horaria: 30
       });
@@ -256,7 +239,7 @@ describe('Courses API', () => {
       expect(response.body.success).toBe(true);
 
       // Verificar se foi realmente deletado
-      const deletedCourse = await Course.findByPk(testCourseId);
+      const deletedCourse = await CourseTest.findByPk(testCourseId);
       expect(deletedCourse).toBeNull();
     });
 
@@ -271,11 +254,9 @@ describe('Courses API', () => {
 
   describe('GET /api/courses/statistics', () => {
     beforeEach(async () => {
-      await Course.bulkCreate([
-        { nome: 'Course A', carga_horaria: 20 },
-        { nome: 'Course B', carga_horaria: 40 },
-        { nome: 'Course C', carga_horaria: 60 }
-      ]);
+      await TestHelper.createTestCourse({ nome: 'Course A', carga_horaria: 20 });
+      await TestHelper.createTestCourse({ nome: 'Course B', carga_horaria: 40 });
+      await TestHelper.createTestCourse({ nome: 'Course C', carga_horaria: 60 });
     });
 
     it('deve retornar estatísticas dos cursos', async () => {
