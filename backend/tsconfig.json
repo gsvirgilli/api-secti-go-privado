@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    // Tipos globais disponíveis nos testes e no runtime Node
+    "types": ["node", "vitest/globals"],
+
+    // Emissão e mapas
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    // Checagens mais estritas
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // Interop e qualidade de módulo
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true
+  },
+  "exclude": [
+    "dist",
+    "node_modules",
+    "test",
+    "src/modules/registration/registration.model.ts"
+  ]
+}
