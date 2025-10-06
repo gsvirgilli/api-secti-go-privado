@@ -1,92 +1,332 @@
-# Backend - SUKATECH
+# 🚀 Backend SUKATECH - Sistema de Controle de Cursos
 
-Sistema de Controle de Cursos desenvolvido pela Sukatech, uma solução robusta para gerenciamento de cursos, alunos e instrutores.
+Este é o backend da aplicação SUKATECH, um sistema completo para gerenciamento de cursos técnicos, desenvolvido com **Node.js**, **TypeScript**, **Express** e **Sequelize ORM** com banco de dados **MySQL**.
 
-## 🚀 Tecnologias Utilizadas
+## 📋 Índice
 
-- Node.js
-- TypeScript
-- Express
-- MySQL
-- Sequelize (ORM)
-- Docker & Docker Compose
-- JWT para autenticação
+- [Arquitetura do Sistema](#-arquitetura-do-sistema)
+- [Tecnologias Utilizadas](#-tecnologias-utilizadas)
+- [Estrutura de Pastas](#-estrutura-de-pastas)
+- [Configuração e Instalação](#-configuração-e-instalação)
+- [Banco de Dados](#-banco-de-dados)
+- [Módulos e Funcionalidades](#-módulos-e-funcionalidades)
+- [Middlewares](#-middlewares)
+- [Autenticação e Autorização](#-autenticação-e-autorização)
+- [API Endpoints](#-api-endpoints)
+- [Testes](#-testes)
+- [Docker](#-docker)
+- [Scripts Disponíveis](#-scripts-disponíveis)
 
-## 📋 Pré-requisitos
+## 🏗️ Arquitetura do Sistema
 
-- Node.js (versão 18 ou superior)
-- Docker e Docker Compose
-- npm ou yarn
+O backend segue uma **arquitetura modular baseada em camadas**, com separação clara de responsabilidades:
 
-## 🔧 Instalação e Configuração
-
-1. **Clone o repositório**
-```bash
-git clone https://github.com/Residencia-em-TIC-Turma-1/G07-SECTI.git
-cd G07-SECTI/backend
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Controllers   │───▶│    Services     │───▶│     Models      │
+│  (HTTP Layer)   │    │ (Business Logic)│    │ (Data Access)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Validators    │    │   Middlewares   │    │    Database     │
+│ (Data Validation)│    │  (Cross-cutting)│    │     (MySQL)     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-2. **Instale as dependências**
+### Princípios Arquiteturais:
+
+- **Separação de Responsabilidades**: Cada camada tem uma responsabilidade específica
+- **Inversão de Dependência**: Uso de interfaces e injeção de dependência
+- **Modularidade**: Cada funcionalidade é um módulo independente
+- **Reutilização**: Middlewares e utilitários compartilhados
+- **Escalabilidade**: Estrutura preparada para crescimento
+
+## �️ Tecnologias Utilizadas
+
+### Core Technologies
+- **Node.js 18+** - Runtime JavaScript
+- **TypeScript 5.9+** - Superset tipado do JavaScript
+- **Express 5.1+** - Framework web minimalista
+- **Sequelize 6.37+** - ORM para JavaScript
+
+### Database & Storage
+- **MySQL 8.0** - Banco de dados relacional
+- **Sequelize CLI** - Migrações e seeders
+
+### Security & Authentication
+- **JWT (jsonwebtoken)** - Autenticação baseada em tokens
+- **bcryptjs** - Hash de senhas
+- **express-rate-limit** - Rate limiting para proteção contra ataques
+
+### Validation & Environment
+- **Zod** - Validação de schemas e variáveis de ambiente
+- **dotenv** - Gerenciamento de variáveis de ambiente
+- **cors** - Cross-Origin Resource Sharing
+
+### Development & Testing
+- **Vitest** - Framework de testes rápido
+- **tsx** - TypeScript execution engine
+- **nodemon** - Hot reload durante desenvolvimento
+- **supertest** - Testes de API
+
+## 📁 Estrutura de Pastas
+
+```
+backend/
+├── 📁 src/                          # Código fonte principal
+│   ├── 📄 app.ts                    # Configuração do Express
+│   ├── 📄 server.ts                 # Inicialização do servidor
+│   │
+│   ├── 📁 config/                   # Configurações do sistema
+│   │   ├── 📄 database.ts           # Configuração do Sequelize
+│   │   ├── 📄 environment.ts        # Validação de variáveis de ambiente
+│   │   └── 📄 sequelize-config.cjs  # Config para Sequelize CLI
+│   │
+│   ├── 📁 database/                 # Estrutura do banco de dados
+│   │   └── 📁 migrations/           # Scripts de migração
+│   │       └── 📄 20250918234918-create-initial-schema.cjs
+│   │
+│   ├── 📁 middlewares/              # Middlewares globais
+│   │   ├── � errorHandler.ts       # Tratamento de erros
+│   │   ├── 📄 isAuthenticated.ts    # Autenticação JWT
+│   │   └── 📄 validateRequest.ts    # Validação de requests
+│   │
+│   ├── 📁 modules/                  # Módulos de funcionalidades
+│   │   ├── 📁 auth/                 # Autenticação e autorização
+│   │   ├── 📁 users/                # Gestão de usuários
+│   │   ├── 📁 courses/              # Gestão de cursos
+│   │   ├── 📁 classes/              # Gestão de turmas
+│   │   ├── 📁 students/             # Gestão de alunos
+│   │   ├── 📁 instructors/          # Gestão de instrutores
+│   │   ├── � enrollments/          # Matrículas
+│   │   ├── 📁 Candidates/           # Candidatos
+│   │   ├── 📁 presenca/             # Controle de presença
+│   │   └── 📁 dashboard/            # Dashboard e estatísticas
+│   │
+│   ├── 📁 routes/                   # Definição de rotas
+│   │   └── 📄 index.ts              # Router principal
+│   │
+│   ├── 📁 types/                    # Definições de tipos TypeScript
+│   │   └── 📁 dtos/                 # Data Transfer Objects
+│   │
+│   └── 📁 utils/                    # Utilitários e helpers
+│       ├── 📄 AppError.ts           # Classe customizada de erro
+│       └── 📄 jwt.ts                # Utilitários JWT
+│
+├── 📁 test/                         # Testes
+│   └── 📄 health.test.ts            # Teste de health check
+│
+├── 📄 package.json                  # Dependências e scripts
+├── 📄 tsconfig.json                 # Configuração TypeScript
+├── 📄 Dockerfile                    # Container Docker
+├── 📄 entrypoint.sh                 # Script de inicialização
+└── 📄 README.md                     # Esta documentação
+```
+
+## ⚙️ Configuração e Instalação
+
+### Pré-requisitos
+
+- **Node.js 18+**
+- **npm** ou **yarn**
+- **MySQL 8.0+**
+- **Docker** (opcional)
+
+### 1. Clonar e Instalar Dependências
+
 ```bash
+# Navegar para o diretório do backend
+cd backend
+
+# Instalar dependências
 npm install
-# ou
-yarn install
 ```
 
-3. **Configure as variáveis de ambiente**
-- Copie o arquivo `.env.example` para `.env`
-- Preencha as variáveis com suas configurações
+### 2. Configurar Variáveis de Ambiente
 
-4. **Inicie o ambiente Docker**
-```bash
-docker-compose up -d
+Crie um arquivo `.env` na raiz do backend:
+
+```env
+# Servidor
+APP_PORT=3333
+
+# Banco de Dados
+DATABASE_HOST=localhost
+DATABASE_USER=root
+DATABASE_PASSWORD=sua_senha_mysql
+DATABASE_NAME=sukatechdb
+DATABASE_PORT=3306
+
+# JWT
+JWT_SECRET=seu_jwt_secret_super_seguro_aqui
+JWT_EXPIRES_IN=1d
 ```
 
-5. **Execute as migrações do banco de dados**
+### 3. Configurar Banco de Dados
+
 ```bash
+# Executar migrações
 npm run migrate
-# ou
-yarn migrate
+
+# Para reverter migrações (se necessário)
+npm run migrate:undo
 ```
 
-## 🏃‍♂️ Executando o Projeto
+### 4. Executar o Servidor
 
-### Ambiente de Desenvolvimento
 ```bash
+# Desenvolvimento (com hot reload)
 npm run dev
-# ou
-yarn dev
-```
 
-### Ambiente de Produção
-```bash
+# Produção
 npm run build
 npm start
-# ou
-yarn build
-yarn start
+
+# Testes
+npm test
+npm run test:watch
 ```
 
-## 📁 Estrutura do Projeto
+## 🗄️ Banco de Dados
 
-```
-src/
-├── app.ts              # Configuração do Express
-├── server.ts           # Ponto de entrada da aplicação
-├── config/             # Configurações do projeto
-├── database/           # Migrações e configurações do banco
-├── middlewares/        # Middlewares da aplicação
-├── modules/           # Módulos do sistema
-│   ├── users/
-│   ├── courses/
-│   ├── classes/
-│   ├── students/
-│   └── ...
-├── routes/            # Rotas da API
-└── utils/             # Utilitários e helpers
+### Schema do Banco de Dados
+
+O sistema utiliza **MySQL** com as seguintes entidades principais:
+
+#### 📊 Tabelas Principais
+
+1. **usuarios** - Sistema de autenticação
+   - `id`, `email`, `senha_hash`, `role`
+
+2. **cursos** - Catálogo de cursos
+   - `id`, `nome`, `carga_horaria`, `descricao`
+
+3. **turmas** - Turmas específicas de cursos
+   - `id`, `nome`, `turno`, `id_curso`
+
+4. **alunos** - Estudantes matriculados
+   - `id`, `matricula`, `cpf`, `nome`, `email`
+
+5. **instrutores** - Professores do sistema
+   - `id`, `cpf`, `nome`, `email`, `especialidade`
+
+6. **candidatos** - Candidatos aguardando matrícula
+   - `id`, `nome`, `cpf`, `email`, `status`, `id_turma_desejada`
+
+#### � Tabelas de Relacionamento
+
+- **matriculas** - Relaciona alunos com turmas
+- **instrutor_turma** - Relaciona instrutores com turmas
+- **presenca** - Controle de presença dos alunos
+
+## 🧩 Módulos e Funcionalidades
+
+### 🔐 Auth Module (`src/modules/auth/`)
+
+**Responsabilidade**: Autenticação e autorização de usuários
+
+```typescript
+// Estrutura do módulo
+auth/
+├── auth.controller.ts  # Controladores HTTP
+├── auth.service.ts     # Lógica de negócio
+├── auth.routes.ts      # Definição de rotas
+└── auth.validator.ts   # Validação de dados
 ```
 
-## 🛣️ Principais Rotas da API
+**Funcionalidades**:
+- ✅ Registro de novos usuários
+- ✅ Login com email e senha
+- ✅ Geração de tokens JWT
+- ✅ Validação de credenciais
+- ✅ Hash de senhas com bcrypt
+
+**Endpoints**:
+- `POST /api/auth/register` - Cadastro de usuário
+- `POST /api/auth/login` - Autenticação
+
+### 👥 Users Module (`src/modules/users/`)
+
+**Responsabilidade**: Gestão de usuários do sistema
+
+**Funcionalidades**:
+- ✅ CRUD de usuários
+- ✅ Gestão de perfis e roles
+- ✅ Atualização de dados pessoais
+
+### 📚 Outros Módulos
+
+- **Courses** - Gestão do catálogo de cursos
+- **Classes** - Gestão de turmas
+- **Students** - Gestão de alunos
+- **Instructors** - Gestão de instrutores
+- **Enrollments** - Gestão de matrículas
+- **Candidates** - Gestão de candidatos
+- **Presenca** - Controle de presença
+- **Dashboard** - Estatísticas e relatórios
+
+## 🛡️ Middlewares
+
+### 🚫 Error Handler (`middlewares/errorHandler.ts`)
+
+**Função**: Tratamento centralizado de erros
+
+```typescript
+export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
+  if (isAppError(err)) {
+    return res.status(err.statusCode).json({ 
+      message: err.message, 
+      details: err.details 
+    });
+  }
+  
+  // Fallback para erros inesperados
+  console.error('[ERROR]', err);
+  return res.status(500).json({ message: 'Internal server error' });
+}
+```
+
+### 🔒 Is Authenticated (`middlewares/isAuthenticated.ts`)
+
+**Função**: Verificação de autenticação JWT
+
+```typescript
+export function isAuthenticated(req: Request, _res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new AppError('Unauthorized', 401);
+  }
+
+  const token = authHeader.replace('Bearer ', '').trim();
+  try {
+    const payload = verifyJwt<{ sub: string }>(token);
+    req.user = { id: payload.sub, ...payload } as AuthUser;
+    return next();
+  } catch {
+    throw new AppError('Invalid token', 401);
+  }
+}
+```
+
+## 🔐 Autenticação e Autorização
+
+### Sistema de Roles
+
+```typescript
+enum UserRole {
+  ADMIN = 'ADMIN',
+  INSTRUTOR = 'INSTRUTOR',
+  COORDENADOR = 'COORDENADOR'
+}
+```
+
+**Hierarquia de Permissões**:
+- 👑 **ADMIN**: Acesso total ao sistema
+- 👨‍🏫 **INSTRUTOR**: Gestão de turmas e presença
+- 📋 **COORDENADOR**: Gestão de cursos e matrículas
+
+## 🛣️ API Endpoints
 
 ### Autenticação
 - `POST /auth/login` - Login de usuário
@@ -147,4 +387,151 @@ Os logs da aplicação são armazenados em:
 2. **Erro nas migrações**
    - Verifique se o banco existe
    - Tente reverter as migrações e executá-las novamente
- 
+
+## 🧪 Testes
+
+### Estrutura de Testes
+
+```
+test/
+└── health.test.ts             # Teste de health check
+```
+
+### Executar Testes
+
+```bash
+# Executar todos os testes
+npm test
+
+# Executar em modo watch
+npm run test:watch
+
+# Executar com coverage
+npm run test:coverage
+```
+
+### Exemplo de Teste
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import request from 'supertest';
+import { app } from '../src/app.js';
+
+describe('Health Check', () => {
+  it('should return OK status', async () => {
+    const response = await request(app)
+      .get('/api/health')
+      .expect(200);
+    
+    expect(response.body).toEqual({
+      status: 'ok',
+      message: 'SUKA TECH API is running!'
+    });
+  });
+});
+```
+
+## 🐳 Docker
+
+### Dockerfile
+
+O projeto inclui um `Dockerfile` otimizado para desenvolvimento:
+
+```dockerfile
+FROM node:18-alpine
+
+RUN apk add --no-cache curl
+
+WORKDIR /usr/app
+COPY package*.json ./
+RUN npm i
+COPY . .
+COPY entrypoint.sh ./entrypoint.sh
+
+RUN chmod +x ./entrypoint.sh
+EXPOSE 3333
+
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["npm","run","dev"]
+```
+
+### Usar com Docker Compose
+
+```bash
+# Na raiz do projeto (onde está o docker-compose.yml)
+docker-compose up backend
+```
+
+## 🔧 Configurações Avançadas
+
+### TypeScript Configuration
+
+O projeto usa configuração TypeScript moderna com:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true
+  }
+}
+```
+
+### Environment Validation
+
+Todas as variáveis de ambiente são validadas com Zod:
+
+```typescript
+const envSchema = z.object({
+  APP_PORT: z.coerce.number().default(3333),
+  DATABASE_HOST: z.string().default('localhost'),
+  JWT_SECRET: z.string().min(8, 'JWT_SECRET must be at least 8 characters'),
+  // ... outras validações
+});
+```
+
+## 🚀 Próximos Passos
+
+### Funcionalidades Planejadas
+
+- [ ] 📧 Sistema de emails (notificações)
+- [ ] 📱 API para mobile
+- [ ] 📊 Relatórios avançados
+- [ ] 🔔 Sistema de notificações
+- [ ] 📤 Exportação de dados
+- [ ] 🔍 Sistema de busca avançada
+- [ ] 📋 Logs de auditoria
+- [ ] 🔐 Autenticação via OAuth
+- [ ] 💾 Cache com Redis
+- [ ] 📈 Métricas e monitoring
+
+### Melhorias Técnicas
+
+- [ ] 🧪 Aumentar cobertura de testes
+- [ ] 📝 Documentação automática com Swagger
+- [ ] 🚀 CI/CD Pipeline
+- [ ] 🔍 Rate limiting mais granular
+- [ ] 🛡️ Validação de entrada mais robusta
+- [ ] 📊 Logging estruturado
+- [ ] 🐳 Otimização de containers
+
+## 🤝 Contribuindo
+
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença ISC. Veja o arquivo `package.json` para mais detalhes.
+
+---
+
+**Desenvolvido com ❤️ pela equipe SUKATECH - G07-SECTI**
+
+> 💡 **Dica**: Para documentação específica de cada módulo, consulte os READMEs individuais em `src/modules/*/README.md`
