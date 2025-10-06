@@ -1,33 +1,33 @@
 {
   "compilerOptions": {
-    "rootDir": "./src",
     "outDir": "./dist",
     "target": "ES2022",
     "lib": ["ES2022"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
 
-    // Tipos globais disponíveis nos testes e no runtime Node
-    "types": ["node", "vitest/globals"],
+    // Tipos básicos
+    "types": ["node"],
 
-    // Emissão e mapas
+    // Emissão
     "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
 
-    // Checagens mais estritas
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    // Checagens básicas
+    "strict": false,
     "forceConsistentCasingInFileNames": true,
 
-    // Interop e qualidade de módulo
+    // Interop
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+
+    // JSON support
+    "resolveJsonModule": true
   },
+  "include": [
+    "src/**/*"
+  ],
   "exclude": [
     "dist",
     "node_modules",

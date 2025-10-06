@@ -1,4 +1,4 @@
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { env } from '../config/environment.js';
 
 type JwtPayload = {
@@ -7,16 +7,28 @@ type JwtPayload = {
 };
 
 export function signJwt(payload: Omit<JwtPayload, 'sub'> & { sub: string }, options?: jwt.SignOptions) {
-  const secret: jwt.Secret = env.JWT_SECRET as unknown as jwt.Secret;
-  const finalOptions = { ...(options as any) };
-  if (finalOptions.expiresIn === undefined) {
-    finalOptions.expiresIn = env.JWT_EXPIRES_IN;
+  const secret = env.JWT_SECRET;
+  
+  if (!secret) {
+    throw new Error('JWT_SECRET não está definido');
   }
-  return jwt.sign(payload, secret, finalOptions as jwt.SignOptions);
+  if (!payload.sub) {
+    throw new Error('payload.sub é obrigatório');
+  }
+  
+  const finalOptions: jwt.SignOptions = { 
+    expiresIn: '1d',
+    ...(options || {})
+  };
+  
+  return jwt.sign(payload, secret, finalOptions);
 }
 
 export function verifyJwt<T extends object = JwtPayload>(token: string): T {
-  const secret: jwt.Secret = env.JWT_SECRET as unknown as jwt.Secret;
+  const secret = env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET não está definido');
+  }
   return jwt.verify(token, secret) as T;
 }
 

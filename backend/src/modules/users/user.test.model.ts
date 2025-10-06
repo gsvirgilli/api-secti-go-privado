@@ -1,7 +1,7 @@
 import { Model, DataTypes } from 'sequelize';
-import { sequelize } from '../../config/database.js';
+import { testSequelize } from '../../config/database.test.config.js';
 
-export interface UserAttributes {
+export interface UserTestAttributes {
   id: number;
   nome: string;
   email: string;
@@ -11,26 +11,25 @@ export interface UserAttributes {
   updatedAt?: Date;
 }
 
-export interface UserCreationAttributes {
+export interface UserTestCreationAttributes {
   nome: string;
   email: string;
   senha_hash: string;
   role?: string;
 }
 
-class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
+class UserTest extends Model<UserTestAttributes, UserTestCreationAttributes> implements UserTestAttributes {
   declare id: number;
   declare nome: string;
   declare email: string;
   declare senha_hash: string;
   declare role: string;
   
-  // Timestamps automáticos
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
 
-User.init({
+UserTest.init({
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -52,12 +51,12 @@ User.init({
   role: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    defaultValue: 'INSTRUTOR', // Ex: 'ADMIN', 'INSTRUTOR'
+    defaultValue: 'INSTRUTOR',
   }
 }, {
-  sequelize,
+  sequelize: testSequelize,
   tableName: 'usuarios',
   timestamps: true,
 });
 
-export default User;
+export default UserTest;

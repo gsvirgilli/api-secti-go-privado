@@ -1,7 +1,7 @@
 import { Model, DataTypes } from 'sequelize';
-import { sequelize } from '../../config/database.js';
+import { testSequelize } from '../../config/database.test.config.js';
 
-export interface CourseAttributes {
+export interface CourseTestAttributes {
   id: number;
   nome: string;
   carga_horaria: number;
@@ -10,24 +10,23 @@ export interface CourseAttributes {
   updatedAt?: Date;
 }
 
-export interface CourseCreationAttributes {
+export interface CourseTestCreationAttributes {
   nome: string;
   carga_horaria: number;
   descricao?: string;
 }
 
-class Course extends Model<CourseAttributes, CourseCreationAttributes> implements CourseAttributes {
+class CourseTest extends Model<CourseTestAttributes, CourseTestCreationAttributes> implements CourseTestAttributes {
   declare id: number;
   declare nome: string;
   declare carga_horaria: number;
   declare descricao?: string;
   
-  // Timestamps automáticos
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
 
-Course.init({
+CourseTest.init({
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -71,9 +70,9 @@ Course.init({
     }
   }
 }, {
-  sequelize,
+  sequelize: testSequelize,
   tableName: 'cursos',
   timestamps: true,
 });
 
-export default Course;
+export default CourseTest;
