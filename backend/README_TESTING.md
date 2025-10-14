@@ -85,7 +85,13 @@ Se quiser verificar se tudo está funcionando corretamente:
 
 - ✅ Acesse o navegador e abra o endereço do frontend
 
-- ✅ Se a tela inicial do SUKATECH aparecer, a instalação foi concluída 🎉
+- ✅ Se a tela inicial do SUKATECH aparecer, a instalação foi concluída 
+
+## 📦 **Download do Sistema Completo**
+
+Se preferir baixar o sistema completo (frontend + backend + banco de dados) como arquivo `.zip`, acesse o link abaixo:
+
+👉 [Baixar SUKATECH Completo (Google Drive)][(https://drive.google.com/....](https://drive.google.com/file/d/1ZE6Kp3OJFqf_WPCPiqNxkpCwLx2BrL6e/view?usp=sharing)
 
 ## 📚 Dicas Úteis
 Se algo travar, use Ctrl + C para parar e rode novamente:
