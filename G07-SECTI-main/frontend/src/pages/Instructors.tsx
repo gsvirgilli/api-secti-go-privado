@@ -15,7 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { Instructor } from "@/contexts/AppContext";
 
 const Instructors = () => {
-  const { instructors, updateInstructor, deleteInstructor } = useAppData();
+  const { instructors: instructorsFromContext = [], updateInstructor, deleteInstructor } = useAppData();
+  const [instructors, setInstructors] = useState<Instructor[]>(instructorsFromContext);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
@@ -53,16 +54,18 @@ const Instructors = () => {
   };
 
   const confirmDelete = () => {
-    if (selectedInstructor) {
-      deleteInstructor(selectedInstructor.id);
-      toast({
-        title: "INSTRUTOR EXCLUÍDO",
-        description: `O instrutor ${selectedInstructor.name} foi excluído do sistema`,
-        className: "bg-red-100 text-red-800 border-red-200",
-      });
-    }
-    setIsDeleteModalOpen(false);
-  };
+  if (selectedInstructor) {
+    deleteInstructor(selectedInstructor.id); // Atualiza o contexto
+    setInstructors(prev => prev.filter(i => i.id !== selectedInstructor.id)); // Atualiza o estado local
+    toast({
+      title: "INSTRUTOR EXCLUÍDO",
+      description: `O instrutor ${selectedInstructor.name} foi excluído do sistema`,
+      className: "bg-red-100 text-red-800 border-red-200",
+    });
+  }
+  setIsDeleteModalOpen(false);
+};
+
 
   return (
     <div className="space-y-6">
@@ -182,7 +185,7 @@ const Instructors = () => {
                 
                 <div className="space-y-2 text-sm text-muted-foreground mb-4">
                   <p>Experiência: {instructor.experience}</p>
-                  <p>Turmas ativas: {instructor.classes.length}</p>
+                  <p>Turmas ativas: {instructor.classes?.length || 0}</p>
                   <p>Email: {instructor.email}</p>
                 </div>
 
@@ -244,7 +247,7 @@ const Instructors = () => {
                   <TableCell className="font-medium">{instructor.name}</TableCell>
                   <TableCell>{instructor.specialization}</TableCell>
                   <TableCell>{instructor.experience}</TableCell>
-                  <TableCell>{instructor.classes.length}</TableCell>
+                  <TableCell>{instructor.classes?.length || 0}</TableCell>
                   <TableCell>
                     <Badge 
                       className={instructor.status === "Ativo" ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-700"}

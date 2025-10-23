@@ -16,10 +16,12 @@ import { useAppData } from "@/hooks/useAppData";
 import { useToast } from "@/hooks/use-toast";
 import type { Class } from "@/contexts/AppContext";
 
+
 type SortField = "name" | "course" | "instructor" | "status" | "startDate" | "enrolled";
 type SortOrder = "asc" | "desc";
 
 const Classes = () => {
+  
   const { classes, stats } = useAppData();
   const { toast } = useToast();
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);

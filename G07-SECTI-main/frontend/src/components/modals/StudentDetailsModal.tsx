@@ -31,7 +31,6 @@ interface StudentDetailsModalProps {
 
 const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: StudentDetailsModalProps) => {
   const { toast } = useToast();
-
   if (!student) return null;
 
   const handleEdit = () => {

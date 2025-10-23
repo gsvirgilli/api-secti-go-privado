@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAppData } from "@/hooks/useAppData";
 import type { Student } from "@/contexts/AppContext";
+import { StudentsAPI } from "@/lib/api";
 
 interface StudentFormModalProps {
   isOpen: boolean;
@@ -17,7 +18,9 @@ interface StudentFormModalProps {
 
 const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormModalProps) => {
   const { toast } = useToast();
-  const { addStudent, updateStudent, courses, classes } = useAppData();
+  const { courses, classes, addStudent, updateStudent } = useAppData();
+
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     cpf: "",
@@ -28,13 +31,10 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
     status: "Ativo",
     course: "",
     class: "",
-    enrollmentDate: new Date().toLocaleDateString('pt-BR'),
-    progress: "0",
-    attendance: "0",
-    grades: "0",
+    enrollmentDate: new Date().toLocaleDateString("pt-BR"),
   });
 
-  // Atualizar dados do formulário quando studentData mudar
+  // Atualiza os dados no modo edição
   useEffect(() => {
     if (studentData && mode === "edit") {
       setFormData({
@@ -47,13 +47,10 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
         status: studentData.status || "Ativo",
         course: studentData.course || "",
         class: studentData.class || "",
-        enrollmentDate: studentData.enrollmentDate || new Date().toLocaleDateString('pt-BR'),
-        progress: studentData.progress?.toString() || "0",
-        attendance: studentData.attendance?.toString() || "0",
-        grades: studentData.grades?.toString() || "0",
+        enrollmentDate: studentData.enrollmentDate || new Date().toLocaleDateString("pt-BR"),
       });
-    } else if (mode === "create") {
-      // Resetar formulário para criação
+    } else {
+      // Resetar se for criar novo aluno
       setFormData({
         name: "",
         cpf: "",
@@ -64,69 +61,71 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
         status: "Ativo",
         course: "",
         class: "",
-        enrollmentDate: new Date().toLocaleDateString('pt-BR'),
-        progress: "0",
-        attendance: "0",
-        grades: "0",
+        enrollmentDate: new Date().toLocaleDateString("pt-BR"),
       });
     }
   }, [studentData, mode]);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const formatCPF = (value: string) => {
-    return value
+  // Formatação
+  const formatCPF = (value: string) =>
+    value
       .replace(/\D/g, "")
       .replace(/(\d{3})(\d)/, "$1.$2")
       .replace(/(\d{3})(\d)/, "$1.$2")
       .replace(/(\d{3})(\d{1,2})/, "$1-$2")
       .replace(/(-\d{2})\d+?$/, "$1");
-  };
 
-  const formatPhone = (value: string) => {
-    return value
+  const formatPhone = (value: string) =>
+    value
       .replace(/\D/g, "")
       .replace(/(\d{2})(\d)/, "($1) $2")
       .replace(/(\d{4,5})(\d{4})/, "$1-$2");
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.name || !formData.cpf || !formData.email) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios",
-        variant: "destructive"
-      });
-      return;
-    }
+  // Envio do formulário
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    // Converter valores numéricos
-    const submitData = {
-      ...formData,
-      progress: Number(formData.progress),
-      attendance: Number(formData.attendance),
-      grades: Number(formData.grades),
-    };
-
-    if (mode === "create") {
-      addStudent(submitData);
-    } else if (studentData) {
-      updateStudent(studentData.id, submitData);
-    }
-
-    const action = mode === "create" ? "CADASTRADO" : "ATUALIZADO";
+  // Validação simples
+  if (!formData.name || !formData.cpf || !formData.email) {
     toast({
-      title: `ALUNO ${action}`,
-      description: `O aluno ${formData.name} foi ${action.toLowerCase()} com sucesso`,
-      className: "bg-green-100 text-green-800 border-green-200",
+      title: "Campos obrigatórios",
+      description: "Preencha nome, CPF e e-mail antes de continuar.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+    setIsLoading(true);
+
+    // 🔹 Simulação de resposta
+    const fakeResponse = { data: { ...formData, id: Math.random() } };
+    addStudent(fakeResponse.data);
+
+    toast({
+      title: "✅ Aluno cadastrado com sucesso!",
+      description: `${formData.name} foi adicionado ao sistema.`,
+      className: "bg-emerald-100 text-emerald-800 border-emerald-200",
     });
 
     onClose();
-  };
+  } catch (error) {
+    toast({
+      title: "Erro ao salvar",
+      description: "Não foi possível salvar os dados do aluno. Tente novamente.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -139,6 +138,7 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Nome */}
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="name">Nome Completo *</Label>
               <Input
@@ -149,6 +149,7 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
               />
             </div>
 
+            {/* CPF */}
             <div className="space-y-2">
               <Label htmlFor="cpf">CPF *</Label>
               <Input
@@ -160,6 +161,7 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
               />
             </div>
 
+            {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">E-mail *</Label>
               <Input
@@ -171,6 +173,7 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
               />
             </div>
 
+            {/* Telefone */}
             <div className="space-y-2">
               <Label htmlFor="phone">Telefone</Label>
               <Input
@@ -182,16 +185,18 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
               />
             </div>
 
+            {/* Nascimento */}
             <div className="space-y-2">
               <Label htmlFor="birthDate">Data de Nascimento</Label>
               <Input
                 id="birthDate"
+                type="date"
                 value={formData.birthDate}
                 onChange={(e) => handleInputChange("birthDate", e.target.value)}
-                placeholder="dd/mm/aaaa"
               />
             </div>
 
+            {/* Endereço */}
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="address">Endereço</Label>
               <Input
@@ -202,41 +207,51 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
               />
             </div>
 
+            {/* Curso */}
             <div className="space-y-2">
               <Label htmlFor="course">Curso</Label>
               <Select value={formData.course} onValueChange={(value) => handleInputChange("course", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o curso" />
-                </SelectTrigger>
-                <SelectContent>
-                  {courses.map((course) => (
-                    <SelectItem key={course.id} value={course.title}>
-                      {course.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o curso" />
+              </SelectTrigger>
+              <SelectContent>
+                {courses.map((course) => (
+                  <SelectItem key={course.id} value={course.id.toString()}>
+                    {course.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+
             </div>
 
+            {/* Turma */}
             <div className="space-y-2">
               <Label htmlFor="class">Turma</Label>
               <Select value={formData.class} onValueChange={(value) => handleInputChange("class", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a turma" />
-                </SelectTrigger>
-                <SelectContent>
-                  {classes.map((classItem) => (
-                    <SelectItem key={classItem.id} value={classItem.name}>
-                      {classItem.name} - {classItem.course}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a turma" />
+              </SelectTrigger>
+              <SelectContent>
+                {classes.map((classItem) => (
+                  <SelectItem key={classItem.id} value={classItem.id.toString()}>
+                    {classItem.name} - {classItem.course}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+
             </div>
 
+            {/* Status */}
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => handleInputChange("status", value)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -248,54 +263,23 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="progress">Progresso (%)</Label>
-              <Input
-                id="progress"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.progress}
-                onChange={(e) => handleInputChange("progress", e.target.value)}
-                placeholder="0-100"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="attendance">Frequência (%)</Label>
-              <Input
-                id="attendance"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.attendance}
-                onChange={(e) => handleInputChange("attendance", e.target.value)}
-                placeholder="0-100"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="grades">Média Geral</Label>
-              <Input
-                id="grades"
-                type="number"
-                min="0"
-                max="10"
-                step="0.1"
-                value={formData.grades}
-                onChange={(e) => handleInputChange("grades", e.target.value)}
-                placeholder="0-10"
-              />
-            </div>
           </div>
 
+          {/* Botões */}
           <div className="flex gap-4 justify-end pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" className="bg-primary hover:bg-primary/90">
-              {mode === "create" ? "Cadastrar" : "Salvar Alterações"}
+            <Button
+              type="submit"
+              className="bg-primary hover:bg-primary/90"
+              disabled={isLoading}
+            >
+              {isLoading
+                ? "Salvando..."
+                : mode === "create"
+                ? "Cadastrar"
+                : "Salvar Alterações"}
             </Button>
           </div>
         </form>

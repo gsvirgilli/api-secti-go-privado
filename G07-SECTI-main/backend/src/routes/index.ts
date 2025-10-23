@@ -3,6 +3,11 @@ import authRouter from '../modules/auth/auth.routes.js';
 import usersRouter from '../modules/users/user.routes.js';
 import coursesRouter from '../modules/courses/course.routes.js';
 import { isAuthenticated } from '../middlewares/isAuthenticated.js';
+import classRoutes from "./class.routes.ts";
+import studentRoutes from "./student.routes.ts";
+import instructorRoutes from "./instructor.routes.ts";
+
+
 
 const router = Router();
 
@@ -12,6 +17,9 @@ router.use('/auth', authRouter);
 // Rotas protegidas por autenticação
 router.use('/users', usersRouter);
 router.use('/courses', coursesRouter);
+router.use('/classes', classRoutes);
+router.use('/students', studentRoutes);
+router.use('/instructors', instructorRoutes); 
 
 // No futuro, adicionaremos outras rotas aqui:
 // router.use('/turmas', turmasRouter);
