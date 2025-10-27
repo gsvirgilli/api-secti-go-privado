@@ -75,3 +75,4 @@ export interface ClassAttendanceReportResponse {
   justified: number;
   attendances: AttendanceWithDetailsResponse[];
 }
+

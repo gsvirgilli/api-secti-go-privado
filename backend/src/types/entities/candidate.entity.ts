@@ -12,3 +12,4 @@ export interface CandidateWithRelations extends Candidate {
   // Add relations here when needed
   desiredClass?: import('./class.entity.js').Class;
 }
+

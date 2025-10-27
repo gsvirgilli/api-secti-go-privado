@@ -14,3 +14,4 @@ export interface ClassWithRelations extends Class {
   // enrollments?: Enrollment[];
   // attendances?: Attendance[];
 }
+

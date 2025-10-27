@@ -18,3 +18,4 @@ export interface CandidateServiceInterface extends
   reject(id: number, reason?: string): Promise<{ success: boolean; error?: string }>;
   convertToStudent(id: number): Promise<{ success: boolean; data?: any; error?: string }>;
 }
+

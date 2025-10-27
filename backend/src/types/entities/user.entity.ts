@@ -1,6 +1,7 @@
 import type { BaseEntity, UserRole } from '../common/index.js';
 
 export interface User extends BaseEntity {
+  nome: string;
   email: string;
   senha_hash: string;
   role: UserRole;
@@ -14,3 +15,4 @@ export interface UserWithRelations extends UserSafe {
   // Add relations here when needed
   // instructor?: Instructor;
 }
+

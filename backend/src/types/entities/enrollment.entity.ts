@@ -11,3 +11,4 @@ export interface EnrollmentWithRelations extends Enrollment {
   student?: import('./student.entity.js').Student;
   class?: import('./class.entity.js').Class;
 }
+

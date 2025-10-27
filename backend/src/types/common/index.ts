@@ -40,3 +40,4 @@ export type PaginatedResponse<T> = ApiResponse<T[]> & {
     totalPages: number;
   };
 };
+

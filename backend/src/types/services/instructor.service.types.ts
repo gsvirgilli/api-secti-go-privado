@@ -16,3 +16,4 @@ export interface InstructorServiceInterface extends
   getWithClasses(id: number): Promise<{ success: boolean; data?: InstructorWithClassesResponse; error?: string }>;
   getAvailableInstructors(date: Date, classId?: number): Promise<{ success: boolean; data?: InstructorResponse[]; error?: string }>;
 }
+

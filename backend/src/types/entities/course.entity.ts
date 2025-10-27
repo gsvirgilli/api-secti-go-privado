@@ -10,3 +10,4 @@ export interface CourseWithRelations extends Course {
   // Add relations here when needed
   // classes?: Class[];
 }
+

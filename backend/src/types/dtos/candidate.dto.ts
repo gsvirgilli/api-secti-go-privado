@@ -54,3 +54,4 @@ export interface CandidateWithClassResponse extends CandidateResponse {
     };
   };
 }
+

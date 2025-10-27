@@ -45,3 +45,4 @@ export interface CourseWithClassesResponse extends CourseResponse {
     data_fim: Date | null;
   }[];
 }
+

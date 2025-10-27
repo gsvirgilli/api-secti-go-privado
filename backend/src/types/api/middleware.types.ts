@@ -35,3 +35,4 @@ export interface AuthContext {
   role: string;
   isAuthenticated: boolean;
 }
+

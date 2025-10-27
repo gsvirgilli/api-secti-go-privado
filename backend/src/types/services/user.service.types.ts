@@ -14,3 +14,4 @@ export interface UserServiceInterface extends
   changePassword(userId: number, currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }>;
   updateProfile(userId: number, data: UpdateUserRequest): Promise<{ success: boolean; data?: UserResponse; error?: string }>;
 }
+

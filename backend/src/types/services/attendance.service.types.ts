@@ -20,3 +20,4 @@ export interface AttendanceServiceInterface extends
   getClassReport(classId: number, date: Date): Promise<{ success: boolean; data?: ClassAttendanceReportResponse; error?: string }>;
   getStudentAttendanceRate(studentId: number, classId: number): Promise<{ success: boolean; data?: { rate: number; total: number; present: number }; error?: string }>;
 }
+

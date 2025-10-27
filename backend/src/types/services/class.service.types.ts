@@ -16,3 +16,4 @@ export interface ClassServiceInterface extends
   removeInstructor(classId: number, instructorId: number): Promise<{ success: boolean; error?: string }>;
   getSchedule(classId: number, startDate?: Date, endDate?: Date): Promise<{ success: boolean; data?: any[]; error?: string }>;
 }
+

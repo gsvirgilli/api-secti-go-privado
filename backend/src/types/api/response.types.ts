@@ -58,3 +58,4 @@ export interface FindAllResult<T = any> {
   total?: number;
   error?: string;
 }
+

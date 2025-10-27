@@ -10,3 +10,4 @@ export * from './class.service.types.js';
 export * from './candidate.service.types.js';
 export * from './enrollment.service.types.js';
 export * from './attendance.service.types.js';
+

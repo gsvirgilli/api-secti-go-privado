@@ -16,6 +16,7 @@ export interface RegisterRequest {
 export interface LoginResponse {
   user: {
     id: number;
+    nome: string;
     email: string;
     role: UserRole;
     createdAt: Date;
@@ -26,6 +27,7 @@ export interface LoginResponse {
 
 export interface RegisterResponse {
   id: number;
+  nome: string;
   email: string;
   role: UserRole;
   createdAt: Date;
@@ -37,3 +39,4 @@ export interface AuthUser {
   role?: UserRole;
   [key: string]: unknown;
 }
+
