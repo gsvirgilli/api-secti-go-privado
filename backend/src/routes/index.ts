@@ -3,6 +3,8 @@ import authRouter from '../modules/auth/auth.routes.js';
 import usersRouter from '../modules/users/user.routes.js';
 import coursesRouter from '../modules/courses/course.routes.js';
 import classesRouter from '../modules/classes/class.routes.js';
+import candidatesRouter from '../modules/Candidates/candidate.routes.js';
+import studentsRouter from '../modules/students/student.routes.js';
 import { isAuthenticated } from '../middlewares/isAuthenticated.js';
 
 const router = Router();
@@ -14,9 +16,10 @@ router.use('/auth', authRouter);
 router.use('/users', usersRouter);
 router.use('/courses', coursesRouter);
 router.use('/classes', classesRouter);
+router.use('/candidates', candidatesRouter);
+router.use('/students', studentsRouter);
 
 // No futuro, adicionaremos outras rotas aqui:
-// router.use('/alunos', alunosRouter);
 // router.use('/instrutores', instrutoresRouter);
 
 // Health já existe em app.ts, mas mantemos um ping adicional aqui se quiser agrupar todas as rotas sob /api
