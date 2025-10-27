@@ -18,6 +18,7 @@ API REST completa para o sistema de gestão de cursos da **SUKATECH**, desenvolv
 - [🚨 Tratamento de Erros](#-tratamento-de-erros)
 - [🧪 Testes](#-testes)
 - [🐳 Docker](#-docker)
+- [🗄️ Acesso ao Banco de Dados](#️-acesso-ao-banco-de-dados)
 
 ## 🚀 Quick Start
 
@@ -213,8 +214,136 @@ Authorization: Bearer <token>
 GET /api/classes
 Authorization: Bearer <token>
 
-# Com filtros:
-GET /api/classes?curso_id=1&turno=MANHA
+# Com filtros opcionais:
+GET /api/classes?nome=Python&turno=MANHA&id_curso=1
+GET /api/classes?data_inicio_min=2024-01-01T00:00:00Z&data_inicio_max=2024-12-31T23:59:59Z
+```
+
+**Resposta (200):**
+```json
+[
+  {
+    "id": 1,
+    "nome": "Turma Python 2024-1",
+    "turno": "MANHA",
+    "data_inicio": "2024-01-15T00:00:00.000Z",
+    "data_fim": "2024-06-30T00:00:00.000Z",
+    "id_curso": 1,
+    "createdAt": "2024-01-01T10:00:00.000Z",
+    "updatedAt": "2024-01-01T10:00:00.000Z",
+    "curso": {
+      "id": 1,
+      "nome": "Python Fundamentals",
+      "carga_horaria": 40
+    }
+  }
+]
+```
+
+#### Buscar Turma
+```http
+GET /api/classes/:id
+Authorization: Bearer <token>
+```
+
+#### Criar Turma
+```http
+POST /api/classes
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "nome": "Turma React 2024-2",
+  "turno": "TARDE",
+  "data_inicio": "2024-07-01T00:00:00Z",
+  "data_fim": "2024-12-20T00:00:00Z",
+  "id_curso": 2
+}
+```
+
+**Resposta (201):**
+```json
+{
+  "id": 2,
+  "nome": "Turma React 2024-2",
+  "turno": "TARDE",
+  "data_inicio": "2024-07-01T00:00:00.000Z",
+  "data_fim": "2024-12-20T00:00:00.000Z",
+  "id_curso": 2,
+  "curso": {
+    "id": 2,
+    "nome": "React Fundamentals",
+    "carga_horaria": 45
+  }
+}
+```
+
+#### Atualizar Turma
+```http
+PUT /api/classes/:id
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "nome": "Turma React 2024-2 - Avançado",
+  "turno": "NOITE"
+}
+```
+
+#### Deletar Turma
+```http
+DELETE /api/classes/:id
+Authorization: Bearer <token>
+```
+
+#### Estatísticas de Turmas
+```http
+GET /api/classes/statistics
+Authorization: Bearer <token>
+```
+
+**Resposta (200):**
+```json
+{
+  "total": 15,
+  "ativas": 8,
+  "encerradas": 7,
+  "porTurno": [
+    {
+      "turno": "MANHA",
+      "quantidade": 5
+    }
+  ],
+  "porCurso": [
+    {
+      "id_curso": 1,
+      "quantidade": 3,
+      "curso": {
+        "nome": "Python Fundamentals"
+      }
+    }
+  ]
+}
+```
+
+#### Verificar Conflito de Horário
+```http
+POST /api/classes/check-conflict
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "turno": "MANHA",
+  "data_inicio": "2024-07-01T00:00:00Z",
+  "data_fim": "2024-12-20T00:00:00Z"
+}
+```
+
+**Resposta (200):**
+```json
+{
+  "hasConflict": false
+}
 ```
 
 #### Criar Turma
@@ -830,6 +959,102 @@ docker compose up -d mysql
 
 # Iniciar todos os serviços
 docker compose up -d
+```
+
+## 🗄️ Acesso ao Banco de Dados
+
+### Via Terminal (Docker)
+
+A forma mais rápida de acessar o banco de dados MySQL:
+
+```bash
+# Acessar o MySQL via container Docker
+docker exec -it g07-secti-db-1 mysql -u sukatech_user -p
+
+# Quando pedir a senha, digite:
+# sukatech_password
+
+# Comandos úteis dentro do MySQL:
+USE sukatech_db;
+SHOW TABLES;
+SELECT * FROM usuarios;
+SELECT * FROM cursos;
+SELECT * FROM turmas;
+DESC usuarios;  # Ver estrutura da tabela
+```
+
+**Acesso direto (uma linha):**
+```bash
+docker exec -it g07-secti-db-1 mysql -u sukatech_user -psukatech_password sukatech_db
+```
+
+### Via Cliente Gráfico (MySQL Workbench, DBeaver, etc.)
+
+**Credenciais de conexão:**
+
+| Campo | Valor |
+|-------|-------|
+| **Host** | `localhost` |
+| **Porta** | `3307` |
+| **Database** | `sukatech_db` |
+| **Usuário** | `sukatech_user` |
+| **Senha** | `sukatech_password` |
+
+**Clientes recomendados:**
+- **MySQL Workbench** (oficial da Oracle)
+- **DBeaver** (gratuito, multiplataforma) ⭐ Recomendado
+- **TablePlus** (macOS/Windows)
+- **HeidiSQL** (Windows)
+- **DataGrip** (JetBrains, pago)
+
+### Via VSCode Extension
+
+**Extensão:** "MySQL" by Jun Han
+
+**Configuração na extensão:**
+```json
+{
+  "host": "localhost",
+  "port": 3307,
+  "user": "sukatech_user",
+  "password": "sukatech_password",
+  "database": "sukatech_db"
+}
+```
+
+### Via MySQL Client (Terminal Local)
+
+Se você tiver o cliente MySQL instalado localmente:
+
+```bash
+mysql -h localhost -P 3307 -u sukatech_user -p sukatech_db
+# Senha: sukatech_password
+```
+
+### Comandos Úteis do Banco de Dados
+
+```sql
+-- Ver todas as tabelas
+SHOW TABLES;
+
+-- Ver estrutura de uma tabela
+DESC usuarios;
+DESC cursos;
+DESC turmas;
+
+-- Contar registros
+SELECT COUNT(*) FROM usuarios;
+SELECT COUNT(*) FROM cursos;
+
+-- Ver últimos registros criados
+SELECT * FROM cursos ORDER BY createdAt DESC LIMIT 5;
+SELECT * FROM usuarios ORDER BY createdAt DESC LIMIT 5;
+
+-- Limpar uma tabela (cuidado!)
+TRUNCATE TABLE cursos;
+
+-- Backup de uma tabela
+CREATE TABLE cursos_backup AS SELECT * FROM cursos;
 ```
 
 ### Variáveis de Ambiente
