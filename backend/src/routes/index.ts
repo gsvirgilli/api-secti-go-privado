@@ -2,6 +2,7 @@ import { Router } from 'express';
 import authRouter from '../modules/auth/auth.routes.js';
 import usersRouter from '../modules/users/user.routes.js';
 import coursesRouter from '../modules/courses/course.routes.js';
+import classesRouter from '../modules/classes/class.routes.js';
 import { isAuthenticated } from '../middlewares/isAuthenticated.js';
 
 const router = Router();
@@ -12,9 +13,9 @@ router.use('/auth', authRouter);
 // Rotas protegidas por autenticação
 router.use('/users', usersRouter);
 router.use('/courses', coursesRouter);
+router.use('/classes', classesRouter);
 
 // No futuro, adicionaremos outras rotas aqui:
-// router.use('/turmas', turmasRouter);
 // router.use('/alunos', alunosRouter);
 // router.use('/instrutores', instrutoresRouter);
 

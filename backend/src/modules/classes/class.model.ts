@@ -2,6 +2,10 @@ import { Model, DataTypes } from 'sequelize';
 import { sequelize } from '../../config/database.js';
 import Curso from '../courses/course.model.js';
 
+/**
+ * Modelo de Turma
+ * Representa uma turma associada a um curso
+ */
 class Class extends Model {
   public id!: number;
   public nome!: string;
@@ -9,6 +13,8 @@ class Class extends Model {
   public data_inicio!: Date | null;
   public data_fim!: Date | null;
   public id_curso!: number;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
 Class.init({
@@ -20,10 +26,28 @@ Class.init({
   nome: {
     type: DataTypes.STRING(100),
     allowNull: false,
+    validate: {
+      notEmpty: {
+        msg: 'Nome da turma é obrigatório'
+      },
+      len: {
+        args: [3, 100],
+        msg: 'Nome deve ter entre 3 e 100 caracteres'
+      }
+    }
   },
   turno: {
     type: DataTypes.STRING(50),
     allowNull: false,
+    validate: {
+      notEmpty: {
+        msg: 'Turno é obrigatório'
+      },
+      isIn: {
+        args: [['MANHA', 'TARDE', 'NOITE', 'INTEGRAL']],
+        msg: 'Turno deve ser MANHA, TARDE, NOITE ou INTEGRAL'
+      }
+    }
   },
   data_inicio: {
     type: DataTypes.DATE,
@@ -32,20 +56,48 @@ Class.init({
   data_fim: {
     type: DataTypes.DATE,
     allowNull: true,
+    validate: {
+      isAfterStart(value: Date) {
+        if (value && this.data_inicio && value <= this.data_inicio) {
+          throw new Error('Data de fim deve ser posterior à data de início');
+        }
+      }
+    }
   },
-  // --- Chave Estrangeira ---
   id_curso: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: Curso, // Pode referenciar o Model diretamente
+      model: Curso,
       key: 'id',
+    },
+    validate: {
+      notNull: {
+        msg: 'Curso é obrigatório'
+      }
     }
   }
 }, {
   sequelize,
-  tableName: 'turmas', // Nome da tabela no banco
+  tableName: 'turmas',
   timestamps: true,
+  indexes: [
+    {
+      fields: ['id_curso']
+    },
+    {
+      fields: ['turno']
+    },
+    {
+      fields: ['data_inicio', 'data_fim']
+    }
+  ]
+});
+
+// Associações
+Class.belongsTo(Curso, {
+  foreignKey: 'id_curso',
+  as: 'curso'
 });
 
 export default Class;
