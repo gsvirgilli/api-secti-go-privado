@@ -11,3 +11,4 @@ export interface InstructorWithRelations extends Instructor {
   // Add relations here when needed
   // classes?: Class[];
 }
+

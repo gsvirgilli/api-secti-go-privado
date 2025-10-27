@@ -12,3 +12,4 @@ export interface StudentWithRelations extends Student {
   // enrollments?: Enrollment[];
   // attendances?: Attendance[];
 }
+

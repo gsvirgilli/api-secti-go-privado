@@ -12,3 +12,4 @@ export interface AttendanceWithRelations extends Attendance {
   student?: import('./student.entity.js').Student;
   class?: import('./class.entity.js').Class;
 }
+

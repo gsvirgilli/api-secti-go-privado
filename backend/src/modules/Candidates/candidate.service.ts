@@ -314,17 +314,18 @@ class CandidateService {
     const porTurma = await Candidate.findAll({
       attributes: [
         'turma_id',
-        [Candidate.sequelize!.fn('COUNT', Candidate.sequelize!.col('id')), 'quantidade']
+        [Candidate.sequelize!.fn('COUNT', Candidate.sequelize!.col('Candidate.id')), 'quantidade']
       ],
       include: [{
         model: Class,
         as: 'turma',
-        attributes: ['nome']
+        attributes: ['nome'],
+        required: false
       }],
       where: {
         turma_id: { [Op.ne]: null }
       },
-      group: ['turma_id', 'turma.id']
+      group: ['Candidate.turma_id']
     });
 
     return {

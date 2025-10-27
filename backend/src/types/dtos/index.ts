@@ -9,3 +9,4 @@ export * from './class.dto.js';
 export * from './candidate.dto.js';
 export * from './enrollment.dto.js';
 export * from './attendance.dto.js';
+

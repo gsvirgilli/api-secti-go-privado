@@ -172,3 +172,4 @@ export const authMiddleware: MiddlewareFunction = (req: AuthenticatedRequest, re
 - **Refatoração**: Mudanças seguras em todo o código
 - **Documentação**: Tipos servem como documentação viva
 - **Manutenibilidade**: Código mais fácil de manter e entender
+

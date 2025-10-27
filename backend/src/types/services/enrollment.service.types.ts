@@ -16,3 +16,4 @@ export interface EnrollmentServiceInterface extends
   getByClass(classId: number): Promise<{ success: boolean; data?: EnrollmentResponse[]; error?: string }>;
   checkAvailability(classId: number): Promise<{ success: boolean; data?: { available: boolean; capacity?: number; enrolled?: number }; error?: string }>;
 }
+

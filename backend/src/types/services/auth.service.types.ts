@@ -25,3 +25,4 @@ export interface TokenServiceInterface {
   verifyToken(token: string): { userId: number; role: string } | null;
   refreshToken(token: string): string | null;
 }
+

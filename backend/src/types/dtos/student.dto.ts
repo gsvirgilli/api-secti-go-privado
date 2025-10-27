@@ -48,3 +48,4 @@ export interface StudentWithEnrollmentsResponse extends StudentResponse {
     };
   }[];
 }
+

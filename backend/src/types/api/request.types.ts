@@ -34,3 +34,4 @@ export interface RequestWithBody<T = any> extends Request {
 export interface AuthenticatedRequestWithBody<T = any> extends AuthenticatedRequest {
   body: T;
 }
+

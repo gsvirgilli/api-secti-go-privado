@@ -16,18 +16,22 @@ export const createClassSchema = z.object({
     }),
 
   data_inicio: z
-    .string()
-    .datetime({ message: 'Data de início deve ser uma data válida (ISO 8601)' })
+    .union([
+      z.string().transform(val => new Date(val)),
+      z.date(),
+      z.null()
+    ])
     .optional()
-    .nullable()
-    .transform(val => val ? new Date(val) : null),
+    .nullable(),
 
   data_fim: z
-    .string()
-    .datetime({ message: 'Data de fim deve ser uma data válida (ISO 8601)' })
+    .union([
+      z.string().transform(val => new Date(val)),
+      z.date(),
+      z.null()
+    ])
     .optional()
-    .nullable()
-    .transform(val => val ? new Date(val) : null),
+    .nullable(),
 
   id_curso: z
     .number({ message: 'ID do curso é obrigatório' })
@@ -64,18 +68,22 @@ export const updateClassSchema = z.object({
     .optional(),
 
   data_inicio: z
-    .string()
-    .datetime({ message: 'Data de início deve ser uma data válida (ISO 8601)' })
+    .union([
+      z.string().transform(val => new Date(val)),
+      z.date(),
+      z.null()
+    ])
     .optional()
-    .nullable()
-    .transform(val => val ? new Date(val) : null),
+    .nullable(),
 
   data_fim: z
-    .string()
-    .datetime({ message: 'Data de fim deve ser uma data válida (ISO 8601)' })
+    .union([
+      z.string().transform(val => new Date(val)),
+      z.date(),
+      z.null()
+    ])
     .optional()
-    .nullable()
-    .transform(val => val ? new Date(val) : null),
+    .nullable(),
 
   id_curso: z
     .number({ message: 'ID do curso deve ser um número' })

@@ -29,7 +29,8 @@ export const createCandidateSchema = z.object({
 
     data_nascimento: z
       .string({ message: 'Data de nascimento é obrigatória' })
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data deve estar no formato YYYY-MM-DD'),
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data deve estar no formato YYYY-MM-DD')
+      .optional(),
 
     status: z
       .enum(['PENDENTE', 'APROVADO', 'REJEITADO'], {

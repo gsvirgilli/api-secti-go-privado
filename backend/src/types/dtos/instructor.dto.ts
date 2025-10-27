@@ -49,3 +49,4 @@ export interface InstructorWithClassesResponse extends InstructorResponse {
     };
   }[];
 }
+

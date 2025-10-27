@@ -8,3 +8,4 @@ export * from './class.entity.js';
 export * from './candidate.entity.js';
 export * from './enrollment.entity.js';
 export * from './attendance.entity.js';
+

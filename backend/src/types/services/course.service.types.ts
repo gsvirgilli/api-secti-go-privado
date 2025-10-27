@@ -14,3 +14,4 @@ export interface CourseServiceInterface extends
   getWithClasses(id: number): Promise<{ success: boolean; data?: CourseWithClassesResponse; error?: string }>;
   getStatistics(id: number): Promise<{ success: boolean; data?: any; error?: string }>;
 }
+

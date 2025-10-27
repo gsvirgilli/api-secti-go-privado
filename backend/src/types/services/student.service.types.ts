@@ -17,3 +17,4 @@ export interface StudentServiceInterface extends
   getWithEnrollments(id: number): Promise<{ success: boolean; data?: StudentWithEnrollmentsResponse; error?: string }>;
   getEnrollmentHistory(id: number): Promise<{ success: boolean; data?: any[]; error?: string }>;
 }
+

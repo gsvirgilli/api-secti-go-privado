@@ -197,53 +197,45 @@ class ClassService {
    * Retorna estatísticas de turmas
    */
   async getStatistics() {
-    const total = await Class.count();
-    
-    const porTurno = await Class.findAll({
-      attributes: [
-        'turno',
-        [Class.sequelize!.fn('COUNT', Class.sequelize!.col('id')), 'quantidade']
-      ],
-      group: ['turno']
-    });
+    try {
+      const total = await Class.count();
+      
+      const porTurno = await Class.findAll({
+        attributes: [
+          'turno',
+          [Class.sequelize!.fn('COUNT', Class.sequelize!.col('id')), 'quantidade']
+        ],
+        group: ['turno'],
+        raw: true
+      });
 
-    const porCurso = await Class.findAll({
-      attributes: [
-        'id_curso',
-        [Class.sequelize!.fn('COUNT', Class.sequelize!.col('id')), 'quantidade']
-      ],
-      include: [{
-        model: Curso,
-        as: 'curso',
-        attributes: ['nome']
-      }],
-      group: ['id_curso', 'curso.id']
-    });
+      // Turmas ativas (que ainda não terminaram)
+      const ativas = await Class.count({
+        where: {
+          [Op.or]: [
+            { data_fim: null },
+            { data_fim: { [Op.gte]: new Date() } }
+          ]
+        }
+      });
 
-    // Turmas ativas (que ainda não terminaram)
-    const ativas = await Class.count({
-      where: {
-        [Op.or]: [
-          { data_fim: null },
-          { data_fim: { [Op.gte]: new Date() } }
-        ]
-      }
-    });
+      // Turmas encerradas
+      const encerradas = await Class.count({
+        where: {
+          data_fim: { [Op.lt]: new Date() }
+        }
+      });
 
-    // Turmas encerradas
-    const encerradas = await Class.count({
-      where: {
-        data_fim: { [Op.lt]: new Date() }
-      }
-    });
-
-    return {
-      total,
-      ativas,
-      encerradas,
-      porTurno,
-      porCurso
-    };
+      return {
+        total,
+        ativas,
+        encerradas,
+        porTurno
+      };
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas de classes:', error);
+      throw error;
+    }
   }
 
   /**
