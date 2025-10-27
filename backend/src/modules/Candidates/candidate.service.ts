@@ -1,7 +1,9 @@
 import Candidate from './candidate.model.js';
 import Student from '../students/student.model.js';
 import Class from '../classes/class.model.js';
+import User from '../users/user.model.js';
 import { Op } from 'sequelize';
+import bcrypt from 'bcryptjs';
 
 /**
  * Interface para filtros de candidatos
@@ -11,7 +13,7 @@ interface CandidateFilters {
   cpf?: string;
   email?: string;
   status?: string;
-  id_turma_desejada?: number;
+  turma_id?: number; // Alterado de id_turma_desejada
 }
 
 /**
@@ -22,8 +24,9 @@ interface CreateCandidateData {
   cpf: string;
   email: string;
   telefone?: string;
+  data_nascimento?: string;
   status?: string;
-  id_turma_desejada?: number;
+  turma_id?: number; // Alterado de id_turma_desejada
 }
 
 /**
@@ -34,7 +37,7 @@ interface UpdateCandidateData {
   email?: string;
   telefone?: string;
   status?: string;
-  id_turma_desejada?: number;
+  turma_id?: number; // Alterado de id_turma_desejada
 }
 
 /**
@@ -103,8 +106,8 @@ class CandidateService {
     }
 
     // Filtro por turma desejada
-    if (filters.id_turma_desejada) {
-      where.id_turma_desejada = filters.id_turma_desejada;
+    if (filters.turma_id) {
+      where.turma_id = filters.turma_id;
     }
 
     const candidates = await Candidate.findAll({
@@ -172,8 +175,8 @@ class CandidateService {
     }
 
     // Verificar se turma desejada existe (se fornecida)
-    if (data.id_turma_desejada) {
-      const turma = await Class.findByPk(data.id_turma_desejada);
+    if (data.turma_id) {
+      const turma = await Class.findByPk(data.turma_id);
       if (!turma) {
         throw new Error('Turma não encontrada');
       }
@@ -205,8 +208,8 @@ class CandidateService {
     }
 
     // Verificar se turma desejada existe (se fornecida)
-    if (data.id_turma_desejada) {
-      const turma = await Class.findByPk(data.id_turma_desejada);
+    if (data.turma_id) {
+      const turma = await Class.findByPk(data.turma_id);
       if (!turma) {
         throw new Error('Turma não encontrada');
       }
@@ -253,26 +256,62 @@ class CandidateService {
       throw new Error('Candidato já foi aprovado');
     }
 
-    // Gerar matrícula
-    const matricula = await this.generateMatricula();
+    // Verificar se candidato tem turma
+    if (!candidate.turma_id) {
+      throw new Error('Candidato precisa ter uma turma desejada para ser aprovado');
+    }
 
-    // Criar aluno
-    const student = await Student.create({
-      matricula,
-      cpf: candidate.cpf,
-      nome: candidate.nome,
-      email: candidate.email,
-      telefone: candidate.telefone
-    } as any);
+    try {
+      // Gerar matrícula
+      const matricula = await this.generateMatricula();
 
-    // Atualizar status do candidato
-    await candidate.update({ status: 'aprovado' });
+      // Verificar se já existe um usuário com esse email
+      const existingUser = await User.findOne({ where: { email: candidate.email } });
+      
+      let usuario;
+      if (existingUser) {
+        // Se já existe, usar o usuário existente
+        usuario = existingUser;
+      } else {
+        // Criar usuário para o aluno
+        // Senha padrão será o CPF (deve ser alterada no primeiro acesso)
+        const senhaTemporaria = candidate.cpf;
+        const senhaHash = await bcrypt.hash(senhaTemporaria, 8);
 
-    return {
-      candidate,
-      student,
-      message: 'Candidato aprovado e convertido em aluno com sucesso'
-    };
+        usuario = await User.create({
+          nome: candidate.nome,
+          email: candidate.email,
+          senha_hash: senhaHash,
+          role: 'ALUNO'
+        } as any);
+      }
+
+      // Criar aluno com os campos obrigatórios
+      const student = await Student.create({
+        candidato_id: candidate.id,
+        usuario_id: usuario.id,
+        matricula,
+        cpf: candidate.cpf,
+        nome: candidate.nome,
+        email: candidate.email,
+        turma_id: candidate.turma_id,
+        status: 'ativo'
+      } as any);
+
+      // Atualizar status do candidato
+      await candidate.update({ status: 'aprovado' });
+
+      return {
+        candidate,
+        student,
+        usuario,
+        message: 'Candidato aprovado e convertido em aluno com sucesso',
+        senhaTemporaria: existingUser ? undefined : candidate.cpf
+      };
+    } catch (error) {
+      console.error('Erro detalhado ao aprovar candidato:', error);
+      throw error;
+    }
   }
 
   /**

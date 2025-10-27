@@ -28,18 +28,19 @@ export const createCandidateSchema = z.object({
       .nullable(),
 
     data_nascimento: z
-      .string({ message: 'Data de nascimento é obrigatória' })
+      .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data deve estar no formato YYYY-MM-DD')
-      .optional(),
+      .optional()
+      .nullable(),
 
     status: z
-      .enum(['PENDENTE', 'APROVADO', 'REJEITADO'], {
-        message: 'Status deve ser PENDENTE, APROVADO ou REJEITADO'
+      .enum(['pendente', 'aprovado', 'reprovado'], {
+        message: 'Status deve ser pendente, aprovado ou reprovado'
       })
       .optional()
-      .default('PENDENTE'),
+      .default('pendente'),
 
-    id_turma_desejada: z
+    turma_id: z
       .number({ message: 'ID da turma deve ser um número' })
       .int('ID da turma deve ser um número inteiro')
       .positive('ID da turma deve ser positivo')
@@ -74,12 +75,12 @@ export const updateCandidateSchema = z.object({
       .nullable(),
 
     status: z
-      .enum(['PENDENTE', 'APROVADO', 'REJEITADO'], {
-        message: 'Status deve ser PENDENTE, APROVADO ou REJEITADO'
+      .enum(['pendente', 'aprovado', 'reprovado'], {
+        message: 'Status deve ser pendente, aprovado ou reprovado'
       })
       .optional(),
 
-    id_turma_desejada: z
+    turma_id: z
       .number({ message: 'ID da turma deve ser um número' })
       .int('ID da turma deve ser um número inteiro')
       .positive('ID da turma deve ser positivo')
@@ -105,10 +106,10 @@ export const listCandidateFiltersSchema = z.object({
     .optional(),
   
   status: z
-    .enum(['PENDENTE', 'APROVADO', 'REJEITADO'])
+    .enum(['pendente', 'aprovado', 'reprovado'])
     .optional(),
   
-  id_turma_desejada: z
+  turma_id: z
     .string()
     .regex(/^\d+$/, 'ID da turma deve ser um número')
     .transform(Number)

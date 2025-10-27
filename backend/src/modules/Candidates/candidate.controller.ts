@@ -70,9 +70,8 @@ class CandidateController {
    */
   async create(req: Request, res: Response) {
     try {
-      // Parse apenas do body, sem wrapping
-      const candidateSchema = createCandidateSchema.shape.body;
-      const data = candidateSchema.parse(req.body);
+      // O middleware validateRequest já fez o parse
+      const data = req.body;
       
       const candidate = await CandidateService.create(data);
       
@@ -108,7 +107,8 @@ class CandidateController {
 
       console.error('Erro ao criar candidato:', error);
       return res.status(500).json({
-        error: 'Erro ao criar candidato'
+        error: 'Erro ao criar candidato',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
       });
     }
   }
@@ -120,8 +120,8 @@ class CandidateController {
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const updateSchema = updateCandidateSchema.shape.body;
-      const data = updateSchema.parse(req.body);
+      // O middleware validateRequest já fez o parse
+      const data = req.body;
       
       const candidate = await CandidateService.update(Number(id), data);
       
@@ -156,7 +156,8 @@ class CandidateController {
 
       console.error('Erro ao atualizar candidato:', error);
       return res.status(500).json({
-        error: 'Erro ao atualizar candidato'
+        error: 'Erro ao atualizar candidato',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
       });
     }
   }
@@ -218,11 +219,18 @@ class CandidateController {
             error: error.message
           });
         }
+
+        if (error.message === 'Candidato precisa ter uma turma desejada para ser aprovado') {
+          return res.status(400).json({
+            error: error.message
+          });
+        }
       }
 
       console.error('Erro ao aprovar candidato:', error);
       return res.status(500).json({
-        error: 'Erro ao aprovar candidato'
+        error: 'Erro ao aprovar candidato',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
       });
     }
   }
@@ -234,10 +242,10 @@ class CandidateController {
   async reject(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const rejectSchema = rejectCandidateSchema.shape.body;
-      const data = rejectSchema.parse(req.body);
+      // O middleware validateRequest já fez o parse
+      const { motivo } = req.body;
       
-      const result = await CandidateService.reject(Number(id), data.motivo);
+      const result = await CandidateService.reject(Number(id), motivo);
       
       return res.status(200).json(result);
     } catch (error) {
@@ -264,7 +272,8 @@ class CandidateController {
 
       console.error('Erro ao rejeitar candidato:', error);
       return res.status(500).json({
-        error: 'Erro ao rejeitar candidato'
+        error: 'Erro ao rejeitar candidato',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
       });
     }
   }

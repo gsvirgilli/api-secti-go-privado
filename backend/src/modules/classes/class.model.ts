@@ -7,14 +7,14 @@ import Curso from '../courses/course.model.js';
  * Representa uma turma associada a um curso
  */
 class Class extends Model {
-  public id!: number;
-  public nome!: string;
-  public turno!: string;
-  public data_inicio!: Date | null;
-  public data_fim!: Date | null;
-  public id_curso!: number;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare id: number;
+  declare nome: string;
+  declare turno: string;
+  declare data_inicio: Date | null;
+  declare data_fim: Date | null;
+  declare id_curso: number;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 Class.init({

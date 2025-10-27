@@ -7,16 +7,16 @@ import Class from '../classes/class.model.js';
  * Representa pessoas interessadas em participar de cursos
  */
 class Candidate extends Model {
-  public id!: number;
-  public nome!: string;
-  public cpf!: string;
-  public email!: string;
-  public telefone!: string | null;
-  public data_nascimento!: Date;
-  public turma_id!: number;
-  public status!: 'pendente' | 'aprovado' | 'reprovado';
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare id: number;
+  declare nome: string;
+  declare cpf: string;
+  declare email: string;
+  declare telefone: string | null;
+  declare data_nascimento: Date | null;
+  declare turma_id: number | null;
+  declare status: 'pendente' | 'aprovado' | 'reprovado';
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 Candidate.init({
@@ -74,12 +74,7 @@ Candidate.init({
   },
   data_nascimento: {
     type: DataTypes.DATEONLY,
-    allowNull: false,
-    validate: {
-      notEmpty: {
-        msg: 'Data de nascimento é obrigatória'
-      }
-    }
+    allowNull: true, // Alterado para permitir null
   },
   turma_id: {
     type: DataTypes.INTEGER,
