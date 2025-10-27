@@ -1,0 +1,205 @@
+
+ RUN  v3.2.4 /home/gsvirgilli/Github/BRISA/BRISA/G07-SECTI/backend
+
+ ✓ test/simple.test.ts > Simple Test > deve passar um teste básico 2ms
+ ✓ test/simple.test.ts > Simple Test > deve testar strings 0ms
+stdout | test/candidates.test.ts
+[dotenv@17.2.2] injecting env (7) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+
+stdout | test/students.test.ts
+[dotenv@17.2.2] injecting env (7) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+stdout | test/courses-final.test.ts
+[dotenv@17.2.2] injecting env (7) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+
+stdout | test/classes.test.ts
+[dotenv@17.2.2] injecting env (7) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+stdout | test/health.test.ts
+[dotenv@17.2.2] injecting env (7) from .env -- tip: 📡 auto-backup env with Radar: https://dotenvx.com/radar
+
+ ✓ test/courses-final.test.ts > Courses API - Final Tests > ✅ Testes Funcionais > deve retornar erro 401 sem token 15ms
+ ✓ test/courses-final.test.ts > Courses API - Final Tests > ✅ Testes Funcionais > deve retornar erro 401 com token inválido 2ms
+ ✓ test/courses-final.test.ts > Courses API - Final Tests > ✅ Testes Funcionais > deve listar cursos com sucesso 3ms
+ ✓ test/courses-final.test.ts > Courses API - Final Tests > ✅ Testes Funcionais > deve criar curso com dados válidos 7ms
+ ✓ test/courses-final.test.ts > Courses API - Final Tests > ✅ Testes Funcionais > deve retornar erro 400 para dados inválidos 3ms
+ ✓ test/courses-final.test.ts > Courses API - Final Tests > ✅ Testes Funcionais > deve retornar estatísticas 2ms
+ ✓ test/courses-final.test.ts > Courses API - Final Tests > ✅ Testes Funcionais > deve retornar erro 400 para ID inválido 2ms
+ ✓ test/health.test.ts > Healthcheck > GET /api/health deve responder 200 com status ok 11ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > 🔐 Autenticação > deve retornar erro 401 sem token 12ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > 🔐 Autenticação > deve retornar erro 401 com token inválido 2ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > 📋 GET /api/classes - Listar Turmas > deve listar turmas com sucesso 3ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > 📋 GET /api/classes - Listar Turmas > deve listar turmas com filtro por nome 3ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > 📋 GET /api/classes - Listar Turmas > deve listar turmas com filtro por turno 2ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > 📋 GET /api/classes - Listar Turmas > deve listar turmas com filtro por curso 2ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > 📋 GET /api/classes - Listar Turmas > deve retornar lista vazia quando não há turmas 1ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > 🔍 GET /api/classes/:id - Buscar Turma > deve buscar turma por ID com sucesso 2ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > 🔍 GET /api/classes/:id - Buscar Turma > deve retornar 404 quando turma não existe 3ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ➕ POST /api/classes - Criar Turma > deve criar turma com dados válidos 8ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ➕ POST /api/classes - Criar Turma > deve retornar 400 sem nome 2ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ➕ POST /api/classes - Criar Turma > deve retornar 400 com nome muito curto 2ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ➕ POST /api/classes - Criar Turma > deve retornar 400 sem turno 2ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ➕ POST /api/classes - Criar Turma > deve retornar 400 com turno inválido 2ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ➕ POST /api/classes - Criar Turma > deve retornar 400 sem id_curso 2ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ➕ POST /api/classes - Criar Turma > deve retornar 404 quando curso não existe 1ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ➕ POST /api/classes - Criar Turma > deve retornar 400 quando data_fim é anterior a data_inicio 1ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ✏️ PUT /api/classes/:id - Atualizar Turma > deve atualizar turma com sucesso 2ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ✏️ PUT /api/classes/:id - Atualizar Turma > deve retornar 404 quando turma não existe 2ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ✏️ PUT /api/classes/:id - Atualizar Turma > deve atualizar apenas nome 1ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ✏️ PUT /api/classes/:id - Atualizar Turma > deve retornar 400 com turno inválido 3ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > 🗑️ DELETE /api/classes/:id - Deletar Turma > deve deletar turma com sucesso 1ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > 🗑️ DELETE /api/classes/:id - Deletar Turma > deve retornar 404 quando turma não existe 1ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > 📊 GET /api/classes/statistics - Estatísticas > deve retornar estatísticas com sucesso 1ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ⚠️ POST /api/classes/check-conflict - Verificar Conflito > deve verificar conflito sem encontrar 2ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ⚠️ POST /api/classes/check-conflict - Verificar Conflito > deve verificar conflito e encontrar 1ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > ⚠️ POST /api/classes/check-conflict - Verificar Conflito > deve verificar conflito excluindo turma específica 2ms
+ ✓ test/classes.test.ts > Classes API - Testes Completos > 🎯 Testes de Integração > deve listar, criar e buscar turma criada 4ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 🔐 Autenticação > deve retornar erro 401 sem token 17ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 🔐 Autenticação > deve retornar erro 401 com token inválido 2ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 🔐 Autenticação > deve aceitar requisição com token válido 3ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 📋 GET /api/students - Listar Alunos > deve listar todos os alunos 3ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 📋 GET /api/students - Listar Alunos > deve listar alunos com filtros 3ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 📋 GET /api/students - Listar Alunos > deve retornar lista vazia quando não há alunos 3ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 🔍 GET /api/students/:id - Buscar Aluno por ID > deve buscar aluno por ID 4ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 🔍 GET /api/students/:id - Buscar Aluno por ID > deve retornar 404 se aluno não existir 3ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 🔍 GET /api/students/cpf/:cpf - Buscar Aluno por CPF > deve buscar aluno por CPF 5ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 🔍 GET /api/students/cpf/:cpf - Buscar Aluno por CPF > deve retornar 404 se aluno não existir 3ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 🔍 GET /api/students/matricula/:matricula - Buscar Aluno por Matrícula > deve buscar aluno por matrícula 2ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 🔍 GET /api/students/matricula/:matricula - Buscar Aluno por Matrícula > deve retornar 404 se aluno não existir 2ms
+ ✓ test/students.test.ts > Students API - Testes Completos > ✏️ PUT /api/students/:id - Atualizar Aluno > deve atualizar aluno existente 14ms
+ ✓ test/students.test.ts > Students API - Testes Completos > ✏️ PUT /api/students/:id - Atualizar Aluno > deve retornar 404 se aluno não existir 3ms
+ ✓ test/students.test.ts > Students API - Testes Completos > ✏️ PUT /api/students/:id - Atualizar Aluno > deve validar dados de atualização 3ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 🗑️ DELETE /api/students/:id - Deletar Aluno > deve deletar aluno existente 2ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 🗑️ DELETE /api/students/:id - Deletar Aluno > deve retornar 404 se aluno não existir 2ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 📊 GET /api/students/statistics - Estatísticas > deve retornar estatísticas de alunos 1ms
+ ✓ test/students.test.ts > Students API - Testes Completos > 📊 GET /api/students/statistics - Estatísticas > deve retornar estatísticas vazias quando não há alunos 1ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > 🔐 Autenticação > deve retornar erro 401 sem token 20ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > 🔐 Autenticação > deve retornar erro 401 com token inválido 4ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > 🔐 Autenticação > deve aceitar requisição com token válido 5ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > 📋 GET /api/candidates - Listar Candidatos > deve listar todos os candidatos 5ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > 📋 GET /api/candidates - Listar Candidatos > deve listar candidatos com filtros 5ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > 📋 GET /api/candidates - Listar Candidatos > deve retornar lista vazia quando não há candidatos 3ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > 🔍 GET /api/candidates/:id - Buscar Candidato > deve buscar candidato por ID 4ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > 🔍 GET /api/candidates/:id - Buscar Candidato > deve retornar 404 se candidato não existir 3ms
+ × test/candidates.test.ts > Candidates API - Testes Completos > ➕ POST /api/candidates - Criar Candidato > deve criar um novo candidato 18ms
+   → expected 400 to be 201 // Object.is equality
+ × test/candidates.test.ts > Candidates API - Testes Completos > ➕ POST /api/candidates - Criar Candidato > deve validar campos obrigatórios 5ms
+   → expected { name: 'ZodError', …(1) } to have property "details"
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > ➕ POST /api/candidates - Criar Candidato > deve validar formato de email 2ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > ➕ POST /api/candidates - Criar Candidato > deve validar CPF com 11 dígitos 1ms
+ × test/candidates.test.ts > Candidates API - Testes Completos > ➕ POST /api/candidates - Criar Candidato > deve retornar 409 se CPF já cadastrado 3ms
+   → expected 400 to be 409 // Object.is equality
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > ✏️ PUT /api/candidates/:id - Atualizar Candidato > deve atualizar candidato existente 4ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > ✏️ PUT /api/candidates/:id - Atualizar Candidato > deve retornar 404 se candidato não existir 3ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > ✏️ PUT /api/candidates/:id - Atualizar Candidato > não deve permitir alterar status de candidato aprovado 3ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > 🗑️ DELETE /api/candidates/:id - Deletar Candidato > deve deletar candidato existente 3ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > 🗑️ DELETE /api/candidates/:id - Deletar Candidato > deve retornar 404 se candidato não existir 2ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > 🗑️ DELETE /api/candidates/:id - Deletar Candidato > não deve permitir deletar candidato aprovado 2ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > ✅ POST /api/candidates/:id/approve - Aprovar Candidato > deve aprovar candidato e converter em aluno 2ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > ✅ POST /api/candidates/:id/approve - Aprovar Candidato > deve retornar 404 se candidato não existir 2ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > ✅ POST /api/candidates/:id/approve - Aprovar Candidato > deve retornar erro se candidato já foi aprovado 2ms
+ × test/candidates.test.ts > Candidates API - Testes Completos > ❌ POST /api/candidates/:id/reject - Rejeitar Candidato > deve rejeitar candidato com motivo 4ms
+   → expected 400 to be 200 // Object.is equality
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > ❌ POST /api/candidates/:id/reject - Rejeitar Candidato > deve validar campo motivo 2ms
+ × test/candidates.test.ts > Candidates API - Testes Completos > ❌ POST /api/candidates/:id/reject - Rejeitar Candidato > deve retornar 404 se candidato não existir 2ms
+   → expected 400 to be 404 // Object.is equality
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > ❌ POST /api/candidates/:id/reject - Rejeitar Candidato > não deve permitir rejeitar candidato aprovado 2ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > 📊 GET /api/candidates/statistics - Estatísticas > deve retornar estatísticas de candidatos 1ms
+ ✓ test/candidates.test.ts > Candidates API - Testes Completos > 📊 GET /api/candidates/statistics - Estatísticas > deve retornar estatísticas vazias quando não há candidatos 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/candidates.test.ts > Candidates API - Testes Completos > ➕ POST /api/candidates - Criar Candidato > deve criar um novo candidato
+AssertionError: expected 400 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 400[39m
+
+ ❯ test/candidates.test.ts:219:31
+    217|         .send(newCandidateData);
+    218|       
+    219|       expect(response.status).toBe(201);
+       |                               ^
+    220|       expect(response.body).toHaveProperty('id');
+    221|       expect(response.body.nome).toBe(newCandidateData.nome);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  test/candidates.test.ts > Candidates API - Testes Completos > ➕ POST /api/candidates - Criar Candidato > deve validar campos obrigatórios
+AssertionError: expected { name: 'ZodError', …(1) } to have property "details"
+ ❯ test/candidates.test.ts:235:29
+    233|       
+    234|       expect(response.status).toBe(400);
+    235|       expect(response.body).toHaveProperty('details');
+       |                             ^
+    236|       expect(response.body.details).toBeInstanceOf(Array);
+    237|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  test/candidates.test.ts > Candidates API - Testes Completos > ➕ POST /api/candidates - Criar Candidato > deve retornar 409 se CPF já cadastrado
+AssertionError: expected 400 to be 409 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 409[39m
+[31m+ 400[39m
+
+ ❯ test/candidates.test.ts:277:31
+    275|         .send(newCandidateData);
+    276|       
+    277|       expect(response.status).toBe(409);
+       |                               ^
+    278|     });
+    279|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  test/candidates.test.ts > Candidates API - Testes Completos > ❌ POST /api/candidates/:id/reject - Rejeitar Candidato > deve rejeitar candidato com motivo
+AssertionError: expected 400 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 400[39m
+
+ ❯ test/candidates.test.ts:428:31
+    426|         .send(rejectData);
+    427|       
+    428|       expect(response.status).toBe(200);
+       |                               ^
+    429|       expect(response.body).toHaveProperty('message');
+    430|       expect(CandidateService.reject).toHaveBeenCalledWith(1, rejectDa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  test/candidates.test.ts > Candidates API - Testes Completos > ❌ POST /api/candidates/:id/reject - Rejeitar Candidato > deve retornar 404 se candidato não existir
+AssertionError: expected 400 to be 404 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 404[39m
+[31m+ 400[39m
+
+ ❯ test/candidates.test.ts:452:31
+    450|         .send(rejectData);
+    451|       
+    452|       expect(response.status).toBe(404);
+       |                               ^
+    453|     });
+    454| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  5 failed | 80 passed (85)
+   Start at  12:18:24
+   Duration  847ms (transform 427ms, setup 0ms, collect 2.64s, tests 317ms, environment 1ms, prepare 377ms)
+

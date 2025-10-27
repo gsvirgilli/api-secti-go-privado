@@ -385,7 +385,92 @@ DELETE /api/classes/:id
 Authorization: Bearer <token>
 ```
 
-### 👨‍🎓 Alunos
+#### Estatísticas de Turmas
+```http
+GET /api/classes/statistics
+Authorization: Bearer <token>
+```
+
+#### Verificar Conflito de Turmas
+```http
+POST /api/classes/check-conflict
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "id_curso": 1,
+  "data_inicio": "2025-01-15",
+  "data_fim": "2025-03-15"
+}
+```
+
+� **[Documentação Completa de Turmas →](./src/modules/classes/README.md)**
+
+---
+
+### 🎓 Candidatos e Alunos
+
+O sistema gerencia o fluxo completo desde a candidatura até a matrícula:
+1. **Candidato** se inscreve para uma turma (status: PENDENTE)
+2. **Aprovação** converte automaticamente candidato em aluno (matrícula gerada)
+3. **Rejeição** registra motivo e mantém histórico
+
+#### Candidatos - Listar
+```http
+GET /api/candidates
+Authorization: Bearer <token>
+
+# Com filtros:
+GET /api/candidates?status=PENDENTE&nome=João&id_turma_desejada=1
+```
+
+#### Candidatos - Criar
+```http
+POST /api/candidates
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "nome": "Maria Santos",
+  "cpf": "98765432100",
+  "email": "maria@example.com",
+  "telefone": "11988888888",
+  "id_turma_desejada": 1
+}
+```
+
+#### Candidatos - Aprovar (Converte em Aluno)
+```http
+POST /api/candidates/:id/approve
+Authorization: Bearer <token>
+```
+**Resposta:**
+```json
+{
+  "candidate": { "id": 1, "status": "APROVADO" },
+  "student": { "id": 1, "matricula": "2024001", "nome": "Maria Santos" },
+  "message": "Candidato aprovado e convertido em aluno com sucesso"
+}
+```
+
+#### Candidatos - Rejeitar
+```http
+POST /api/candidates/:id/reject
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "motivo": "Documentação incompleta - falta comprovante de residência"
+}
+```
+
+#### Candidatos - Estatísticas
+```http
+GET /api/candidates/statistics
+Authorization: Bearer <token>
+```
+
+### �👨‍🎓 Alunos
 
 #### Listar Alunos
 ```http
@@ -393,24 +478,55 @@ GET /api/students
 Authorization: Bearer <token>
 
 # Com filtros:
-GET /api/students?nome=João&turma_id=1
+GET /api/students?nome=João&matricula=2024
 ```
 
-#### Criar Aluno
+#### Buscar Aluno por ID
 ```http
-POST /api/students
+GET /api/students/:id
+Authorization: Bearer <token>
+```
+
+#### Buscar Aluno por CPF
+```http
+GET /api/students/cpf/:cpf
+Authorization: Bearer <token>
+```
+
+#### Buscar Aluno por Matrícula
+```http
+GET /api/students/matricula/:matricula
+Authorization: Bearer <token>
+```
+
+#### Atualizar Aluno
+```http
+PUT /api/students/:id
 Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "matricula": "2025001",
-  "cpf": "12345678901",
-  "nome": "João dos Santos",
-  "email": "joao.santos@exemplo.com",
-  "telefone": "(11) 98765-4321",
-  "data_nascimento": "1990-01-15"
+  "nome": "João dos Santos Atualizado",
+  "email": "joao.novo@exemplo.com",
+  "telefone": "(11) 99999-8888"
 }
 ```
+
+#### Deletar Aluno
+```http
+DELETE /api/students/:id
+Authorization: Bearer <token>
+```
+
+#### Estatísticas de Alunos
+```http
+GET /api/students/statistics
+Authorization: Bearer <token>
+```
+
+📖 **[Documentação Completa de Candidatos e Alunos →](./src/modules/Candidates/README.md)**
+
+---
 
 ### 👨‍🏫 Instrutores
 
