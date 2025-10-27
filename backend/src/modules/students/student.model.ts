@@ -6,14 +6,17 @@ import { sequelize } from '../../config/database.js';
  * Representa candidatos aprovados que foram matriculados
  */
 class Student extends Model {
-  public id!: number;
-  public candidato_id!: number;
-  public usuario_id!: number;
-  public matricula!: string;
-  public turma_id!: number;
-  public status!: 'ativo' | 'trancado' | 'concluido' | 'desistente';
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare id: number;
+  declare candidato_id: number;
+  declare usuario_id: number;
+  declare matricula: string;
+  declare cpf: string;
+  declare nome: string;
+  declare email: string;
+  declare turma_id: number;
+  declare status: 'ativo' | 'trancado' | 'concluido' | 'desistente';
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 Student.init({
@@ -49,6 +52,20 @@ Student.init({
         msg: 'Matrícula é obrigatória'
       }
     }
+  },
+  cpf: {
+    type: DataTypes.STRING(11),
+    allowNull: false,
+    unique: true,
+  },
+  nome: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  email: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    unique: true,
   },
   turma_id: {
     type: DataTypes.INTEGER,

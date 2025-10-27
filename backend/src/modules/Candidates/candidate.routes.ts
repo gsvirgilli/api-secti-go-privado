@@ -41,6 +41,7 @@ router.get(
 router.post(
   '/',
   isAuthenticated,
+  validateRequest(createCandidateSchema),
   CandidateController.create
 );
 
@@ -48,6 +49,7 @@ router.post(
 router.put(
   '/:id',
   isAuthenticated,
+  validateRequest(updateCandidateSchema),
   CandidateController.update
 );
 
@@ -69,6 +71,7 @@ router.post(
 router.post(
   '/:id/reject',
   isAuthenticated,
+  validateRequest(rejectCandidateSchema),
   CandidateController.reject
 );
 
