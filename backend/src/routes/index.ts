@@ -5,6 +5,7 @@ import coursesRouter from '../modules/courses/course.routes.js';
 import classesRouter from '../modules/classes/class.routes.js';
 import candidatesRouter from '../modules/Candidates/candidate.routes.js';
 import studentsRouter from '../modules/students/student.routes.js';
+import enrollmentsRouter from '../modules/enrollments/enrollment.routes.js';
 import { isAuthenticated } from '../middlewares/isAuthenticated.js';
 
 const router = Router();
@@ -18,6 +19,7 @@ router.use('/courses', coursesRouter);
 router.use('/classes', classesRouter);
 router.use('/candidates', candidatesRouter);
 router.use('/students', studentsRouter);
+router.use('/enrollments', enrollmentsRouter);
 
 // No futuro, adicionaremos outras rotas aqui:
 // router.use('/instrutores', instrutoresRouter);

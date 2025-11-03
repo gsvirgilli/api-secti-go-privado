@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { AuthAPI } from "@/lib/api";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -16,14 +17,16 @@ const Register = () => {
     email: "",
     telefone: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    role: ""
   });
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
     telefone: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    role: "INSTRUTOR" // valor padrão compatível com o backend
   });
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -54,7 +57,8 @@ const Register = () => {
       email: "",
       telefone: "",
       password: "",
-      confirmPassword: ""
+      confirmPassword: "",
+      role: ""
     };
     
     if (!formData.nome.trim()) {
@@ -99,19 +103,30 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Chamar API de registro
+      const response = await AuthAPI.register({
+        nome: formData.nome,
+        email: formData.email,
+        senha: formData.password,
+        role: formData.role // enviar o papel selecionado (ex: "INSTRUTOR" ou "ADMIN")
+      });
       
       toast({
         title: "Sucesso!",
-        description: "Conta criada com sucesso. Redirecionando...",
+        description: "Conta criada com sucesso. Redirecionando para login...",
       });
       
       setTimeout(() => navigate("/login"), 1500);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Erro ao registrar:', error);
+      
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          "Erro ao criar conta. Tente novamente.";
+      
       toast({
         title: "Erro",
-        description: "Erro ao criar conta. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -225,6 +240,27 @@ const Register = () => {
                   </div>
                   {errors.nome && (
                     <p className="text-destructive text-xs font-sora animate-fade-in">{errors.nome}</p>
+                  )}
+                </div>
+
+                {/* Role (papel) - selecionar papel compatível com o backend */}
+                <div className="space-y-2">
+                  <Label htmlFor="role" className="text-primary-foreground font-sora font-medium text-sm">
+                    Papel
+                  </Label>
+                  <div className="relative group">
+                    <select
+                      id="role"
+                      value={formData.role}
+                      onChange={(e) => updateField("role", e.target.value)}
+                      className={`pl-3 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-sora text-sm w-full`}
+                    >
+                      <option value="INSTRUTOR">Instrutor</option>
+                      <option value="ADMIN">Administrador</option>
+                    </select>
+                  </div>
+                  {errors.role && (
+                    <p className="text-destructive text-xs font-sora animate-fade-in">{errors.role}</p>
                   )}
                 </div>
 

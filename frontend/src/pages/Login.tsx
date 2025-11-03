@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { AuthAPI } from "@/lib/api";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -38,14 +39,22 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Permitir login sem validação dos campos
-    // if (!validateForm()) return;
+    if (!validateForm()) return;
     
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Chamar API de login
+      const response = await AuthAPI.login({
+        email: credentials.username, // usando username como email
+        senha: credentials.password
+      });
+      
+      // Salvar token e dados do usuário
+      if (response.data.token) {
+        localStorage.setItem('@sukatech:token', response.data.token);
+        localStorage.setItem('@sukatech:user', JSON.stringify(response.data.usuario || response.data.user));
+      }
       
       toast({
         title: "Sucesso!",
@@ -53,10 +62,16 @@ const Login = () => {
       });
       
       navigate("/");
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Erro ao fazer login:', error);
+      
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          "Credenciais inválidas. Tente novamente.";
+      
       toast({
         title: "Erro",
-        description: "Credenciais inválidas. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
