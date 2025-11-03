@@ -190,6 +190,53 @@ class CourseController {
       throw new AppError('Erro ao obter estatísticas', 500);
     }
   }
+
+  /**
+   * Listar todos os cursos (endpoint público)
+   * GET /api/courses/public
+   */
+  async indexPublic(req: Request, res: Response) {
+    try {
+      const courses = await CourseService.findAllPublic();
+
+      res.json({
+        message: 'Cursos disponíveis',
+        data: courses
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Erro ao listar cursos', 500);
+    }
+  }
+
+  /**
+   * Buscar curso por ID com turmas disponíveis (endpoint público)
+   * GET /api/courses/:id/public
+   */
+  async showPublic(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const courseId = Number(id);
+
+      if (isNaN(courseId)) {
+        throw new AppError('ID do curso deve ser um número', 400);
+      }
+
+      const course = await CourseService.findByIdPublic(courseId);
+
+      res.json({
+        message: 'Curso encontrado',
+        data: course
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Erro ao buscar curso', 500);
+    }
+  }
 }
 
 export default new CourseController();

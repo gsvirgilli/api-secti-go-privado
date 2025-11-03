@@ -11,8 +11,18 @@ import { isAuthenticated } from '../../middlewares/isAuthenticated.js';
 const router = Router();
 
 /**
+ * Rotas públicas (sem autenticação)
+ */
+
+// GET /api/courses/public - Listar todos os cursos (público)
+router.get('/public', CourseController.indexPublic);
+
+// GET /api/courses/:id/public - Buscar curso específico com turmas (público)
+router.get('/:id/public', CourseController.showPublic);
+
+/**
  * Rotas para gerenciamento de cursos
- * Todas as rotas requerem autenticação
+ * Todas as rotas abaixo requerem autenticação
  */
 
 // GET /api/courses/statistics - Obter estatísticas dos cursos

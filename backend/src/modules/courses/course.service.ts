@@ -160,6 +160,47 @@ class CourseService {
       }
     };
   }
+
+  /**
+   * Buscar todos os cursos (endpoint público)
+   * Retorna apenas informações básicas
+   */
+  async findAllPublic() {
+    const courses = await Course.findAll({
+      attributes: ['id', 'nome', 'descricao', 'carga_horaria'],
+      order: [['nome', 'ASC']]
+    });
+
+    return courses.map((course: any) => ({
+      id: course.id,
+      nome: course.nome,
+      descricao: course.descricao,
+      carga_horaria: course.carga_horaria
+    }));
+  }
+
+  /**
+   * Buscar curso por ID (endpoint público)
+   * Retorna detalhes do curso
+   */
+  async findByIdPublic(id: number) {
+    const course = await Course.findByPk(id, {
+      attributes: ['id', 'nome', 'descricao', 'carga_horaria']
+    });
+
+    if (!course) {
+      throw new AppError('Curso não encontrado', 404);
+    }
+
+    const courseData = course.toJSON() as any;
+
+    return {
+      id: courseData.id,
+      nome: courseData.nome,
+      descricao: courseData.descricao,
+      carga_horaria: courseData.carga_horaria
+    };
+  }
 }
 
 export default new CourseService();
