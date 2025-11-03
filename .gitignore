@@ -66,3 +66,27 @@ mysql_data/
 
 # Backup/cópia antiga do projeto
 G07-SECTI-main/
+
+# Arquivos de teste e debug locais
+backend/*test*.sh
+backend/*test*.txt
+backend/test_*.sh
+backend/test_*.txt
+backend/quick_test.sh
+backend/manual_full_test.sh
+backend/full_manual_test.sh
+backend/verify_system.sh
+backend/diagnose_container.sh
+backend/api_test.txt
+backend/health_test.txt
+backend/backend_logs.txt
+backend/containers.txt
+backend/docker_ps.txt
+backend/login_output.txt
+backend/sql_applied.txt
+backend/sql_result.txt
+backend/start_error.txt
+backend/status.txt
+backend/final_status.txt
+backend/turma_test.txt
+backend/server.log
