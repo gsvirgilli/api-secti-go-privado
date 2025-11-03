@@ -63,3 +63,6 @@ mysql_data/
 *.pid
 *.seed
 *.pid.lock
+
+# Backup/cópia antiga do projeto
+G07-SECTI-main/
