@@ -106,7 +106,7 @@ export const listCandidateFiltersSchema = z.object({
     .optional(),
   
   status: z
-    .enum(['pendente', 'aprovado', 'reprovado'])
+    .enum(['PENDENTE', 'APROVADO', 'REPROVADO'])
     .optional(),
   
   turma_id: z

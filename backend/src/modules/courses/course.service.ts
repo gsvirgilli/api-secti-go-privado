@@ -1,4 +1,5 @@
 import Course, { CourseAttributes, CourseCreationAttributes } from './course.model.js';
+import Class from '../classes/class.model.js';
 import { AppError } from '../../utils/AppError.js';
 import { Op } from 'sequelize';
 
@@ -118,8 +119,17 @@ class CourseService {
   async delete(id: number): Promise<void> {
     const course = await this.findById(id);
     
-    // TODO: Verificar se o curso tem turmas ativas antes de deletar
-    // Esta verificação será implementada quando criarmos o módulo de turmas
+    // Verificar se o curso tem turmas associadas
+    const classCount = await Class.count({
+      where: { id_curso: id }
+    });
+    
+    if (classCount > 0) {
+      throw new AppError(
+        `Não é possível deletar o curso. Existem ${classCount} turma(s) associada(s) a este curso.`,
+        400
+      );
+    }
     
     await course.destroy();
   }

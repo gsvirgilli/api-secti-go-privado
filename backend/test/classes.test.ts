@@ -205,7 +205,8 @@ describe('Classes API - Testes Completos', () => {
       turno: 'TARDE',
       data_inicio: '2024-07-01T00:00:00Z',
       data_fim: '2024-12-20T00:00:00Z',
-      id_curso: 2
+      id_curso: 2,
+      vagas: 30
     };
 
     it('deve criar turma com dados válidos', async () => {
@@ -464,7 +465,8 @@ describe('Classes API - Testes Completos', () => {
       data_inicio: '2024-07-01T00:00:00Z',
       data_fim: '2024-12-20T00:00:00Z',
       nome: 'Teste',
-      id_curso: 1
+      id_curso: 1,
+      vagas: 25
     };
 
     it('deve verificar conflito sem encontrar', async () => {
@@ -522,7 +524,8 @@ describe('Classes API - Testes Completos', () => {
         turno: 'TARDE',
         data_inicio: '2024-08-01T00:00:00Z',
         data_fim: '2024-12-15T00:00:00Z',
-        id_curso: 1
+        id_curso: 1,
+        vagas: 30
       };
 
       const createdClass = {

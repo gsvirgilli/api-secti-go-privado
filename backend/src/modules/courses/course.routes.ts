@@ -14,10 +14,49 @@ const router = Router();
  * Rotas públicas (sem autenticação)
  */
 
-// GET /api/courses/public - Listar todos os cursos (público)
+/**
+ * @swagger
+ * /api/courses/public:
+ *   get:
+ *     summary: Listar todos os cursos (público)
+ *     tags: [Courses]
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: Lista de cursos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Course'
+ */
 router.get('/public', CourseController.indexPublic);
 
-// GET /api/courses/:id/public - Buscar curso específico com turmas (público)
+/**
+ * @swagger
+ * /api/courses/{id}/public:
+ *   get:
+ *     summary: Buscar curso por ID (público)
+ *     tags: [Courses]
+ *     security: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID do curso
+ *     responses:
+ *       200:
+ *         description: Dados do curso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Course'
+ *       404:
+ *         description: Curso não encontrado
+ */
 router.get('/:id/public', CourseController.showPublic);
 
 /**
