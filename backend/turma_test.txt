@@ -1,0 +1,4 @@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    92  100    31  100    61   3496   6879 --:--:-- --:--:-- --:--:-- 11500
+{"error":"Erro ao criar turma"}

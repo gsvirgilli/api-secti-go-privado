@@ -1,0 +1,3 @@
+CONTAINER ID   IMAGE       COMMAND                  CREATED              STATUS                    PORTS                                                    NAMES
+acf693abfe6f   mysql:8.0   "docker-entrypoint.s…"   About a minute ago   Up 57 seconds (healthy)   33060/tcp, 0.0.0.0:3307->3306/tcp, [::]:3307->3306/tcp   sukatech_mysql
+{"status":"ok","message":"SUKA TECH API is running!"}

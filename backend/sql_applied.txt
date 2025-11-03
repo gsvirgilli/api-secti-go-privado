@@ -1,0 +1,12 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Field	Type	Null	Key	Default	Extra
+id	int	NO	PRI	NULL	auto_increment
+nome	varchar(100)	NO		NULL	
+descricao	text	YES		NULL	
+data_inicio	date	YES		NULL	
+data_fim	date	YES		NULL	
+turno	varchar(20)	YES		NULL	
+id_curso	int	YES	MUL	NULL	
+createdAt	datetime	NO		NULL	
+updatedAt	datetime	NO		NULL	
+vagas	int	NO		30	

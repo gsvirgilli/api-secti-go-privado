@@ -13,6 +13,7 @@ class Class extends Model {
   declare data_inicio: Date | null;
   declare data_fim: Date | null;
   declare id_curso: number;
+  declare vagas: number; // Total de vagas da turma
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -74,6 +75,20 @@ Class.init({
     validate: {
       notNull: {
         msg: 'Curso é obrigatório'
+      }
+    }
+  },
+  vagas: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 30,
+    validate: {
+      notNull: {
+        msg: 'Número de vagas é obrigatório'
+      },
+      min: {
+        args: [0],
+        msg: 'Número de vagas não pode ser negativo'
       }
     }
   }
