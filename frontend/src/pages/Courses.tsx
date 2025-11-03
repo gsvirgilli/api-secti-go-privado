@@ -28,16 +28,25 @@ const Courses = () => {
     setIsFormModalOpen(true);
   };
 
-  const handleDeleteCourse = (course: Course) => {
+  const handleDeleteCourse = async (course: Course) => {
     console.log('Tentando excluir curso:', course);
     if (confirm(`Tem certeza que deseja excluir o curso "${course.title}"? Esta ação não pode ser desfeita.`)) {
-      console.log('Confirmado, excluindo curso:', course.id);
-      deleteCourse(course.id);
-      toast({
-        title: "Curso Excluído",
-        description: `${course.title} foi excluído com sucesso`,
-        className: "bg-red-100 text-red-800 border-red-200",
-      });
+      try {
+        console.log('Confirmado, excluindo curso:', course.id);
+        await deleteCourse(course.id);
+        toast({
+          title: "Curso Excluído",
+          description: `${course.title} foi excluído com sucesso`,
+          className: "bg-green-100 text-green-800 border-green-200",
+        });
+      } catch (error: any) {
+        console.error('Erro ao excluir curso:', error);
+        toast({
+          title: "Erro ao Excluir",
+          description: error.message || "Não foi possível excluir o curso",
+          variant: "destructive",
+        });
+      }
     }
   };
 

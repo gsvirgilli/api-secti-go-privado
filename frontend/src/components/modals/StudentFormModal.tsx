@@ -92,7 +92,7 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
       .replace(/(\d{4,5})(\d{4})/, "$1-$2");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name || !formData.cpf || !formData.email) {
@@ -104,28 +104,37 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
       return;
     }
 
-    // Converter valores numéricos
-    const submitData = {
-      ...formData,
-      progress: Number(formData.progress),
-      attendance: Number(formData.attendance),
-      grades: Number(formData.grades),
-    };
+    try {
+      // Converter valores numéricos
+      const submitData = {
+        ...formData,
+        progress: Number(formData.progress),
+        attendance: Number(formData.attendance),
+        grades: Number(formData.grades),
+      };
 
-    if (mode === "create") {
-      addStudent(submitData);
-    } else if (studentData) {
-      updateStudent(studentData.id, submitData);
+      if (mode === "create") {
+        await addStudent(submitData);
+      } else if (studentData) {
+        await updateStudent(studentData.id, submitData);
+      }
+
+      const action = mode === "create" ? "CADASTRADO" : "ATUALIZADO";
+      toast({
+        title: `ALUNO ${action}`,
+        description: `O aluno ${formData.name} foi ${action.toLowerCase()} com sucesso`,
+        className: "bg-green-100 text-green-800 border-green-200",
+      });
+
+      onClose();
+    } catch (error: any) {
+      console.error('Erro ao salvar aluno:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: error.message || "Não foi possível salvar o aluno",
+        variant: "destructive",
+      });
     }
-
-    const action = mode === "create" ? "CADASTRADO" : "ATUALIZADO";
-    toast({
-      title: `ALUNO ${action}`,
-      description: `O aluno ${formData.name} foi ${action.toLowerCase()} com sucesso`,
-      className: "bg-green-100 text-green-800 border-green-200",
-    });
-
-    onClose();
   };
 
   return (

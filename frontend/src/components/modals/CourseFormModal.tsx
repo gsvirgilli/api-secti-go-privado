@@ -70,7 +70,7 @@ const CourseFormModal = ({ isOpen, onClose, courseData, mode }: CourseFormModalP
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.title || !formData.description || !formData.duration) {
@@ -82,20 +82,29 @@ const CourseFormModal = ({ isOpen, onClose, courseData, mode }: CourseFormModalP
       return;
     }
 
-    if (mode === "create") {
-      addCourse(formData);
-    } else if (courseData) {
-      updateCourse(courseData.id, formData);
+    try {
+      if (mode === "create") {
+        await addCourse(formData);
+      } else if (courseData) {
+        await updateCourse(courseData.id, formData);
+      }
+
+      const action = mode === "create" ? "CRIADO" : "ATUALIZADO";
+      toast({
+        title: `CURSO ${action}`,
+        description: `O curso ${formData.title} foi ${action.toLowerCase()} com sucesso`,
+        className: "bg-green-100 text-green-800 border-green-200",
+      });
+
+      onClose();
+    } catch (error: any) {
+      console.error('Erro ao salvar curso:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: error.message || "Não foi possível salvar o curso",
+        variant: "destructive",
+      });
     }
-
-    const action = mode === "create" ? "CRIADO" : "ATUALIZADO";
-    toast({
-      title: `CURSO ${action}`,
-      description: `O curso ${formData.title} foi ${action.toLowerCase()} com sucesso`,
-      className: "bg-green-100 text-green-800 border-green-200",
-    });
-
-    onClose();
   };
 
   return (

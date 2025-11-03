@@ -176,16 +176,25 @@ const Students = () => {
     setIsFormModalOpen(true);
   };
 
-  const handleDeleteStudent = (student: Student) => {
+  const handleDeleteStudent = async (student: Student) => {
     console.log('Tentando excluir aluno:', student);
     if (confirm(`Tem certeza que deseja excluir o aluno ${student.name}? Esta ação não pode ser desfeita.`)) {
-      console.log('Confirmado, excluindo aluno:', student.id);
-      deleteStudent(student.id);
-      toast({
-        title: "Aluno Excluído",
-        description: `${student.name} foi excluído com sucesso`,
-        className: "bg-red-100 text-red-800 border-red-200",
-      });
+      try {
+        console.log('Confirmado, excluindo aluno:', student.id);
+        await deleteStudent(student.id);
+        toast({
+          title: "Aluno Excluído",
+          description: `${student.name} foi excluído com sucesso`,
+          className: "bg-green-100 text-green-800 border-green-200",
+        });
+      } catch (error: any) {
+        console.error('Erro ao excluir aluno:', error);
+        toast({
+          title: "Erro ao Excluir",
+          description: error.message || "Não foi possível excluir o aluno",
+          variant: "destructive",
+        });
+      }
     }
   };
 
