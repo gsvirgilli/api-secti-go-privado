@@ -6,15 +6,30 @@ import {
   createCandidateSchema,
   updateCandidateSchema,
   listCandidateFiltersSchema,
-  rejectCandidateSchema
+  rejectCandidateSchema,
+  publicCandidateSchema
 } from './candidate.validator.js';
 
 const router = Router();
 
 /**
  * Rotas de Candidatos
- * Todas as rotas exigem autenticação JWT
  */
+
+// ===== ROTAS PÚBLICAS (sem autenticação) =====
+
+/**
+ * Cria uma candidatura pública
+ * POST /api/candidates/public
+ * Rota pública para candidatos se inscreverem
+ */
+router.post(
+  '/public',
+  validateRequest(publicCandidateSchema),
+  CandidateController.createPublic
+);
+
+// ===== ROTAS PROTEGIDAS (exigem autenticação) =====
 
 // Rota de estatísticas deve vir antes de /:id para evitar conflito
 router.get(
