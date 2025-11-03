@@ -53,6 +53,16 @@ export const AuthAPI = {
   
   me: () => 
     api.get("/auth/me"),
+  
+  // Recuperação de senha
+  forgotPassword: (data: { email: string }) => 
+    api.post("/auth/forgot-password", data),
+  
+  validateResetToken: (token: string) => 
+    api.get(`/auth/reset-password/${token}`),
+  
+  resetPassword: (data: { token: string; newPassword: string }) => 
+    api.post("/auth/reset-password", data),
 };
 
 // ======================================

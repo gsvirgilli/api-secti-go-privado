@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { AuthAPI } from "@/lib/api";
 
 const NewPassword = () => {
   const [searchParams] = useSearchParams();
@@ -36,24 +37,23 @@ const NewPassword = () => {
     // Validar token com a API
     const validateToken = async () => {
       try {
-        const response = await fetch(`http://localhost:3333/api/auth/reset-password/${token}`);
-        const data = await response.json();
+        const response = await AuthAPI.validateResetToken(token);
 
-        if (response.ok && data.valid) {
+        if (response.data.valid) {
           setTokenValid(true);
         } else {
           toast({
             title: "Token inválido",
-            description: data.message || "Token expirado ou já utilizado. Solicite uma nova recuperação.",
+            description: "Token expirado ou já utilizado. Solicite uma nova recuperação.",
             variant: "destructive",
           });
           setTimeout(() => navigate("/reset-password"), 3000);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erro ao validar token:', error);
         toast({
           title: "Erro",
-          description: "Erro ao validar token. Tente novamente.",
+          description: error.response?.data?.message || "Erro ao validar token. Tente novamente.",
           variant: "destructive",
         });
         setTimeout(() => navigate("/reset-password"), 3000);
@@ -104,40 +104,23 @@ const NewPassword = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch('http://localhost:3333/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          token, 
-          newPassword 
-        }),
-      });
+      const response = await AuthAPI.resetPassword({ token, newPassword });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.data) {
         setSuccess(true);
         toast({
           title: "Senha redefinida!",
           description: "Sua senha foi alterada com sucesso. Redirecionando para o login...",
         });
         setTimeout(() => navigate("/login"), 3000);
-      } else {
-        setError(data.message || "Erro ao redefinir senha");
-        toast({
-          title: "Erro",
-          description: data.message || "Erro ao redefinir senha. Tente novamente.",
-          variant: "destructive",
-        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao redefinir senha:', error);
-      setError("Erro ao conectar com o servidor");
+      const errorMessage = error.response?.data?.message || "Erro ao redefinir senha. Tente novamente.";
+      setError(errorMessage);
       toast({
         title: "Erro",
-        description: "Erro ao conectar com o servidor. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

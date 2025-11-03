@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { AuthAPI } from "@/lib/api";
 
 const ResetPassword = () => {
   const [email, setEmail] = useState("");
@@ -37,36 +38,21 @@ const ResetPassword = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch('http://localhost:3333/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
+      const response = await AuthAPI.forgotPassword({ email });
+      const data = response.data;
+
+      setEmailSent(true);
+      toast({
+        title: "E-mail enviado!",
+        description: data.message || "Verifique sua caixa de entrada para redefinir sua senha.",
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setEmailSent(true);
-        toast({
-          title: "E-mail enviado!",
-          description: data.message || "Verifique sua caixa de entrada para redefinir sua senha.",
-        });
-      } else {
-        setError(data.message || "Erro ao enviar e-mail");
-        toast({
-          title: "Erro",
-          description: data.message || "Erro ao enviar e-mail. Tente novamente.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao solicitar recuperação de senha:', error);
-      setError("Erro ao conectar com o servidor");
+      const errorMessage = error.response?.data?.message || "Erro ao enviar e-mail. Tente novamente.";
+      setError(errorMessage);
       toast({
         title: "Erro",
-        description: "Erro ao conectar com o servidor. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
