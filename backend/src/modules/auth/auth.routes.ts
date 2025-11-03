@@ -4,6 +4,7 @@ import rateLimit from 'express-rate-limit';
 import { validateRequest } from '../../middlewares/validateRequest.js';
 import { loginSchema, registerSchema } from './auth.validator.js';
 import { auditLogin } from '../../middlewares/audit.middleware.js';
+import passwordResetRoutes from '../password-reset/password-reset.routes.js';
 
 const authRouter = Router();
 const authController = new AuthController();
@@ -111,5 +112,8 @@ authRouter.post('/register', validateRequest(registerSchema), authController.reg
  *         description: Muitas tentativas de login
  */
 authRouter.post('/login', loginLimiter, validateRequest(loginSchema), auditLogin, authController.login);
+
+// Rotas de recuperação de senha
+authRouter.use('/', passwordResetRoutes);
 
 export default authRouter;
