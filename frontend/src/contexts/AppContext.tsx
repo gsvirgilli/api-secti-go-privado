@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { StudentsAPI, CoursesAPI, ClassesAPI } from '@/lib/api';
 
 // Types
 export interface Student {
@@ -72,6 +73,7 @@ interface AppContextType {
   courses: Course[];
   classes: Class[];
   instructors: Instructor[];
+  loading: boolean;
   
   // Student actions
   addStudent: (student: Omit<Student, 'id'>) => void;
@@ -428,10 +430,52 @@ const initialInstructors: Instructor[] = [
 ];
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [students, setStudents] = useState<Student[]>(initialStudents);
-  const [courses, setCourses] = useState<Course[]>(initialCourses);
-  const [classes, setClasses] = useState<Class[]>(initialClasses);
-  const [instructors, setInstructors] = useState<Instructor[]>(initialInstructors);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Carregar dados da API ao montar o componente
+  useEffect(() => {
+    async function loadData() {
+      // Não carregar dados se estiver em páginas públicas
+      const publicPaths = ['/login', '/register', '/reset-password'];
+      const isPublicPath = publicPaths.some(path => window.location.pathname.includes(path));
+      
+      if (isPublicPath) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        
+        // Carregar dados em paralelo
+        const [studentsRes, coursesRes, classesRes] = await Promise.all([
+          StudentsAPI.list().catch(() => ({ data: initialStudents })),
+          CoursesAPI.list().catch(() => ({ data: initialCourses })),
+          ClassesAPI.list().catch(() => ({ data: initialClasses }))
+        ]);
+
+        setStudents(studentsRes.data || initialStudents);
+        setCourses(coursesRes.data || initialCourses);
+        setClasses(classesRes.data || initialClasses);
+        setInstructors(initialInstructors); // Por enquanto, usar mock para instrutores
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        // Em caso de erro, usar dados mockados
+        setStudents(initialStudents);
+        setCourses(initialCourses);
+        setClasses(initialClasses);
+        setInstructors(initialInstructors);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
 
   // Student actions
   const addStudent = (studentData: Omit<Student, 'id'>) => {
@@ -628,6 +672,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     courses,
     classes,
     instructors,
+    loading,
     addStudent,
     updateStudent,
     deleteStudent,

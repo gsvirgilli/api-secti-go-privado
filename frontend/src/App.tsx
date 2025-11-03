@@ -19,6 +19,7 @@ import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 import Reports from "./pages/Reports";
 import CalendarPage from "./pages/Calendar";
+import APITest from "./pages/APITest";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/cadastro" element={<Layout><Cadastro /></Layout>} />
             <Route path="/notificacoes" element={<Layout><Notifications /></Layout>} />
             <Route path="/calendario" element={<Layout><CalendarPage /></Layout>} />
+            <Route path="/api-test" element={<Layout><APITest /></Layout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
