@@ -373,6 +373,90 @@ class CandidateService {
       porTurma
     };
   }
+
+  /**
+   * Cria uma candidatura pública (sem autenticação)
+   * Valida CPF único, email único, curso existe e turno disponível
+   */
+  async createPublic(data: any) {
+    // 1. Validar CPF
+    if (!this.validateCPF(data.cpf)) {
+      throw new Error('CPF inválido');
+    }
+
+    // 2. Verificar se CPF já está cadastrado
+    const existingCandidate = await Candidate.findOne({
+      where: { cpf: data.cpf.replace(/\D/g, '') }
+    });
+
+    if (existingCandidate) {
+      throw new Error('CPF já cadastrado');
+    }
+
+    // 3. Verificar se email já está cadastrado
+    const existingEmail = await Candidate.findOne({
+      where: { email: data.email }
+    });
+
+    if (existingEmail) {
+      throw new Error('Email já cadastrado');
+    }
+
+    // 4. Verificar se o curso existe
+    const Course = (await import('../courses/course.model.js')).default;
+    const course = await Course.findByPk(data.curso_id);
+
+    if (!course) {
+      throw new Error('Curso não encontrado');
+    }
+
+    // 5. Verificar se existe turma disponível para o curso e turno escolhidos
+    const availableClass = await Class.findOne({
+      where: {
+        id_curso: data.curso_id,
+        turno: data.turno,
+        status: 'ABERTA'
+      }
+    });
+
+    if (!availableClass) {
+      throw new Error('Turno não disponível para este curso');
+    }
+
+    // 6. Criar candidatura com status PENDENTE
+    const candidate = await Candidate.create({
+      nome: data.nome,
+      cpf: data.cpf.replace(/\D/g, ''),
+      email: data.email.toLowerCase(),
+      telefone: data.telefone?.replace(/\D/g, ''),
+      data_nascimento: data.data_nascimento,
+      // Campos de endereço (se o model suportar)
+      cep: data.cep?.replace(/\D/g, ''),
+      rua: data.rua,
+      numero: data.numero,
+      complemento: data.complemento,
+      bairro: data.bairro,
+      cidade: data.cidade,
+      estado: data.estado?.toUpperCase(),
+      // Curso e turno desejados
+      curso_id: data.curso_id,
+      turno: data.turno,
+      status: 'pendente'
+    });
+
+    return {
+      id: candidate.id,
+      nome: candidate.nome,
+      email: candidate.email,
+      status: candidate.status,
+      curso: {
+        id: course.id,
+        nome: course.nome
+      },
+      turno: data.turno,
+      createdAt: candidate.createdAt
+    };
+  }
 }
 
 export default new CandidateService();

@@ -137,6 +137,93 @@ export const rejectCandidateSchema = z.object({
 });
 
 /**
+ * Schema de validação para candidatura pública (sem autenticação)
+ */
+export const publicCandidateSchema = z.object({
+  body: z.object({
+    nome: z
+      .string({ message: 'Nome é obrigatório' })
+      .min(3, 'Nome deve ter no mínimo 3 caracteres')
+      .max(100, 'Nome deve ter no máximo 100 caracteres')
+      .trim(),
+
+    cpf: z
+      .string({ message: 'CPF é obrigatório' })
+      .regex(/^\d{11}$/, 'CPF deve conter exatamente 11 dígitos numéricos'),
+
+    email: z
+      .string({ message: 'Email é obrigatório' })
+      .email('Email inválido')
+      .max(100, 'Email deve ter no máximo 100 caracteres')
+      .toLowerCase(),
+
+    telefone: z
+      .string({ message: 'Telefone é obrigatório' })
+      .min(10, 'Telefone deve ter no mínimo 10 dígitos')
+      .max(20, 'Telefone deve ter no máximo 20 caracteres'),
+
+    data_nascimento: z
+      .string({ message: 'Data de nascimento é obrigatória' })
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data deve estar no formato YYYY-MM-DD'),
+
+    // Endereço (opcional)
+    cep: z
+      .string()
+      .regex(/^\d{8}$/, 'CEP deve conter 8 dígitos')
+      .optional()
+      .nullable(),
+
+    rua: z
+      .string()
+      .max(200, 'Rua deve ter no máximo 200 caracteres')
+      .optional()
+      .nullable(),
+
+    numero: z
+      .string()
+      .max(20, 'Número deve ter no máximo 20 caracteres')
+      .optional()
+      .nullable(),
+
+    complemento: z
+      .string()
+      .max(100, 'Complemento deve ter no máximo 100 caracteres')
+      .optional()
+      .nullable(),
+
+    bairro: z
+      .string()
+      .max(100, 'Bairro deve ter no máximo 100 caracteres')
+      .optional()
+      .nullable(),
+
+    cidade: z
+      .string()
+      .max(100, 'Cidade deve ter no máximo 100 caracteres')
+      .optional()
+      .nullable(),
+
+    estado: z
+      .string()
+      .length(2, 'Estado deve ter exatamente 2 caracteres (UF)')
+      .toUpperCase()
+      .optional()
+      .nullable(),
+
+    // Curso e turno desejados
+    curso_id: z
+      .number({ message: 'ID do curso é obrigatório' })
+      .int('ID do curso deve ser um número inteiro')
+      .positive('ID do curso deve ser positivo'),
+
+    turno: z
+      .enum(['MATUTINO', 'VESPERTINO', 'NOTURNO'], {
+        message: 'Turno deve ser MATUTINO, VESPERTINO ou NOTURNO'
+      })
+  })
+});
+
+/**
  * Tipos TypeScript inferidos dos schemas
  */
 export type CreateCandidateInput = z.infer<typeof createCandidateSchema>;
@@ -144,3 +231,4 @@ export type UpdateCandidateInput = z.infer<typeof updateCandidateSchema>;
 export type ListCandidateFilters = z.infer<typeof listCandidateFiltersSchema>;
 export type ApproveCandidateInput = z.infer<typeof approveCandidateSchema>;
 export type RejectCandidateInput = z.infer<typeof rejectCandidateSchema>;
+export type PublicCandidateInput = z.infer<typeof publicCandidateSchema>;
