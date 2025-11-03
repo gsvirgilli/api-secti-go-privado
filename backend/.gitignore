@@ -59,3 +59,42 @@ mysql_data/
 *.sock
 *.pem
 binlog.*
+
+# Arquivos de teste e debug locais
+*test*.sh
+*test*.txt
+test*.sh
+test*.txt
+quick_test.sh
+manual_full_test.sh
+full_manual_test.sh
+verify_system.sh
+diagnose_container.sh
+test-api-manual.sh
+api_test.txt
+health_test.txt
+backend_logs.txt
+containers.txt
+docker_ps.txt
+login_output.txt
+sql_applied.txt
+sql_result.txt
+start_error.txt
+status.txt
+final_status.txt
+turma_test.txt
+server.log
+test_output.txt
+
+# SQL de teste e temporários (exceto migrations)
+add-vagas-column.sql
+create-admin.sql
+create-tables.sql
+init-mysql-schema.sql
+
+# Scripts de sincronização temporários
+sync-db-simple.ts
+create-admin.ts
+
+# Backups de configuração
+.env.backup
