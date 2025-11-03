@@ -81,7 +81,6 @@ Class.init({
   vagas: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 30,
     validate: {
       notNull: {
         msg: 'Número de vagas é obrigatório'

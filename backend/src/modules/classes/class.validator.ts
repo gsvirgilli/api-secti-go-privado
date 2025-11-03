@@ -36,7 +36,12 @@ export const createClassSchema = z.object({
   id_curso: z
     .number({ message: 'ID do curso é obrigatório' })
     .int('ID do curso deve ser um número inteiro')
-    .positive('ID do curso deve ser um número positivo')
+    .positive('ID do curso deve ser um número positivo'),
+
+  vagas: z
+    .number({ message: 'Número de vagas é obrigatório' })
+    .int('Número de vagas deve ser um número inteiro')
+    .min(0, 'Número de vagas não pode ser negativo')
 }).refine(
   (data) => {
     if (data.data_inicio && data.data_fim) {

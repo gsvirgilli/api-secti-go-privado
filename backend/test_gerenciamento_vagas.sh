@@ -73,10 +73,11 @@ echo ""
 
 # 2. Criar um curso de teste
 echo "📚 Criando curso de teste..."
+TIMESTAMP=$(date +%s)
 COURSE_RESPONSE=$(curl -s -X POST "$BASE_URL/courses" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"nome":"Curso Teste Vagas","descricao":"Curso para testar gerenciamento de vagas","carga_horaria":40}')
+  -d "{\"nome\":\"Curso Teste Vagas $TIMESTAMP\",\"descricao\":\"Curso para testar gerenciamento de vagas\",\"carga_horaria\":40}")
 
 COURSE_ID=$(echo $COURSE_RESPONSE | jq -r '.data.id // .id // empty')
 echo "Curso criado com ID: $COURSE_ID"
@@ -87,22 +88,20 @@ echo "🏫 Criando turma com 5 vagas..."
 CLASS_RESPONSE=$(curl -s -X POST "$BASE_URL/classes" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d "{\"nome\":\"Turma Teste Vagas\",\"turno\":\"MANHA\",\"id_curso\":$COURSE_ID,\"vagas\":5}")
+  -d "{\"nome\":\"Turma Teste Vagas $TIMESTAMP\",\"turno\":\"MANHA\",\"id_curso\":$COURSE_ID,\"vagas\":5}")
 
-CLASS_ID=$(echo $CLASS_RESPONSE | jq -r '.data.id // .id // empty')
-INITIAL_VAGAS=$(echo $CLASS_RESPONSE | jq -r '.data.vagas // .vagas // empty')
+CLASS_ID=$(echo $CLASS_RESPONSE | jq -r '.id // empty')
+INITIAL_VAGAS=$(echo $CLASS_RESPONSE | jq -r '.vagas // empty')
 echo "Turma criada com ID: $CLASS_ID"
 echo "Vagas iniciais: $INITIAL_VAGAS"
 echo ""
 
-# 4. Criar um aluno de teste
-echo "👤 Criando aluno de teste..."
-STUDENT_RESPONSE=$(curl -s -X POST "$BASE_URL/students" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"nome":"Aluno Teste Vagas","email":"alunoteste@vagas.com","cpf":"12345678901","matricula":"TEST2024"}')
+# 4. Criar um aluno de teste via inserção no banco
+echo "👤 Criando aluno de teste no banco de dados..."
+STUDENT_CPF="999$(date +%H%M%S)001"
+docker exec $(docker ps -q -f name=mysql) mysql -usukatech_user -psukatech_password -Dsukatechdb -e "INSERT INTO alunos (nome, email, cpf, matricula, createdAt, updatedAt) VALUES ('Aluno Teste Vagas', 'aluno$TIMESTAMP@test.com', '$STUDENT_CPF', 'TEST$TIMESTAMP', NOW(), NOW());" 2>&1 > /dev/null
 
-STUDENT_ID=$(echo $STUDENT_RESPONSE | jq -r '.data.id // .id // empty')
+STUDENT_ID=$(docker exec $(docker ps -q -f name=mysql) mysql -usukatech_user -psukatech_password -Dsukatechdb -se "SELECT id FROM alunos WHERE cpf='$STUDENT_CPF' LIMIT 1;")
 echo "Aluno criado com ID: $STUDENT_ID"
 echo ""
 
@@ -112,8 +111,8 @@ echo ""
 echo "TEST 1: Verificar vagas iniciais da turma"
 RESPONSE=$(curl -s -X GET "$BASE_URL/classes/$CLASS_ID" \
   -H "Authorization: Bearer $TOKEN")
-STATUS=$(echo $RESPONSE | jq -r 'if .data then 200 else if .message then 404 else 500 end end')
-VAGAS_ANTES=$(echo $RESPONSE | jq -r '.data.vagas // empty')
+STATUS=$(echo $RESPONSE | jq -r 'if .id then 200 else if .message then 404 else 500 end end')
+VAGAS_ANTES=$(echo $RESPONSE | jq -r '.vagas // empty')
 
 echo "Vagas antes: $VAGAS_ANTES"
 print_result "Verificar vagas iniciais (5)" "5" "$VAGAS_ANTES" "$RESPONSE"
@@ -127,14 +126,14 @@ ENROLL_RESPONSE=$(curl -s -X POST "$BASE_URL/enrollments" \
   -H "Authorization: Bearer $TOKEN" \
   -d "{\"id_aluno\":$STUDENT_ID,\"id_turma\":$CLASS_ID}")
 
-ENROLL_STATUS=$(echo $ENROLL_RESPONSE | jq -r 'if .data then 201 else if .message then 400 else 500 end end')
+ENROLL_STATUS=$(echo $ENROLL_RESPONSE | jq -r 'if .id then 201 else if .message then 400 else 500 end end')
 echo "Response matrícula: $ENROLL_RESPONSE"
 
 # Verificar vagas após criar matrícula
 sleep 1
 RESPONSE_AFTER=$(curl -s -X GET "$BASE_URL/classes/$CLASS_ID" \
   -H "Authorization: Bearer $TOKEN")
-VAGAS_DEPOIS=$(echo $RESPONSE_AFTER | jq -r '.data.vagas // empty')
+VAGAS_DEPOIS=$(echo $RESPONSE_AFTER | jq -r '.vagas // empty')
 
 echo "Vagas depois de criar matrícula: $VAGAS_DEPOIS"
 print_result "Criar matrícula decrementa vagas (4)" "4" "$VAGAS_DEPOIS" "$RESPONSE_AFTER"
@@ -153,7 +152,7 @@ echo "Response cancelamento: $CANCEL_RESPONSE"
 sleep 1
 RESPONSE_CANCEL=$(curl -s -X GET "$BASE_URL/classes/$CLASS_ID" \
   -H "Authorization: Bearer $TOKEN")
-VAGAS_APOS_CANCEL=$(echo $RESPONSE_CANCEL | jq -r '.data.vagas // empty')
+VAGAS_APOS_CANCEL=$(echo $RESPONSE_CANCEL | jq -r '.vagas // empty')
 
 echo "Vagas depois de cancelar matrícula: $VAGAS_APOS_CANCEL"
 print_result "Cancelar matrícula incrementa vagas (5)" "5" "$VAGAS_APOS_CANCEL" "$RESPONSE_CANCEL"
@@ -170,7 +169,7 @@ ENROLL2_RESPONSE=$(curl -s -X POST "$BASE_URL/enrollments" \
 sleep 1
 RESPONSE_AFTER2=$(curl -s -X GET "$BASE_URL/classes/$CLASS_ID" \
   -H "Authorization: Bearer $TOKEN")
-VAGAS_DEPOIS2=$(echo $RESPONSE_AFTER2 | jq -r '.data.vagas // empty')
+VAGAS_DEPOIS2=$(echo $RESPONSE_AFTER2 | jq -r '.vagas // empty')
 
 echo "Vagas depois de criar matrícula novamente: $VAGAS_DEPOIS2"
 print_result "Segunda matrícula decrementa vagas (4)" "4" "$VAGAS_DEPOIS2" "$RESPONSE_AFTER2"
@@ -189,7 +188,7 @@ echo "Response deleção: $DELETE_RESPONSE"
 sleep 1
 RESPONSE_DELETE=$(curl -s -X GET "$BASE_URL/classes/$CLASS_ID" \
   -H "Authorization: Bearer $TOKEN")
-VAGAS_APOS_DELETE=$(echo $RESPONSE_DELETE | jq -r '.data.vagas // empty')
+VAGAS_APOS_DELETE=$(echo $RESPONSE_DELETE | jq -r '.vagas // empty')
 
 echo "Vagas depois de deletar matrícula: $VAGAS_APOS_DELETE"
 print_result "Deletar matrícula incrementa vagas (5)" "5" "$VAGAS_APOS_DELETE" "$RESPONSE_DELETE"
