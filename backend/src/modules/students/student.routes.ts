@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import StudentController from './student.controller.js';
+import EnrollmentController from '../enrollments/enrollment.controller.js';
 import { isAuthenticated } from '../../middlewares/isAuthenticated.js';
 import { validateRequest } from '../../middlewares/validateRequest.js';
 import {
@@ -40,6 +41,13 @@ router.get(
   '/',
   isAuthenticated,
   StudentController.list
+);
+
+// Lista matrículas de um aluno (deve vir antes de /:id para evitar conflito)
+router.get(
+  '/:id/enrollments',
+  isAuthenticated,
+  EnrollmentController.listByStudent
 );
 
 // Busca aluno por ID
