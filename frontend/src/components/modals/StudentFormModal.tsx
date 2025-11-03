@@ -257,46 +257,6 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="progress">Progresso (%)</Label>
-              <Input
-                id="progress"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.progress}
-                onChange={(e) => handleInputChange("progress", e.target.value)}
-                placeholder="0-100"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="attendance">Frequência (%)</Label>
-              <Input
-                id="attendance"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.attendance}
-                onChange={(e) => handleInputChange("attendance", e.target.value)}
-                placeholder="0-100"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="grades">Média Geral</Label>
-              <Input
-                id="grades"
-                type="number"
-                min="0"
-                max="10"
-                step="0.1"
-                value={formData.grades}
-                onChange={(e) => handleInputChange("grades", e.target.value)}
-                placeholder="0-10"
-              />
-            </div>
           </div>
 
           <div className="flex gap-4 justify-end pt-4">

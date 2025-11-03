@@ -73,20 +73,28 @@ const CourseFormModal = ({ isOpen, onClose, courseData, mode }: CourseFormModalP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.description || !formData.duration) {
+    if (!formData.title || !formData.duration) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios",
+        description: "Preencha o nome e a carga horária",
         variant: "destructive"
       });
       return;
     }
 
     try {
+      // Mapear campos do frontend para o formato do backend
+      const backendData = {
+        nome: formData.title,
+        carga_horaria: parseInt(formData.duration.replace(/\D/g, '')) || 0, // Extrai números da string
+        descricao: formData.description || undefined,
+        ativo: formData.status === "Ativo"
+      };
+
       if (mode === "create") {
-        await addCourse(formData);
+        await addCourse(backendData);
       } else if (courseData) {
-        await updateCourse(courseData.id, formData);
+        await updateCourse(courseData.id, backendData);
       }
 
       const action = mode === "create" ? "CRIADO" : "ATUALIZADO";
@@ -174,25 +182,6 @@ const CourseFormModal = ({ isOpen, onClose, courseData, mode }: CourseFormModalP
                   <SelectItem value="Ativo">Ativo</SelectItem>
                   <SelectItem value="Inativo">Inativo</SelectItem>
                   <SelectItem value="Em Desenvolvimento">Em Desenvolvimento</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="color">Cor de Identificação</Label>
-              <Select value={formData.color} onValueChange={(value) => handleInputChange("color", value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {colorOptions.map((color) => (
-                    <SelectItem key={color.value} value={color.value}>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded-full ${color.class}`}></div>
-                        {color.label}
-                      </div>
-                    </SelectItem>
-                  ))}
                 </SelectContent>
               </Select>
             </div>
