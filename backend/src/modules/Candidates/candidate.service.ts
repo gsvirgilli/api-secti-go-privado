@@ -414,8 +414,7 @@ class CandidateService {
     const availableClass = await Class.findOne({
       where: {
         id_curso: data.curso_id,
-        turno: data.turno,
-        status: 'ABERTA'
+        turno: data.turno
       }
     });
 
