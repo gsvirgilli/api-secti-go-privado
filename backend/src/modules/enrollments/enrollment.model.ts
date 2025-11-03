@@ -69,4 +69,15 @@ Enrollment.belongsTo(Class, {
   as: 'turma'
 });
 
+// Associações
+Enrollment.belongsTo(Student, {
+  foreignKey: 'id_aluno',
+  as: 'aluno'
+});
+
+Enrollment.belongsTo(Class, {
+  foreignKey: 'id_turma',
+  as: 'turma'
+});
+
 export default Enrollment;

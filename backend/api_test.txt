@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "nome": "Turma Python 2025-1",
+    "turno": "MATUTINO",
+    "data_inicio": "2025-01-15",
+    "data_fim": "2025-03-15",
+    "id_curso": 1,
+    "vagas": 30,
+    "createdAt": "2025-11-03T06:22:03.000Z",
+    "updatedAt": "2025-11-03T06:22:03.000Z",
+    "curso": {
+      "id": 1,
+      "nome": "Python para Iniciantes",
+      "carga_horaria": 40
+    }
+  },
+  {
+    "id": 5,
+    "nome": "Turma JS 2025 - Noturna",
+    "turno": "NOITE",
+    "data_inicio": "2025-11-01",
+    "data_fim": "2026-05-01",
+    "id_curso": 10,
+    "vagas": 30,
+    "createdAt": "2025-10-27T19:28:17.000Z",
+    "updatedAt": "2025-10-27T19:28:17.000Z",
+    "curso": {
+      "id": 10,
+      "nome": "JavaScript Fullstack",
+      "carga_horaria": 80
+    }
+  },
+  {
+    "id": 3,
+    "nome": "Turma Test 1761587926",
+    "turno": "NOITE",
+    "data_inicio": "2024-01-15",
+    "data_fim": "2024-06-15",
+    "id_curso": 8,
+    "vagas": 30,
+    "createdAt": "2025-10-27T17:58:46.000Z",
+    "updatedAt": "2025-10-27T17:58:46.000Z",
+    "curso": {
+      "id": 8,
+      "nome": "Test Course 1761587926",
+      "carga_horaria": 40
+    }
+  },
+  {

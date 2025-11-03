@@ -1,28 +1,25 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import EnrollmentService from './enrollment.service.js';
-import { ZodError } from 'zod';
 
 /**
  * Controller de Matrículas
- * Responsável por lidar com requisições HTTP relacionadas a matrículas
+ * Gerencia as requisições HTTP relacionadas a matrículas
  */
 class EnrollmentController {
   /**
-   * Lista todas as matrículas com filtros opcionais
+   * Lista todas as matrículas
    * GET /api/enrollments
    */
-  async list(req: Request, res: Response) {
+  async index(req: Request, res: Response, next: NextFunction) {
     try {
-      const filters = req.query;
-      const enrollments = await EnrollmentService.list(filters);
+      const enrollments = await EnrollmentService.list();
       
-      return res.status(200).json(enrollments);
-    } catch (error) {
-      console.error('Erro ao listar matrículas:', error);
-      return res.status(500).json({
-        error: 'Erro ao listar matrículas',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      return res.status(200).json({
+        message: 'Matrículas listadas com sucesso',
+        data: enrollments
       });
+    } catch (error) {
+      next(error);
     }
   }
 
@@ -30,307 +27,153 @@ class EnrollmentController {
    * Busca uma matrícula específica
    * GET /api/enrollments/:id_aluno/:id_turma
    */
-  async findOne(req: Request, res: Response) {
+  async show(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id_aluno, id_turma } = req.params;
-      
-      const enrollment = await EnrollmentService.findOne(
-        Number(id_aluno),
-        Number(id_turma)
-      );
-      
-      return res.status(200).json(enrollment);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Matrícula não encontrada') {
-        return res.status(404).json({
-          error: 'Matrícula não encontrada'
+      const id_aluno = parseInt(req.params.id_aluno);
+      const id_turma = parseInt(req.params.id_turma);
+
+      if (isNaN(id_aluno) || isNaN(id_turma)) {
+        return res.status(400).json({
+          message: 'IDs devem ser números válidos'
         });
       }
 
-      console.error('Erro ao buscar matrícula:', error);
-      return res.status(500).json({
-        error: 'Erro ao buscar matrícula',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      const enrollment = await EnrollmentService.findOne(id_aluno, id_turma);
+      
+      return res.status(200).json({
+        message: 'Matrícula encontrada',
+        data: enrollment
       });
-    }
-  }
-
-  /**
-   * Busca todas as matrículas de um aluno
-   * GET /api/enrollments/student/:id_aluno
-   */
-  async findByStudent(req: Request, res: Response) {
-    try {
-      const { id_aluno } = req.params;
-      
-      const enrollments = await EnrollmentService.findByStudent(Number(id_aluno));
-      
-      return res.status(200).json(enrollments);
     } catch (error) {
-      console.error('Erro ao buscar matrículas do aluno:', error);
-      return res.status(500).json({
-        error: 'Erro ao buscar matrículas do aluno',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-      });
-    }
-  }
-
-  /**
-   * Busca todas as matrículas de uma turma
-   * GET /api/enrollments/class/:id_turma
-   */
-  async findByClass(req: Request, res: Response) {
-    try {
-      const { id_turma } = req.params;
-      
-      const enrollments = await EnrollmentService.findByClass(Number(id_turma));
-      
-      return res.status(200).json(enrollments);
-    } catch (error) {
-      console.error('Erro ao buscar matrículas da turma:', error);
-      return res.status(500).json({
-        error: 'Erro ao buscar matrículas da turma',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-      });
+      next(error);
     }
   }
 
   /**
    * Cria uma nova matrícula
    * POST /api/enrollments
+   * AUTOMATICAMENTE decrementa as vagas da turma
    */
-  async create(req: Request, res: Response) {
+  async store(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = req.body;
-      
-      const enrollment = await EnrollmentService.create(data);
-      
-      return res.status(201).json(enrollment);
-    } catch (error) {
-      if (error instanceof ZodError) {
+      const { id_aluno, id_turma, status } = req.body;
+
+      if (!id_aluno || !id_turma) {
         return res.status(400).json({
-          error: 'Erro de validação',
-          details: error.issues
+          message: 'id_aluno e id_turma são obrigatórios'
         });
       }
 
-      if (error instanceof Error) {
-        if (error.message === 'Aluno não encontrado') {
-          return res.status(404).json({ error: error.message });
-        }
-
-        if (error.message === 'Turma não encontrada') {
-          return res.status(404).json({ error: error.message });
-        }
-
-        if (error.message === 'Aluno já está matriculado nesta turma') {
-          return res.status(409).json({ error: error.message });
-        }
-
-        if (error.message.includes('já possui matrícula ativa')) {
-          return res.status(409).json({ error: error.message });
-        }
-      }
-
-      console.error('Erro ao criar matrícula:', error);
-      return res.status(500).json({
-        error: 'Erro ao criar matrícula',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      const enrollment = await EnrollmentService.create({
+        id_aluno,
+        id_turma,
+        status
       });
+      
+      return res.status(201).json({
+        message: 'Matrícula criada com sucesso e vaga decrementada',
+        data: enrollment
+      });
+    } catch (error) {
+      next(error);
     }
   }
 
   /**
-   * Atualiza uma matrícula
-   * PUT /api/enrollments/:id_aluno/:id_turma
+   * Cancela uma matrícula (soft delete)
+   * PATCH /api/enrollments/:id_aluno/:id_turma/cancel
+   * AUTOMATICAMENTE incrementa as vagas da turma
    */
-  async update(req: Request, res: Response) {
+  async cancel(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id_aluno, id_turma } = req.params;
-      const data = req.body;
-      
-      const enrollment = await EnrollmentService.update(
-        Number(id_aluno),
-        Number(id_turma),
-        data
-      );
-      
-      return res.status(200).json(enrollment);
-    } catch (error) {
-      if (error instanceof ZodError) {
+      const id_aluno = parseInt(req.params.id_aluno);
+      const id_turma = parseInt(req.params.id_turma);
+
+      if (isNaN(id_aluno) || isNaN(id_turma)) {
         return res.status(400).json({
-          error: 'Erro de validação',
-          details: error.issues
+          message: 'IDs devem ser números válidos'
         });
       }
 
-      if (error instanceof Error && error.message === 'Matrícula não encontrada') {
-        return res.status(404).json({
-          error: 'Matrícula não encontrada'
-        });
-      }
-
-      console.error('Erro ao atualizar matrícula:', error);
-      return res.status(500).json({
-        error: 'Erro ao atualizar matrícula',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-      });
-    }
-  }
-
-  /**
-   * Cancela uma matrícula
-   * POST /api/enrollments/:id_aluno/:id_turma/cancel
-   */
-  async cancel(req: Request, res: Response) {
-    try {
-      const { id_aluno, id_turma } = req.params;
-      
-      const enrollment = await EnrollmentService.cancel(
-        Number(id_aluno),
-        Number(id_turma)
-      );
-      
-      return res.status(200).json(enrollment);
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message === 'Matrícula não encontrada') {
-          return res.status(404).json({ error: error.message });
-        }
-
-        if (error.message === 'Matrícula já está cancelada') {
-          return res.status(400).json({ error: error.message });
-        }
-      }
-
-      console.error('Erro ao cancelar matrícula:', error);
-      return res.status(500).json({
-        error: 'Erro ao cancelar matrícula',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-      });
-    }
-  }
-
-  /**
-   * Reativa uma matrícula trancada
-   * PUT /api/enrollments/:id_aluno/:id_turma/reactivate
-   */
-  async reactivate(req: Request, res: Response) {
-    try {
-      const { id_aluno, id_turma } = req.params;
-      
-      const enrollment = await EnrollmentService.reactivate(
-        Number(id_aluno),
-        Number(id_turma)
-      );
-      
-      return res.status(200).json(enrollment);
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message === 'Matrícula não encontrada') {
-          return res.status(404).json({ error: error.message });
-        }
-
-        if (error.message.includes('não está trancada')) {
-          return res.status(400).json({ error: error.message });
-        }
-      }
-
-      console.error('Erro ao reativar matrícula:', error);
-      return res.status(500).json({
-        error: 'Erro ao reativar matrícula',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-      });
-    }
-  }
-
-  /**
-   * Transfere aluno para outra turma
-   * POST /api/enrollments/:id_aluno/:id_turma/transfer
-   */
-  async transfer(req: Request, res: Response) {
-    try {
-      const { id_aluno, id_turma } = req.params;
-      const { id_nova_turma } = req.body;
-      
-      const result = await EnrollmentService.transfer(
-        Number(id_aluno),
-        Number(id_turma),
-        id_nova_turma
-      );
+      const result = await EnrollmentService.cancel(id_aluno, id_turma);
       
       return res.status(200).json(result);
     } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({
-          error: 'Erro de validação',
-          details: error.issues
-        });
-      }
-
-      if (error instanceof Error) {
-        if (error.message.includes('não encontrada')) {
-          return res.status(404).json({ error: error.message });
-        }
-
-        if (error.message.includes('não podem ser transferidas') ||
-            error.message.includes('já possui matrícula')) {
-          return res.status(400).json({ error: error.message });
-        }
-      }
-
-      console.error('Erro ao transferir matrícula:', error);
-      return res.status(500).json({
-        error: 'Erro ao transferir matrícula',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-      });
+      next(error);
     }
   }
 
   /**
-   * Deleta uma matrícula
+   * Remove completamente uma matrícula (hard delete)
    * DELETE /api/enrollments/:id_aluno/:id_turma
+   * AUTOMATICAMENTE incrementa as vagas da turma se não estava cancelada
    */
-  async delete(req: Request, res: Response) {
+  async destroy(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id_aluno, id_turma } = req.params;
-      
-      const result = await EnrollmentService.delete(
-        Number(id_aluno),
-        Number(id_turma)
-      );
-      
-      return res.status(200).json(result);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Matrícula não encontrada') {
-        return res.status(404).json({
-          error: 'Matrícula não encontrada'
+      const id_aluno = parseInt(req.params.id_aluno);
+      const id_turma = parseInt(req.params.id_turma);
+
+      if (isNaN(id_aluno) || isNaN(id_turma)) {
+        return res.status(400).json({
+          message: 'IDs devem ser números válidos'
         });
       }
 
-      console.error('Erro ao deletar matrícula:', error);
-      return res.status(500).json({
-        error: 'Erro ao deletar matrícula',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-      });
+      const result = await EnrollmentService.delete(id_aluno, id_turma);
+      
+      return res.status(200).json(result);
+    } catch (error) {
+      next(error);
     }
   }
 
   /**
-   * Retorna estatísticas de matrículas
-   * GET /api/enrollments/statistics
+   * Lista matrículas de um aluno
+   * GET /api/students/:id/enrollments
    */
-  async getStatistics(req: Request, res: Response) {
+  async listByStudent(req: Request, res: Response, next: NextFunction) {
     try {
-      const statistics = await EnrollmentService.getStatistics();
+      const id_aluno = parseInt(req.params.id);
+
+      if (isNaN(id_aluno)) {
+        return res.status(400).json({
+          message: 'ID do aluno deve ser um número válido'
+        });
+      }
+
+      const enrollments = await EnrollmentService.listByStudent(id_aluno);
       
-      return res.status(200).json(statistics);
-    } catch (error) {
-      console.error('Erro ao buscar estatísticas:', error);
-      return res.status(500).json({
-        error: 'Erro ao buscar estatísticas',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      return res.status(200).json({
+        message: 'Matrículas do aluno listadas com sucesso',
+        data: enrollments
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Lista matrículas de uma turma
+   * GET /api/classes/:id/enrollments
+   */
+  async listByClass(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id_turma = parseInt(req.params.id);
+
+      if (isNaN(id_turma)) {
+        return res.status(400).json({
+          message: 'ID da turma deve ser um número válido'
+        });
+      }
+
+      const enrollments = await EnrollmentService.listByClass(id_turma);
+      
+      return res.status(200).json({
+        message: 'Matrículas da turma listadas com sucesso',
+        data: enrollments
+      });
+    } catch (error) {
+      next(error);
     }
   }
 }

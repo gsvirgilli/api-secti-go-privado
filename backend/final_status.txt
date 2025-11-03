@@ -1,0 +1,5 @@
+CONTAINER ID   IMAGE           COMMAND                  CREATED          STATUS                    PORTS                                                    NAMES
+0fae1c6535bf   g07-secti-api   "sh ./entrypoint.sh …"   50 seconds ago   Up 19 seconds (healthy)   0.0.0.0:3333->3333/tcp, [::]:3333->3333/tcp              app_backend
+794c563ea595   mysql:8.0       "docker-entrypoint.s…"   50 seconds ago   Up 49 seconds (healthy)   33060/tcp, 0.0.0.0:3307->3306/tcp, [::]:3307->3306/tcp   sukatech_mysql
+---
+{"status":"ok","message":"SUKA TECH API is running!"}

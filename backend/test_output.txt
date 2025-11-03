@@ -1,0 +1,98 @@
+=========================================
+🧪 TESTES - GERENCIAMENTO DE VAGAS
+=========================================
+
+🔐 Fazendo login...
+[0;32m✅ Login realizado com sucesso[0m
+
+📚 Criando curso de teste...
+Curso criado com ID: 11
+
+🏫 Criando turma com 5 vagas...
+Turma criada com ID: 
+Vagas iniciais: 
+
+👤 Criando aluno de teste...
+jq: parse error: Invalid numeric literal at line 1, column 10
+Aluno criado com ID: 
+
+TEST 1: Verificar vagas iniciais da turma
+Vagas antes: 
+[0;31m❌ FALHOU:[0m Verificar vagas iniciais (5)
+   Esperado: 5
+   Recebido: 
+   Response: {"error":"Erro ao listar turmas"}
+
+TEST 2: Criar matrícula (deve decrementar vagas)
+Response matrícula: {"message":"Internal server error"}
+Vagas depois de criar matrícula: 
+[0;31m❌ FALHOU:[0m Criar matrícula decrementa vagas (4)
+   Esperado: 4
+   Recebido: 
+   Response: {"error":"Erro ao listar turmas"}
+
+TEST 3: Cancelar matrícula (deve incrementar vagas)
+jq: parse error: Invalid numeric literal at line 1, column 10
+Response cancelamento: <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot PATCH /api/enrollments///cancel</pre>
+</body>
+</html>
+Vagas depois de cancelar matrícula: 
+[0;31m❌ FALHOU:[0m Cancelar matrícula incrementa vagas (5)
+   Esperado: 5
+   Recebido: 
+   Response: {"error":"Erro ao listar turmas"}
+
+TEST 4: Criar matrícula novamente
+Vagas depois de criar matrícula novamente: 
+[0;31m❌ FALHOU:[0m Segunda matrícula decrementa vagas (4)
+   Esperado: 4
+   Recebido: 
+   Response: {"error":"Erro ao listar turmas"}
+
+TEST 5: Deletar matrícula completamente (deve incrementar vagas)
+jq: parse error: Invalid numeric literal at line 1, column 10
+Response deleção: <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot DELETE /api/enrollments//</pre>
+</body>
+</html>
+Vagas depois de deletar matrícula: 
+[0;31m❌ FALHOU:[0m Deletar matrícula incrementa vagas (5)
+   Esperado: 5
+   Recebido: 
+   Response: {"error":"Erro ao listar turmas"}
+
+TEST 6: Tentar matricular em turma SEM vagas
+mysql: [Warning] Using a password on the command line interface can be insecure.
+ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
+Status ao tentar matricular sem vagas: 500
+Response: {"message":"Internal server error"}
+[0;31m❌ FALHOU:[0m Matrícula sem vagas retorna 400
+   Esperado: 400
+   Recebido: 500
+   Response: {"message":"Internal server error"}
+
+TEST 7: Verificar mensagem de erro correta
+[0;31m❌ FALHOU:[0m Mensagem de erro não menciona vagas
+Mensagem recebida: Internal server error
+
+=========================================
+📊 RESULTADOS DOS TESTES
+=========================================
+[0;32m✅ Testes passados: 0[0m
+[0;31m❌ Testes falhados: 7[0m
+Total: 7
+
+[0;31m❌ Alguns testes falharam.[0m

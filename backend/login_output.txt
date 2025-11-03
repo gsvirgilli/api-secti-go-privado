@@ -1,0 +1,11 @@
+Tentando registrar admin...
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   229  100   148  100    81   3710   2030 --:--:-- --:--:-- --:--:--  5871
+{"id":13,"nome":"Admin Teste","email":"admin@test.com","role":"ADMIN","updatedAt":"2025-11-03T06:53:32.255Z","createdAt":"2025-11-03T06:53:32.255Z"}
+
+Tentando fazer login...
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   376  100   331  100    45  16460   2237 --:--:-- --:--:-- --:--:-- 18800
+{"user":{"id":13,"nome":"Admin Teste","email":"admin@test.com","role":"ADMIN","createdAt":"2025-11-03T06:53:32.000Z","updatedAt":"2025-11-03T06:53:32.000Z"},"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMyIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc2MjE1MjgxMiwiZXhwIjoxNzYyMjM5MjEyfQ.7KU0K_UOYjmS7Im608JRzaZUlvAwAxyhPozmDra8iSw"}
