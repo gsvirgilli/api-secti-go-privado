@@ -1,6 +1,16 @@
 import Class from './class.model.js';
 import Curso from '../courses/course.model.js';
+import Enrollment from '../enrollments/enrollment.model.js';
+import Student from '../students/student.model.js';
 import { Op } from 'sequelize';
+import NotificationService from '../notifications/notification.service.js';
+import { 
+  PaginationParams, 
+  PaginatedResponse, 
+  calculateOffset, 
+  createPagination, 
+  normalizePagination 
+} from '../../utils/pagination.js';
 
 /**
  * Interface para filtros de turmas
@@ -13,6 +23,9 @@ interface ClassFilters {
   data_inicio_max?: Date;
   data_fim_min?: Date;
   data_fim_max?: Date;
+  status?: 'ATIVA' | 'ENCERRADA' | 'CANCELADA';
+  page?: number;
+  limit?: number;
 }
 
 /**
@@ -24,6 +37,8 @@ interface CreateClassData {
   data_inicio?: Date;
   data_fim?: Date;
   id_curso: number;
+  vagas: number;
+  status?: 'ATIVA' | 'ENCERRADA' | 'CANCELADA';
 }
 
 /**
@@ -43,10 +58,16 @@ interface UpdateClassData {
  */
 class ClassService {
   /**
-   * Lista todas as turmas com filtros opcionais
+   * Lista todas as turmas com filtros opcionais e paginação
    */
-  async list(filters: ClassFilters = {}) {
+  async list(filters: ClassFilters = {}): Promise<PaginatedResponse<any>> {
     const where: any = {};
+
+    // Extrair parâmetros de paginação
+    const { page, limit } = normalizePagination({
+      page: filters.page,
+      limit: filters.limit
+    });
 
     // Filtro por nome (busca parcial, case-insensitive)
     if (filters.nome) {
@@ -87,6 +108,15 @@ class ClassService {
       }
     }
 
+    // Filtro por status
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
+    // Buscar total de registros (para paginação)
+    const total = await Class.count({ where });
+
+    // Buscar turmas com paginação
     const turmas = await Class.findAll({
       where,
       include: [{
@@ -94,10 +124,16 @@ class ClassService {
         as: 'curso',
         attributes: ['id', 'nome', 'carga_horaria']
       }],
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset: calculateOffset(page, limit)
     });
 
-    return turmas;
+    // Retornar resposta paginada
+    return {
+      data: turmas,
+      pagination: createPagination(page, limit, total)
+    };
   }
 
   /**
@@ -287,6 +323,112 @@ class ClassService {
     const conflitos = await Class.findAll({ where });
 
     return conflitos.length > 0;
+  }
+
+  /**
+   * Altera o status de uma turma
+   */
+  async updateStatus(id: number, status: 'ATIVA' | 'ENCERRADA' | 'CANCELADA') {
+    const turma = await this.findById(id);
+    const statusAnterior = turma.status;
+
+    // Validações específicas por tipo de transição
+    if (status === 'ENCERRADA') {
+      // Pode encerrar turma ATIVA
+      if (turma.status !== 'ATIVA') {
+        throw new Error('Apenas turmas ATIVAS podem ser encerradas');
+      }
+    }
+
+    if (status === 'CANCELADA') {
+      // Pode cancelar turma ATIVA
+      if (turma.status !== 'ATIVA') {
+        throw new Error('Apenas turmas ATIVAS podem ser canceladas');
+      }
+    }
+
+    if (status === 'ATIVA') {
+      // Pode reativar turma CANCELADA (mas não ENCERRADA)
+      if (turma.status === 'ENCERRADA') {
+        throw new Error('Turmas ENCERRADAS não podem ser reativadas');
+      }
+    }
+
+    turma.status = status;
+    await turma.save();
+
+    // Se a turma foi ENCERRADA ou CANCELADA, notificar os alunos matriculados
+    if ((status === 'ENCERRADA' || status === 'CANCELADA') && statusAnterior === 'ATIVA') {
+      // Buscar alunos matriculados na turma
+      const enrollments = await Enrollment.findAll({
+        where: {
+          id_turma: id,
+          status: { [Op.ne]: 'Cancelado' } // Apenas matrículas ativas
+        },
+        include: [{
+          model: Student,
+          as: 'aluno',
+          attributes: ['id', 'nome', 'email']
+        }]
+      });
+
+      // Extrair emails dos alunos
+      const alunosEmails = enrollments
+        .map((enrollment: any) => enrollment.aluno?.email)
+        .filter((email: string | undefined) => email !== undefined) as string[];
+
+      // Enviar notificações (não aguarda para não bloquear)
+      if (alunosEmails.length > 0) {
+        if (status === 'ENCERRADA') {
+          NotificationService.sendClassEnded(
+            {
+              nome: turma.nome,
+              turno: turma.turno,
+              dataInicio: turma.data_inicio,
+              dataFim: turma.data_fim
+            },
+            alunosEmails
+          ).catch(err => console.error('Erro ao enviar emails de turma encerrada:', err));
+        } else if (status === 'CANCELADA') {
+          NotificationService.sendClassCancelled(
+            {
+              nome: turma.nome,
+              turno: turma.turno,
+              dataInicio: turma.data_inicio,
+              dataFim: turma.data_fim
+            },
+            alunosEmails
+          ).catch(err => console.error('Erro ao enviar emails de turma cancelada:', err));
+        }
+      }
+    }
+
+    return turma;
+  }
+
+  /**
+   * Valida se a turma está ativa e com vagas disponíveis
+   */
+  async validateForEnrollment(id: number): Promise<{ valid: boolean; message?: string }> {
+    const turma = await this.findById(id);
+
+    // Verifica se turma está ativa
+    if (turma.status !== 'ATIVA') {
+      return {
+        valid: false,
+        message: `Não é possível matricular em turma ${turma.status}`
+      };
+    }
+
+    // Verifica se há vagas disponíveis
+    if (turma.vagas <= 0) {
+      return {
+        valid: false,
+        message: 'Turma não possui vagas disponíveis'
+      };
+    }
+
+    return { valid: true };
   }
 }
 

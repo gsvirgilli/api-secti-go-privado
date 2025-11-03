@@ -166,6 +166,12 @@ const options: swaggerJsdoc.Options = {
               minimum: 0,
               description: 'Número de vagas disponíveis'
             },
+            status: {
+              type: 'string',
+              enum: ['ATIVA', 'ENCERRADA', 'CANCELADA'],
+              default: 'ATIVA',
+              description: 'Status da turma'
+            },
             id_curso: {
               type: 'integer'
             },

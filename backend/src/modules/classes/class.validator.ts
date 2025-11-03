@@ -41,7 +41,14 @@ export const createClassSchema = z.object({
   vagas: z
     .number({ message: 'Número de vagas é obrigatório' })
     .int('Número de vagas deve ser um número inteiro')
-    .min(0, 'Número de vagas não pode ser negativo')
+    .min(0, 'Número de vagas não pode ser negativo'),
+
+  status: z
+    .enum(['ATIVA', 'ENCERRADA', 'CANCELADA'], {
+      message: 'Status deve ser ATIVA, ENCERRADA ou CANCELADA'
+    })
+    .optional()
+    .default('ATIVA')
 }).refine(
   (data) => {
     if (data.data_inicio && data.data_fim) {
@@ -146,7 +153,36 @@ export const listClassFiltersSchema = z.object({
     .string()
     .datetime({ message: 'Data de fim máxima deve ser uma data válida (ISO 8601)' })
     .transform(val => new Date(val))
+    .optional(),
+
+  status: z
+    .enum(['ATIVA', 'ENCERRADA', 'CANCELADA'])
+    .optional(),
+
+  // Parâmetros de paginação
+  page: z
+    .string()
     .optional()
+    .transform(val => (val ? parseInt(val, 10) : 1))
+    .refine(val => val >= 1, { message: 'Página deve ser maior ou igual a 1' }),
+  
+  limit: z
+    .string()
+    .optional()
+    .transform(val => (val ? parseInt(val, 10) : 10))
+    .refine(val => val >= 1 && val <= 100, { 
+      message: 'Limite deve estar entre 1 e 100' 
+    })
+});
+
+/**
+ * Schema de validação para alteração de status
+ */
+export const updateClassStatusSchema = z.object({
+  status: z
+    .enum(['ATIVA', 'ENCERRADA', 'CANCELADA'], {
+      message: 'Status deve ser ATIVA, ENCERRADA ou CANCELADA'
+    })
 });
 
 /**
@@ -155,3 +191,4 @@ export const listClassFiltersSchema = z.object({
 export type CreateClassInput = z.infer<typeof createClassSchema>;
 export type UpdateClassInput = z.infer<typeof updateClassSchema>;
 export type ListClassFilters = z.infer<typeof listClassFiltersSchema>;
+export type UpdateClassStatusInput = z.infer<typeof updateClassStatusSchema>;

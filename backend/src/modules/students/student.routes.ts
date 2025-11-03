@@ -7,6 +7,8 @@ import {
   updateStudentSchema,
   listStudentFiltersSchema
 } from './student.validator.js';
+import { auditMiddleware } from '../../middlewares/audit.middleware.js';
+import Student from './student.model.js';
 
 const router = Router();
 
@@ -287,6 +289,14 @@ router.get(
 router.put(
   '/:id',
   isAuthenticated,
+  auditMiddleware({
+    entidade: 'aluno',
+    getEntityId: (req) => Number(req.params.id),
+    getOldData: async (req) => {
+      const student = await Student.findByPk(req.params.id);
+      return student?.toJSON();
+    }
+  }),
   validateRequest(updateStudentSchema),
   StudentController.update
 );
@@ -294,6 +304,14 @@ router.put(
 router.delete(
   '/:id',
   isAuthenticated,
+  auditMiddleware({
+    entidade: 'aluno',
+    getEntityId: (req) => Number(req.params.id),
+    getOldData: async (req) => {
+      const student = await Student.findByPk(req.params.id);
+      return student?.toJSON();
+    }
+  }),
   StudentController.delete
 );
 

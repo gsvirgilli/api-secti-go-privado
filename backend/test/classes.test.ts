@@ -47,7 +47,9 @@ vi.mock('../src/modules/classes/class.service.js', () => ({
     update: vi.fn(),
     delete: vi.fn(),
     getStatistics: vi.fn(),
-    checkConflict: vi.fn()
+    checkConflict: vi.fn(),
+    updateStatus: vi.fn(),
+    validateForEnrollment: vi.fn()
   }
 }));
 
@@ -66,6 +68,8 @@ describe('Classes API - Testes Completos', () => {
     data_inicio: new Date('2024-01-15'),
     data_fim: new Date('2024-06-30'),
     id_curso: 1,
+    status: 'ATIVA',
+    vagas: 30,
     createdAt: new Date(),
     updatedAt: new Date(),
     curso: {
@@ -206,7 +210,8 @@ describe('Classes API - Testes Completos', () => {
       data_inicio: '2024-07-01T00:00:00Z',
       data_fim: '2024-12-20T00:00:00Z',
       id_curso: 2,
-      vagas: 30
+      vagas: 30,
+      status: 'ATIVA'
     };
 
     it('deve criar turma com dados válidos', async () => {
@@ -552,6 +557,100 @@ describe('Classes API - Testes Completos', () => {
         .set('Authorization', `Bearer ${authToken}`);
       expect(findResponse.status).toBe(200);
       expect(findResponse.body.nome).toBe('Nova Turma');
+    });
+  });
+
+  describe('🔄 PATCH /api/classes/:id/status - Alterar Status', () => {
+    it('deve alterar status de ATIVA para ENCERRADA', async () => {
+      const updatedClass = { ...mockClass, status: 'ENCERRADA' };
+      ClassService.updateStatus = vi.fn().mockResolvedValue(updatedClass);
+
+      const response = await request(app)
+        .patch('/api/classes/1/status')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ status: 'ENCERRADA' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe('ENCERRADA');
+    });
+
+    it('deve alterar status de ATIVA para CANCELADA', async () => {
+      const updatedClass = { ...mockClass, status: 'CANCELADA' };
+      ClassService.updateStatus = vi.fn().mockResolvedValue(updatedClass);
+
+      const response = await request(app)
+        .patch('/api/classes/1/status')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ status: 'CANCELADA' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe('CANCELADA');
+    });
+
+    it('deve reativar turma CANCELADA', async () => {
+      const cancelledClass = { ...mockClass, status: 'CANCELADA' };
+      const reactivatedClass = { ...mockClass, status: 'ATIVA' };
+      
+      ClassService.findById.mockResolvedValue(cancelledClass);
+      ClassService.updateStatus = vi.fn().mockResolvedValue(reactivatedClass);
+
+      const response = await request(app)
+        .patch('/api/classes/1/status')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ status: 'ATIVA' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe('ATIVA');
+    });
+
+    it('deve retornar 400 ao tentar reativar turma ENCERRADA', async () => {
+      ClassService.updateStatus = vi.fn().mockRejectedValue(
+        new Error('Turmas ENCERRADAS não podem ser reativadas')
+      );
+
+      const response = await request(app)
+        .patch('/api/classes/1/status')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ status: 'ATIVA' });
+
+      expect(response.status).toBe(400);
+    });
+
+    it('deve retornar 400 com status inválido', async () => {
+      const response = await request(app)
+        .patch('/api/classes/1/status')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ status: 'INVALIDO' });
+
+      expect(response.status).toBe(400);
+    });
+
+    it('deve filtrar turmas por status ATIVA', async () => {
+      const activeClasses = [mockClass];
+      ClassService.list.mockResolvedValue(activeClasses);
+
+      const response = await request(app)
+        .get('/api/classes?status=ATIVA')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(200);
+      expect(ClassService.list).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'ATIVA' })
+      );
+    });
+
+    it('deve retornar erro ao alterar status de turma inexistente', async () => {
+      ClassService.updateStatus = vi.fn().mockRejectedValue(
+        new Error('Turma não encontrada')
+      );
+
+      const response = await request(app)
+        .patch('/api/classes/999/status')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ status: 'ENCERRADA' });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error');
     });
   });
 });

@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import InstructorController from './instructor.controller.js';
 import { isAuthenticated } from '../../middlewares/isAuthenticated.js';
+import { auditMiddleware } from '../../middlewares/audit.middleware.js';
+import Instructor from './instructor.model.js';
 
 const router = Router();
 
@@ -232,6 +234,10 @@ router.get(
 router.post(
   '/',
   isAuthenticated,
+  auditMiddleware({
+    entidade: 'instrutor',
+    getEntityId: (req) => req.body.id,
+  }),
   InstructorController.create
 );
 
@@ -327,6 +333,14 @@ router.get(
 router.put(
   '/:id',
   isAuthenticated,
+  auditMiddleware({
+    entidade: 'instrutor',
+    getEntityId: (req) => Number(req.params.id),
+    getOldData: async (req) => {
+      const instructor = await Instructor.findByPk(req.params.id);
+      return instructor?.toJSON();
+    }
+  }),
   InstructorController.update
 );
 
@@ -359,6 +373,14 @@ router.put(
 router.delete(
   '/:id',
   isAuthenticated,
+  auditMiddleware({
+    entidade: 'instrutor',
+    getEntityId: (req) => Number(req.params.id),
+    getOldData: async (req) => {
+      const instructor = await Instructor.findByPk(req.params.id);
+      return instructor?.toJSON();
+    }
+  }),
   InstructorController.delete
 );
 

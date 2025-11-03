@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import ClassController from './class.controller.js';
 import { isAuthenticated } from '../../middlewares/isAuthenticated.js';
+import { auditMiddleware } from '../../middlewares/audit.middleware.js';
+import Class from './class.model.js';
 
 const router = Router();
 
@@ -102,7 +104,7 @@ router.post('/check-conflict', isAuthenticated, ClassController.checkConflict);
  * @swagger
  * /api/classes:
  *   get:
- *     summary: Listar todas as turmas
+ *     summary: Listar todas as turmas com paginação
  *     tags: [Classes]
  *     security:
  *       - bearerAuth: []
@@ -116,22 +118,67 @@ router.post('/check-conflict', isAuthenticated, ClassController.checkConflict);
  *         name: turno
  *         schema:
  *           type: string
- *           enum: [MATUTINO, VESPERTINO, NOTURNO]
+ *           enum: [MANHA, TARDE, NOITE, INTEGRAL]
  *         description: Filtrar por turno
  *       - in: query
  *         name: id_curso
  *         schema:
  *           type: integer
  *         description: Filtrar por ID do curso
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [ATIVA, ENCERRADA, CANCELADA]
+ *         description: Filtrar por status
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Número da página
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         description: Quantidade de itens por página
  *     responses:
  *       200:
- *         description: Lista de turmas
+ *         description: Lista paginada de turmas
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Class'
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Class'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                     total:
+ *                       type: integer
+ *                       example: 50
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 5
+ *                     hasNextPage:
+ *                       type: boolean
+ *                       example: true
+ *                     hasPrevPage:
+ *                       type: boolean
+ *                       example: false
  *       401:
  *         description: Não autenticado
  */
@@ -222,7 +269,10 @@ router.get('/:id', isAuthenticated, ClassController.findById);
  *       401:
  *         description: Não autenticado
  */
-router.post('/', isAuthenticated, ClassController.create);
+router.post('/', isAuthenticated, auditMiddleware({
+  entidade: 'turma',
+  getEntityId: (req) => req.body.id,
+}), ClassController.create);
 
 /**
  * @swagger
@@ -290,7 +340,96 @@ router.post('/', isAuthenticated, ClassController.create);
  *       401:
  *         description: Não autenticado
  */
-router.put('/:id', isAuthenticated, ClassController.update);
-router.delete('/:id', isAuthenticated, ClassController.delete);
+router.put('/:id', isAuthenticated, auditMiddleware({
+  entidade: 'turma',
+  getEntityId: (req) => Number(req.params.id),
+  getOldData: async (req) => {
+    const turma = await Class.findByPk(req.params.id);
+    return turma?.toJSON();
+  }
+}), ClassController.update);
+
+router.delete('/:id', isAuthenticated, auditMiddleware({
+  entidade: 'turma',
+  getEntityId: (req) => Number(req.params.id),
+  getOldData: async (req) => {
+    const turma = await Class.findByPk(req.params.id);
+    return turma?.toJSON();
+  }
+}), ClassController.delete);
+
+/**
+ * @swagger
+ * /api/classes/{id}/status:
+ *   patch:
+ *     summary: Alterar status de uma turma
+ *     tags: [Classes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID da turma
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [ATIVA, ENCERRADA, CANCELADA]
+ *                 description: Novo status da turma
+ *           examples:
+ *             encerrar:
+ *               summary: Encerrar turma
+ *               value:
+ *                 status: ENCERRADA
+ *             cancelar:
+ *               summary: Cancelar turma
+ *               value:
+ *                 status: CANCELADA
+ *             reativar:
+ *               summary: Reativar turma cancelada
+ *               value:
+ *                 status: ATIVA
+ *     responses:
+ *       200:
+ *         description: Status atualizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Class'
+ *       400:
+ *         description: Transição de status inválida
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   examples:
+ *                     - Apenas turmas ATIVAS podem ser encerradas
+ *                     - Turmas ENCERRADAS não podem ser reativadas
+ *       404:
+ *         description: Turma não encontrada
+ *       401:
+ *         description: Não autenticado
+ */
+router.patch('/:id/status', isAuthenticated, auditMiddleware({
+  entidade: 'turma',
+  getEntityId: (req) => Number(req.params.id),
+  getOldData: async (req) => {
+    const turma = await Class.findByPk(req.params.id);
+    return turma?.toJSON();
+  }
+}), ClassController.updateStatus);
 
 export default router;

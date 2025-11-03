@@ -4,6 +4,12 @@ import Class from '../classes/class.model.js';
 import Course from '../courses/course.model.js';
 import { Op } from 'sequelize';
 import { AppError } from '../../utils/AppError.js';
+import { 
+  PaginatedResponse, 
+  calculateOffset, 
+  createPagination, 
+  normalizePagination 
+} from '../../utils/pagination.js';
 
 /**
  * Interface para filtros de instrutores
@@ -13,6 +19,8 @@ interface InstructorFilters {
   cpf?: string;
   email?: string;
   especialidade?: string;
+  page?: number;
+  limit?: number;
 }
 
 /**
@@ -40,10 +48,16 @@ interface UpdateInstructorData {
  */
 class InstructorService {
   /**
-   * Lista todos os instrutores com filtros opcionais
+   * Lista todos os instrutores com filtros opcionais e paginação
    */
-  async list(filters: InstructorFilters = {}) {
+  async list(filters: InstructorFilters = {}): Promise<PaginatedResponse<Instructor>> {
     const where: any = {};
+
+    // Extrair parâmetros de paginação
+    const { page, limit } = normalizePagination({
+      page: filters.page,
+      limit: filters.limit
+    });
 
     // Filtro por nome (busca parcial, case-insensitive)
     if (filters.nome) {
@@ -71,12 +85,21 @@ class InstructorService {
       };
     }
 
-    const instructors = await Instructor.findAll({
+    // Buscar total de registros
+    const total = await Instructor.count({ where });
+
+    // Buscar instrutores com paginação
+    const data = await Instructor.findAll({
       where,
-      order: [['nome', 'ASC']]
+      order: [['nome', 'ASC']],
+      limit,
+      offset: calculateOffset(page, limit)
     });
 
-    return instructors;
+    return {
+      data,
+      pagination: createPagination(page, limit, total)
+    };
   }
 
   /**

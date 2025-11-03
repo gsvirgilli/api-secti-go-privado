@@ -1,5 +1,11 @@
 import Student from './student.model.js';
 import { Op } from 'sequelize';
+import { 
+  PaginatedResponse, 
+  calculateOffset, 
+  createPagination, 
+  normalizePagination 
+} from '../../utils/pagination.js';
 
 /**
  * Interface para filtros de alunos
@@ -9,6 +15,8 @@ interface StudentFilters {
   cpf?: string;
   email?: string;
   matricula?: string;
+  page?: number;
+  limit?: number;
 }
 
 /**
@@ -26,10 +34,16 @@ interface UpdateStudentData {
  */
 class StudentService {
   /**
-   * Lista todos os alunos com filtros opcionais
+   * Lista todos os alunos com filtros opcionais e paginação
    */
-  async list(filters: StudentFilters = {}) {
+  async list(filters: StudentFilters = {}): Promise<PaginatedResponse<Student>> {
     const where: any = {};
+
+    // Extrair parâmetros de paginação
+    const { page, limit } = normalizePagination({
+      page: filters.page,
+      limit: filters.limit
+    });
 
     // Filtro por nome (busca parcial, case-insensitive)
     if (filters.nome) {
@@ -57,12 +71,21 @@ class StudentService {
       };
     }
 
-    const students = await Student.findAll({
+    // Buscar total de registros
+    const total = await Student.count({ where });
+
+    // Buscar alunos com paginação
+    const data = await Student.findAll({
       where,
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset: calculateOffset(page, limit)
     });
 
-    return students;
+    return {
+      data,
+      pagination: createPagination(page, limit, total)
+    };
   }
 
   /**

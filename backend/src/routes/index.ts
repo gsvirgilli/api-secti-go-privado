@@ -8,6 +8,9 @@ import studentsRouter from '../modules/students/student.routes.js';
 import enrollmentsRouter from '../modules/enrollments/enrollment.routes.js';
 import attendancesRouter from '../modules/attendance/attendance.routes.js';
 import instructorsRouter from '../modules/instructors/instructor.routes.js';
+import notificationsRouter from '../modules/notifications/notification.routes.js';
+import reportsRouter from '../modules/reports/report.routes.js';
+import auditLogsRouter from '../modules/audit/audit-log.routes.js';
 import { isAuthenticated } from '../middlewares/isAuthenticated.js';
 
 const router = Router();
@@ -24,6 +27,9 @@ router.use('/students', studentsRouter);
 router.use('/enrollments', enrollmentsRouter);
 router.use('/attendances', attendancesRouter);
 router.use('/instructors', instructorsRouter);
+router.use('/notifications', notificationsRouter);
+router.use('/reports', reportsRouter);
+router.use('/audit-logs', auditLogsRouter);
 
 // Health já existe em app.ts, mas mantemos um ping adicional aqui se quiser agrupar todas as rotas sob /api
 router.get('/ping', (_req, res) => {

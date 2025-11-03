@@ -14,6 +14,7 @@ class Class extends Model {
   declare data_fim: Date | null;
   declare id_curso: number;
   declare vagas: number; // Total de vagas da turma
+  declare status: 'ATIVA' | 'ENCERRADA' | 'CANCELADA';
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -90,6 +91,20 @@ Class.init({
         msg: 'Número de vagas não pode ser negativo'
       }
     }
+  },
+  status: {
+    type: DataTypes.ENUM('ATIVA', 'ENCERRADA', 'CANCELADA'),
+    allowNull: false,
+    defaultValue: 'ATIVA',
+    validate: {
+      notNull: {
+        msg: 'Status é obrigatório'
+      },
+      isIn: {
+        args: [['ATIVA', 'ENCERRADA', 'CANCELADA']],
+        msg: 'Status deve ser ATIVA, ENCERRADA ou CANCELADA'
+      }
+    }
   }
 }, {
   sequelize,
@@ -104,6 +119,9 @@ Class.init({
     },
     {
       fields: ['data_inicio', 'data_fim']
+    },
+    {
+      fields: ['status']
     }
   ]
 });

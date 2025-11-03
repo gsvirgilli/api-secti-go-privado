@@ -2,19 +2,33 @@ import Course, { CourseAttributes, CourseCreationAttributes } from './course.mod
 import Class from '../classes/class.model.js';
 import { AppError } from '../../utils/AppError.js';
 import { Op } from 'sequelize';
+import { 
+  PaginatedResponse, 
+  calculateOffset, 
+  createPagination, 
+  normalizePagination 
+} from '../../utils/pagination.js';
 
 export interface CourseFilters {
   nome?: string;
   carga_horaria_min?: number;
   carga_horaria_max?: number;
+  page?: number;
+  limit?: number;
 }
 
 class CourseService {
   /**
-   * Buscar todos os cursos com filtros opcionais
+   * Buscar todos os cursos com filtros opcionais e paginação
    */
-  async findAll(filters: CourseFilters = {}) {
+  async findAll(filters: CourseFilters = {}): Promise<PaginatedResponse<Course>> {
     const whereClause: any = {};
+
+    // Extrair parâmetros de paginação
+    const { page, limit } = normalizePagination({
+      page: filters.page,
+      limit: filters.limit
+    });
 
     // Filtro por nome (busca parcial)
     if (filters.nome) {
@@ -36,10 +50,21 @@ class CourseService {
       }
     }
 
-    return await Course.findAll({
+    // Buscar total de registros
+    const total = await Course.count({ where: whereClause });
+
+    // Buscar cursos com paginação
+    const data = await Course.findAll({
       where: whereClause,
-      order: [['nome', 'ASC']]
+      order: [['nome', 'ASC']],
+      limit,
+      offset: calculateOffset(page, limit)
     });
+
+    return {
+      data,
+      pagination: createPagination(page, limit, total)
+    };
   }
 
   /**

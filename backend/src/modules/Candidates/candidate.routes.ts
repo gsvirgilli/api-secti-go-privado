@@ -9,6 +9,8 @@ import {
   rejectCandidateSchema,
   publicCandidateSchema
 } from './candidate.validator.js';
+import { auditMiddleware } from '../../middlewares/audit.middleware.js';
+import Candidate from './candidate.model.js';
 
 const router = Router();
 
@@ -192,6 +194,10 @@ router.get(
 router.post(
   '/',
   isAuthenticated,
+  auditMiddleware({
+    entidade: 'candidato',
+    getEntityId: (req) => req.body.id,
+  }),
   validateRequest(createCandidateSchema),
   CandidateController.create
 );
@@ -280,6 +286,14 @@ router.get(
 router.put(
   '/:id',
   isAuthenticated,
+  auditMiddleware({
+    entidade: 'candidato',
+    getEntityId: (req) => Number(req.params.id),
+    getOldData: async (req) => {
+      const candidate = await Candidate.findByPk(req.params.id);
+      return candidate?.toJSON();
+    }
+  }),
   validateRequest(updateCandidateSchema),
   CandidateController.update
 );
@@ -287,6 +301,14 @@ router.put(
 router.delete(
   '/:id',
   isAuthenticated,
+  auditMiddleware({
+    entidade: 'candidato',
+    getEntityId: (req) => Number(req.params.id),
+    getOldData: async (req) => {
+      const candidate = await Candidate.findByPk(req.params.id);
+      return candidate?.toJSON();
+    }
+  }),
   CandidateController.delete
 );
 
@@ -326,6 +348,27 @@ router.delete(
 router.post(
   '/:id/approve',
   isAuthenticated,
+  async (req, res, next) => {
+    try {
+      const candidate = await Candidate.findByPk(req.params.id);
+      if (candidate && res.statusCode === 200) {
+        const auditLogService = (await import('../../modules/audit/audit-log.service.js')).default;
+        await auditLogService.createLog({
+          usuario_id: req.user?.id ? Number(req.user.id) : undefined,
+          acao: 'APPROVE',
+          entidade: 'candidato',
+          entidade_id: Number(req.params.id),
+          dados_anteriores: candidate.toJSON(),
+          ip: auditLogService.getIpFromRequest(req),
+          user_agent: auditLogService.getUserAgentFromRequest(req),
+          descricao: 'Candidato aprovado e convertido em aluno'
+        });
+      }
+    } catch (err) {
+      console.error('[AUDIT] Erro ao registrar aprovação:', err);
+    }
+    next();
+  },
   CandidateController.approve
 );
 
@@ -369,6 +412,28 @@ router.post(
 router.post(
   '/:id/reject',
   isAuthenticated,
+  async (req, res, next) => {
+    try {
+      const candidate = await Candidate.findByPk(req.params.id);
+      if (candidate && res.statusCode === 200) {
+        const auditLogService = (await import('../../modules/audit/audit-log.service.js')).default;
+        await auditLogService.createLog({
+          usuario_id: req.user?.id ? Number(req.user.id) : undefined,
+          acao: 'REJECT',
+          entidade: 'candidato',
+          entidade_id: Number(req.params.id),
+          dados_anteriores: candidate.toJSON(),
+          dados_novos: { motivo_rejeicao: req.body.motivo },
+          ip: auditLogService.getIpFromRequest(req),
+          user_agent: auditLogService.getUserAgentFromRequest(req),
+          descricao: `Candidato rejeitado: ${req.body.motivo}`
+        });
+      }
+    } catch (err) {
+      console.error('[AUDIT] Erro ao registrar rejeição:', err);
+    }
+    next();
+  },
   validateRequest(rejectCandidateSchema),
   CandidateController.reject
 );

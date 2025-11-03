@@ -7,6 +7,8 @@ import {
   validateCourseFilters
 } from './course.validator.js';
 import { isAuthenticated } from '../../middlewares/isAuthenticated.js';
+import { auditMiddleware } from '../../middlewares/audit.middleware.js';
+import Course from './course.model.js';
 
 const router = Router();
 
@@ -155,7 +157,10 @@ router.get('/statistics', isAuthenticated, CourseController.statistics);
  *         description: Não autenticado
  */
 router.get('/', isAuthenticated, validateCourseFilters, CourseController.index);
-router.post('/', isAuthenticated, validateCreateCourse, CourseController.store);
+router.post('/', isAuthenticated, auditMiddleware({
+  entidade: 'curso',
+  getEntityId: (req) => req.body.id,
+}), validateCreateCourse, CourseController.store);
 
 /**
  * @swagger
@@ -238,7 +243,21 @@ router.post('/', isAuthenticated, validateCreateCourse, CourseController.store);
  *         description: Não autenticado
  */
 router.get('/:id', isAuthenticated, validateGetCourse, CourseController.show);
-router.put('/:id', isAuthenticated, validateUpdateCourse, CourseController.update);
-router.delete('/:id', isAuthenticated, validateGetCourse, CourseController.destroy);
+router.put('/:id', isAuthenticated, auditMiddleware({
+  entidade: 'curso',
+  getEntityId: (req) => Number(req.params.id),
+  getOldData: async (req) => {
+    const course = await Course.findByPk(req.params.id);
+    return course?.toJSON();
+  }
+}), validateUpdateCourse, CourseController.update);
+router.delete('/:id', isAuthenticated, auditMiddleware({
+  entidade: 'curso',
+  getEntityId: (req) => Number(req.params.id),
+  getOldData: async (req) => {
+    const course = await Course.findByPk(req.params.id);
+    return course?.toJSON();
+  }
+}), validateGetCourse, CourseController.destroy);
 
 export default router;

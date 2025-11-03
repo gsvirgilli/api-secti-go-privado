@@ -4,6 +4,12 @@ import Class from '../classes/class.model.js';
 import User from '../users/user.model.js';
 import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
+import { 
+  PaginatedResponse, 
+  calculateOffset, 
+  createPagination, 
+  normalizePagination 
+} from '../../utils/pagination.js';
 
 /**
  * Interface para filtros de candidatos
@@ -14,6 +20,8 @@ interface CandidateFilters {
   email?: string;
   status?: string;
   turma_id?: number; // Alterado de id_turma_desejada
+  page?: number;
+  limit?: number;
 }
 
 /**
@@ -76,10 +84,16 @@ class CandidateService {
   }
 
   /**
-   * Lista todos os candidatos com filtros opcionais
+   * Lista todos os candidatos com filtros opcionais e paginação
    */
-  async list(filters: CandidateFilters = {}) {
+  async list(filters: CandidateFilters = {}): Promise<PaginatedResponse<Candidate>> {
     const where: any = {};
+
+    // Extrair parâmetros de paginação
+    const { page, limit } = normalizePagination({
+      page: filters.page,
+      limit: filters.limit
+    });
 
     // Filtro por nome (busca parcial, case-insensitive)
     if (filters.nome) {
@@ -110,7 +124,11 @@ class CandidateService {
       where.turma_id = filters.turma_id;
     }
 
-    const candidates = await Candidate.findAll({
+    // Buscar total de registros
+    const total = await Candidate.count({ where });
+
+    // Buscar candidatos com paginação
+    const data = await Candidate.findAll({
       where,
       include: [{
         model: Class,
@@ -118,10 +136,15 @@ class CandidateService {
         attributes: ['id', 'nome'],
         required: false
       }],
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset: calculateOffset(page, limit)
     });
 
-    return candidates;
+    return {
+      data,
+      pagination: createPagination(page, limit, total)
+    };
   }
 
   /**

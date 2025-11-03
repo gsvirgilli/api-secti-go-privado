@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import EnrollmentController from './enrollment.controller.js';
 import { isAuthenticated } from '../../middlewares/isAuthenticated.js';
+import { auditMiddleware } from '../../middlewares/audit.middleware.js';
+import Enrollment from './enrollment.model.js';
 
 const router = Router();
 
@@ -64,7 +66,10 @@ const router = Router();
  *         description: Não autenticado
  */
 router.get('/', isAuthenticated, EnrollmentController.index);
-router.post('/', isAuthenticated, EnrollmentController.store);
+router.post('/', isAuthenticated, auditMiddleware({
+  entidade: 'matricula',
+  getEntityId: (req) => undefined, // Matrícula é composta
+}), EnrollmentController.store);
 
 /**
  * @swagger
@@ -125,7 +130,19 @@ router.post('/', isAuthenticated, EnrollmentController.store);
  *         description: Não autenticado
  */
 router.get('/:id_aluno/:id_turma', isAuthenticated, EnrollmentController.show);
-router.delete('/:id_aluno/:id_turma', isAuthenticated, EnrollmentController.destroy);
+router.delete('/:id_aluno/:id_turma', isAuthenticated, auditMiddleware({
+  entidade: 'matricula',
+  getEntityId: (req) => undefined, // Matrícula é composta
+  getOldData: async (req) => {
+    const enrollment = await Enrollment.findOne({
+      where: {
+        id_aluno: req.params.id_aluno,
+        id_turma: req.params.id_turma
+      }
+    });
+    return enrollment?.toJSON();
+  }
+}), EnrollmentController.destroy);
 
 /**
  * @swagger
@@ -167,6 +184,18 @@ router.delete('/:id_aluno/:id_turma', isAuthenticated, EnrollmentController.dest
  *       401:
  *         description: Não autenticado
  */
-router.patch('/:id_aluno/:id_turma/cancel', isAuthenticated, EnrollmentController.cancel);
+router.patch('/:id_aluno/:id_turma/cancel', isAuthenticated, auditMiddleware({
+  entidade: 'matricula',
+  getEntityId: (req) => undefined, // Matrícula é composta
+  getOldData: async (req) => {
+    const enrollment = await Enrollment.findOne({
+      where: {
+        id_aluno: req.params.id_aluno,
+        id_turma: req.params.id_turma
+      }
+    });
+    return enrollment?.toJSON();
+  }
+}), EnrollmentController.cancel);
 
 export default router;

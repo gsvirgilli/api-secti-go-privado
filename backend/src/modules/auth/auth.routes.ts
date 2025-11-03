@@ -3,6 +3,7 @@ import { AuthController } from './auth.controller.js';
 import rateLimit from 'express-rate-limit';
 import { validateRequest } from '../../middlewares/validateRequest.js';
 import { loginSchema, registerSchema } from './auth.validator.js';
+import { auditLogin } from '../../middlewares/audit.middleware.js';
 
 const authRouter = Router();
 const authController = new AuthController();
@@ -109,6 +110,6 @@ authRouter.post('/register', validateRequest(registerSchema), authController.reg
  *       429:
  *         description: Muitas tentativas de login
  */
-authRouter.post('/login', loginLimiter, validateRequest(loginSchema), authController.login);
+authRouter.post('/login', loginLimiter, validateRequest(loginSchema), auditLogin, authController.login);
 
 export default authRouter;

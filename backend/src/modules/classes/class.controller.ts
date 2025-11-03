@@ -3,7 +3,8 @@ import ClassService from './class.service.js';
 import { 
   createClassSchema, 
   updateClassSchema, 
-  listClassFiltersSchema 
+  listClassFiltersSchema,
+  updateClassStatusSchema
 } from './class.validator.js';
 import { ZodError } from 'zod';
 
@@ -224,6 +225,39 @@ class ClassController {
       console.error('Erro ao verificar conflito:', error);
       return res.status(500).json({
         error: 'Erro ao verificar conflito'
+      });
+    }
+  }
+
+  /**
+   * Altera o status de uma turma
+   * PATCH /api/classes/:id/status
+   */
+  async updateStatus(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const data = updateClassStatusSchema.parse(req.body);
+      
+      const turma = await ClassService.updateStatus(Number(id), data.status);
+      
+      return res.status(200).json(turma);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          error: 'Erro de validação',
+          details: error.issues
+        });
+      }
+
+      if (error instanceof Error) {
+        return res.status(400).json({
+          error: error.message
+        });
+      }
+
+      console.error('Erro ao atualizar status da turma:', error);
+      return res.status(500).json({
+        error: 'Erro ao atualizar status da turma'
       });
     }
   }

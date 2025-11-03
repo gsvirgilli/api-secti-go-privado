@@ -1,8 +1,16 @@
 import Enrollment from './enrollment.model.js';
 import Student from '../students/student.model.js';
 import Class from '../classes/class.model.js';
+import Course from '../courses/course.model.js';
 import { sequelize } from '../../config/database.js';
 import { AppError } from '../../utils/AppError.js';
+import NotificationService from '../notifications/notification.service.js';
+import { 
+  PaginatedResponse, 
+  calculateOffset, 
+  createPagination, 
+  normalizePagination 
+} from '../../utils/pagination.js';
 
 /**
  * Interface para dados de criação de matrícula
@@ -14,16 +22,34 @@ interface CreateEnrollmentData {
 }
 
 /**
+ * Interface para filtros de matrículas
+ */
+interface EnrollmentFilters {
+  page?: number;
+  limit?: number;
+}
+
+/**
  * Service de Matrículas
  * Contém toda a lógica de negócio relacionada a matrículas
  * Inclui gerenciamento automático de vagas das turmas
  */
 class EnrollmentService {
   /**
-   * Lista todas as matrículas
+   * Lista todas as matrículas com paginação
    */
-  async list() {
-    const enrollments = await Enrollment.findAll({
+  async list(filters: EnrollmentFilters = {}): Promise<PaginatedResponse<Enrollment>> {
+    // Extrair parâmetros de paginação
+    const { page, limit } = normalizePagination({
+      page: filters.page,
+      limit: filters.limit
+    });
+
+    // Buscar total de registros
+    const total = await Enrollment.count();
+
+    // Buscar matrículas com paginação
+    const data = await Enrollment.findAll({
       include: [
         {
           model: Student,
@@ -36,10 +62,15 @@ class EnrollmentService {
           attributes: ['id', 'nome', 'turno', 'vagas']
         }
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset: calculateOffset(page, limit)
     });
 
-    return enrollments;
+    return {
+      data,
+      pagination: createPagination(page, limit, total)
+    };
   }
 
   /**
@@ -90,6 +121,11 @@ class EnrollmentService {
         throw new AppError('Turma não encontrada', 404);
       }
 
+      // Verificar se a turma está ativa
+      if (turma.status !== 'ATIVA') {
+        throw new AppError(`Não é possível matricular em turma ${turma.status}`, 400);
+      }
+
       // Verificar se há vagas disponíveis
       if (turma.vagas <= 0) {
         throw new AppError('Não há vagas disponíveis nesta turma', 400);
@@ -122,7 +158,19 @@ class EnrollmentService {
       await transaction.commit();
 
       // Retornar matrícula com dados completos
-      return await this.findOne(enrollment.id_aluno, enrollment.id_turma);
+      const enrollmentWithDetails = await this.findOne(enrollment.id_aluno, enrollment.id_turma);
+
+      // Enviar email de confirmação (não aguarda para não bloquear resposta)
+      NotificationService.sendEnrollmentConfirmation({
+        alunoNome: student.nome,
+        alunoEmail: student.email,
+        turmaNome: turma.nome,
+        turno: turma.turno,
+        dataInicio: turma.data_inicio,
+        dataFim: turma.data_fim
+      }).catch(err => console.error('Erro ao enviar email de confirmação:', err));
+
+      return enrollmentWithDetails;
     } catch (error) {
       // Rollback em caso de erro
       await transaction.rollback();
@@ -150,7 +198,7 @@ class EnrollmentService {
       }
 
       // Verificar se já está cancelada
-      if (enrollment.status === 'Cancelado') {
+      if (enrollment.status === 'cancelado') {
         throw new AppError('Matrícula já está cancelada', 400);
       }
 
@@ -158,6 +206,12 @@ class EnrollmentService {
       const turma = await Class.findByPk(id_turma, { transaction });
       if (!turma) {
         throw new AppError('Turma não encontrada', 404);
+      }
+
+      // Buscar dados do aluno para o email
+      const student = await Student.findByPk(id_aluno, { transaction });
+      if (!student) {
+        throw new AppError('Aluno não encontrado', 404);
       }
 
       // Atualizar status para Cancelado
@@ -168,6 +222,16 @@ class EnrollmentService {
 
       // Commit da transação
       await transaction.commit();
+
+      // Enviar email de cancelamento (não aguarda)
+      NotificationService.sendEnrollmentCancellation({
+        alunoNome: student.nome,
+        alunoEmail: student.email,
+        turmaNome: turma.nome,
+        turno: turma.turno,
+        dataInicio: turma.data_inicio,
+        dataFim: turma.data_fim
+      }).catch(err => console.error('Erro ao enviar email de cancelamento:', err));
 
       return {
         message: 'Matrícula cancelada com sucesso',
@@ -209,7 +273,7 @@ class EnrollmentService {
       await enrollment.destroy({ transaction });
 
       // INCREMENTAR as vagas da turma (apenas se a matrícula não estava cancelada)
-      if (enrollment.status !== 'Cancelado') {
+      if (enrollment.status !== 'cancelado') {
         await turma.increment('vagas', { by: 1, transaction });
       }
 
