@@ -37,18 +37,36 @@ const ResetPassword = () => {
     setIsLoading(true);
     
     try {
-      // Simulate API call to send reset email
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setEmailSent(true);
-      toast({
-        title: "E-mail enviado!",
-        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      const response = await fetch('http://localhost:3333/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
       });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setEmailSent(true);
+        toast({
+          title: "E-mail enviado!",
+          description: data.message || "Verifique sua caixa de entrada para redefinir sua senha.",
+        });
+      } else {
+        setError(data.message || "Erro ao enviar e-mail");
+        toast({
+          title: "Erro",
+          description: data.message || "Erro ao enviar e-mail. Tente novamente.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
+      console.error('Erro ao solicitar recuperação de senha:', error);
+      setError("Erro ao conectar com o servidor");
       toast({
         title: "Erro",
-        description: "Erro ao enviar e-mail. Tente novamente.",
+        description: "Erro ao conectar com o servidor. Tente novamente.",
         variant: "destructive",
       });
     } finally {

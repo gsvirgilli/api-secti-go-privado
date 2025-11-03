@@ -223,7 +223,7 @@ export class PasswordResetService {
   private async sendPasswordResetEmail(email: string, name: string, token: string): Promise<void> {
     // URL do frontend (configurável via env)
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const resetLink = `${frontendUrl}/reset-password?token=${token}`;
+    const resetLink = `${frontendUrl}/new-password?token=${token}`;
 
     const subject = 'Recuperação de Senha - Sistema SECTI';
     const html = `

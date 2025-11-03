@@ -13,6 +13,7 @@ import Instructors from "./pages/Instructors";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
+import NewPassword from "./pages/NewPassword";
 import Profile from "./pages/Profile";
 import Cadastro from "./pages/Cadastro";
 import Notifications from "./pages/Notifications";
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/new-password" element={<NewPassword />} />
             <Route path="/" element={<Layout><Dashboard /></Layout>} />
             <Route path="/alunos" element={<Layout><Students /></Layout>} />
             <Route path="/turmas" element={<Layout><Classes /></Layout>} />
