@@ -294,6 +294,69 @@ class CandidateController {
       });
     }
   }
+
+  /**
+   * Cria uma candidatura pública (sem autenticação)
+   * POST /api/candidates/public
+   */
+  async createPublic(req: Request, res: Response) {
+    try {
+      // O middleware validateRequest já fez o parse
+      const data = req.body;
+      
+      const candidate = await CandidateService.createPublic(data);
+      
+      return res.status(201).json({
+        message: 'Candidatura enviada com sucesso',
+        data: candidate
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          error: 'Erro de validação',
+          details: error.issues
+        });
+      }
+
+      if (error instanceof Error) {
+        // Erros de validação específicos
+        if (error.message === 'CPF inválido') {
+          return res.status(400).json({
+            error: 'CPF inválido'
+          });
+        }
+
+        if (error.message === 'CPF já cadastrado') {
+          return res.status(409).json({
+            error: 'Já existe uma candidatura com este CPF'
+          });
+        }
+
+        if (error.message === 'Email já cadastrado') {
+          return res.status(409).json({
+            error: 'Já existe uma candidatura com este email'
+          });
+        }
+
+        if (error.message === 'Curso não encontrado') {
+          return res.status(404).json({
+            error: 'Curso não encontrado ou inativo'
+          });
+        }
+
+        if (error.message === 'Turno não disponível para este curso') {
+          return res.status(400).json({
+            error: 'Não há turmas disponíveis no turno selecionado para este curso'
+          });
+        }
+      }
+
+      console.error('Erro ao criar candidatura pública:', error);
+      return res.status(500).json({
+        error: 'Erro ao processar candidatura. Tente novamente mais tarde.'
+      });
+    }
+  }
 }
 
 export default new CandidateController();

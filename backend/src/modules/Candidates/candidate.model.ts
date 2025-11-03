@@ -13,6 +13,17 @@ class Candidate extends Model {
   declare email: string;
   declare telefone: string | null;
   declare data_nascimento: Date | null;
+  // Endereço
+  declare cep: string | null;
+  declare rua: string | null;
+  declare numero: string | null;
+  declare complemento: string | null;
+  declare bairro: string | null;
+  declare cidade: string | null;
+  declare estado: string | null;
+  // Curso e turno desejados
+  declare curso_id: number | null;
+  declare turno: 'MATUTINO' | 'VESPERTINO' | 'NOTURNO' | null;
   declare turma_id: number | null;
   declare status: 'pendente' | 'aprovado' | 'reprovado';
   declare readonly createdAt: Date;
@@ -75,6 +86,48 @@ Candidate.init({
   data_nascimento: {
     type: DataTypes.DATEONLY,
     allowNull: true, // Alterado para permitir null
+  },
+  // Campos de endereço
+  cep: {
+    type: DataTypes.STRING(8),
+    allowNull: true,
+  },
+  rua: {
+    type: DataTypes.STRING(200),
+    allowNull: true,
+  },
+  numero: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+  },
+  complemento: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  bairro: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  cidade: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  estado: {
+    type: DataTypes.STRING(2),
+    allowNull: true,
+  },
+  // Curso e turno desejados
+  curso_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'cursos',
+      key: 'id',
+    }
+  },
+  turno: {
+    type: DataTypes.ENUM('MATUTINO', 'VESPERTINO', 'NOTURNO'),
+    allowNull: true,
   },
   turma_id: {
     type: DataTypes.INTEGER,
