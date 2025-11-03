@@ -70,13 +70,14 @@ G07-SECTI-main/
 # Arquivos de teste e debug locais
 backend/*test*.sh
 backend/*test*.txt
-backend/test_*.sh
-backend/test_*.txt
+backend/test*.sh
+backend/test*.txt
 backend/quick_test.sh
 backend/manual_full_test.sh
 backend/full_manual_test.sh
 backend/verify_system.sh
 backend/diagnose_container.sh
+backend/test-api-manual.sh
 backend/api_test.txt
 backend/health_test.txt
 backend/backend_logs.txt
@@ -90,3 +91,18 @@ backend/status.txt
 backend/final_status.txt
 backend/turma_test.txt
 backend/server.log
+backend/test_output.txt
+
+# SQL de teste e temporários (exceto migrations)
+backend/add-vagas-column.sql
+backend/create-admin.sql
+backend/create-tables.sql
+backend/init-mysql-schema.sql
+
+# Scripts de sincronização temporários
+backend/sync-db-simple.ts
+backend/create-admin.ts
+
+# Backups de configuração
+backend/.env.backup
+backend/.env.local
