@@ -74,24 +74,28 @@ interface AppContextType {
   classes: Class[];
   instructors: Instructor[];
   loading: boolean;
+  error: string | null;
   
   // Student actions
-  addStudent: (student: Omit<Student, 'id'>) => void;
-  updateStudent: (id: number, student: Partial<Student>) => void;
-  deleteStudent: (id: number) => void;
+  addStudent: (student: Omit<Student, 'id'>) => Promise<Student>;
+  updateStudent: (id: number, student: Partial<Student>) => Promise<void>;
+  deleteStudent: (id: number) => Promise<void>;
   getStudentById: (id: number) => Student | undefined;
+  refreshStudents: () => Promise<void>;
   
   // Course actions
-  addCourse: (course: Omit<Course, 'id'>) => void;
-  updateCourse: (id: number, course: Partial<Course>) => void;
-  deleteCourse: (id: number) => void;
+  addCourse: (course: Omit<Course, 'id'>) => Promise<Course>;
+  updateCourse: (id: number, course: Partial<Course>) => Promise<void>;
+  deleteCourse: (id: number) => Promise<void>;
   getCourseById: (id: number) => Course | undefined;
+  refreshCourses: () => Promise<void>;
   
   // Class actions
-  addClass: (classData: Omit<Class, 'id'>) => void;
-  updateClass: (id: number, classData: Partial<Class>) => void;
-  deleteClass: (id: number) => void;
+  addClass: (classData: Omit<Class, 'id'>) => Promise<Class>;
+  updateClass: (id: number, classData: Partial<Class>) => Promise<void>;
+  deleteClass: (id: number) => Promise<void>;
   getClassById: (id: number) => Class | undefined;
+  refreshClasses: () => Promise<void>;
   
   // Instructor actions
   addInstructor: (instructor: Omit<Instructor, 'id'>) => void;
@@ -435,6 +439,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Carregar dados da API ao montar o componente
   useEffect(() => {
@@ -477,163 +482,215 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     loadData();
   }, []);
 
+  // Refresh functions
+  const refreshStudents = async () => {
+    try {
+      const response = await StudentsAPI.list();
+      setStudents(response.data || []);
+      setError(null);
+    } catch (err: any) {
+      console.error('Erro ao carregar alunos:', err);
+      setError(err.response?.data?.message || 'Erro ao carregar alunos');
+    }
+  };
+
   // Student actions
-  const addStudent = (studentData: Omit<Student, 'id'>) => {
-    const newId = Math.max(...students.map(s => s.id), 0) + 1;
-    const newStudent = { ...studentData, id: newId };
-    setStudents(prev => [...prev, newStudent]);
-    
-    // Update class enrollment count
-    if (studentData.class) {
-      setClasses(prev => prev.map(cls => {
-        if (cls.name === studentData.class) {
-          return {
-            ...cls,
-            enrolled: cls.enrolled + 1,
-            students: [...cls.students, { id: newId, name: studentData.name, status: studentData.status }]
-          };
-        }
-        return cls;
-      }));
-    }
-    
-    // Update course student count
-    if (studentData.course) {
-      setCourses(prev => prev.map(course => {
-        if (course.title === studentData.course) {
-          return { ...course, students: course.students + 1 };
-        }
-        return course;
-      }));
+  const addStudent = async (studentData: Omit<Student, 'id'>): Promise<Student> => {
+    try {
+      setError(null);
+      const response = await StudentsAPI.create(studentData);
+      const newStudent = response.data;
+      
+      setStudents(prev => [...prev, newStudent]);
+      
+      // Refresh related data
+      await refreshClasses();
+      await refreshCourses();
+      
+      return newStudent;
+    } catch (err: any) {
+      console.error('Erro ao criar aluno:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao criar aluno';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
-  const updateStudent = (id: number, studentData: Partial<Student>) => {
-    const oldStudent = students.find(s => s.id === id);
-    
-    setStudents(prev => prev.map(student => 
-      student.id === id ? { ...student, ...studentData } : student
-    ));
-
-    // Update class students if name or status changed
-    if (oldStudent && (studentData.name || studentData.status)) {
-      setClasses(prev => prev.map(cls => ({
-        ...cls,
-        students: cls.students.map(student => 
-          student.id === id 
-            ? { 
-                ...student, 
-                name: studentData.name || student.name,
-                status: studentData.status || student.status
-              }
-            : student
-        )
-      })));
+  const updateStudent = async (id: number, studentData: Partial<Student>): Promise<void> => {
+    try {
+      setError(null);
+      await StudentsAPI.update(id, studentData);
+      
+      setStudents(prev => prev.map(student => 
+        student.id === id ? { ...student, ...studentData } : student
+      ));
+      
+      // Refresh related data
+      await refreshClasses();
+      
+    } catch (err: any) {
+      console.error('Erro ao atualizar aluno:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao atualizar aluno';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
-  const deleteStudent = (id: number) => {
-    const student = students.find(s => s.id === id);
-    
-    setStudents(prev => prev.filter(s => s.id !== id));
-    
-    // Update class enrollment
-    if (student?.class) {
-      setClasses(prev => prev.map(cls => {
-        if (cls.name === student.class) {
-          return {
-            ...cls,
-            enrolled: Math.max(0, cls.enrolled - 1),
-            students: cls.students.filter(s => s.id !== id)
-          };
-        }
-        return cls;
-      }));
-    }
-    
-    // Update course student count
-    if (student?.course) {
-      setCourses(prev => prev.map(course => {
-        if (course.title === student.course) {
-          return { ...course, students: Math.max(0, course.students - 1) };
-        }
-        return course;
-      }));
+  const deleteStudent = async (id: number): Promise<void> => {
+    try {
+      setError(null);
+      await StudentsAPI.delete(id);
+      
+      setStudents(prev => prev.filter(s => s.id !== id));
+      
+      // Refresh related data
+      await refreshClasses();
+      await refreshCourses();
+      
+    } catch (err: any) {
+      console.error('Erro ao deletar aluno:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao deletar aluno';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
   const getStudentById = (id: number) => students.find(s => s.id === id);
 
-  // Course actions
-  const addCourse = (courseData: Omit<Course, 'id'>) => {
-    const newId = Math.max(...courses.map(c => c.id), 0) + 1;
-    setCourses(prev => [...prev, { ...courseData, id: newId }]);
-  };
-
-  const updateCourse = (id: number, courseData: Partial<Course>) => {
-    const oldCourse = courses.find(c => c.id === id);
-    
-    setCourses(prev => prev.map(course => 
-      course.id === id ? { ...course, ...courseData } : course
-    ));
-
-    // Update students and classes if course title changed
-    if (oldCourse && courseData.title && courseData.title !== oldCourse.title) {
-      setStudents(prev => prev.map(student => 
-        student.course === oldCourse.title 
-          ? { ...student, course: courseData.title! }
-          : student
-      ));
-      
-      setClasses(prev => prev.map(cls => 
-        cls.course === oldCourse.title 
-          ? { ...cls, course: courseData.title! }
-          : cls
-      ));
+  const refreshCourses = async () => {
+    try {
+      const response = await CoursesAPI.list();
+      setCourses(response.data || []);
+      setError(null);
+    } catch (err: any) {
+      console.error('Erro ao carregar cursos:', err);
+      setError(err.response?.data?.message || 'Erro ao carregar cursos');
     }
   };
 
-  const deleteCourse = (id: number) => {
-    setCourses(prev => prev.filter(c => c.id !== id));
+  // Course actions
+  const addCourse = async (courseData: Omit<Course, 'id'>): Promise<Course> => {
+    try {
+      setError(null);
+      const response = await CoursesAPI.create(courseData);
+      const newCourse = response.data;
+      
+      setCourses(prev => [...prev, newCourse]);
+      
+      return newCourse;
+    } catch (err: any) {
+      console.error('Erro ao criar curso:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao criar curso';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
+  const updateCourse = async (id: number, courseData: Partial<Course>): Promise<void> => {
+    try {
+      setError(null);
+      await CoursesAPI.update(id, courseData);
+      
+      setCourses(prev => prev.map(course => 
+        course.id === id ? { ...course, ...courseData } : course
+      ));
+      
+      // Refresh related data
+      await refreshClasses();
+      await refreshStudents();
+      
+    } catch (err: any) {
+      console.error('Erro ao atualizar curso:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao atualizar curso';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
+  const deleteCourse = async (id: number): Promise<void> => {
+    try {
+      setError(null);
+      await CoursesAPI.delete(id);
+      
+      setCourses(prev => prev.filter(c => c.id !== id));
+      
+      // Refresh related data
+      await refreshClasses();
+      
+    } catch (err: any) {
+      console.error('Erro ao deletar curso:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao deletar curso';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
   };
 
   const getCourseById = (id: number) => courses.find(c => c.id === id);
 
-  // Class actions
-  const addClass = (classData: Omit<Class, 'id'>) => {
-    const newId = Math.max(...classes.map(c => c.id), 0) + 1;
-    setClasses(prev => [...prev, { ...classData, id: newId }]);
-  };
-
-  const updateClass = (id: number, classData: Partial<Class>) => {
-    const oldClass = classes.find(c => c.id === id);
-    
-    setClasses(prev => prev.map(cls => 
-      cls.id === id ? { ...cls, ...classData } : cls
-    ));
-
-    // Update students if class name changed
-    if (oldClass && classData.name && classData.name !== oldClass.name) {
-      setStudents(prev => prev.map(student => 
-        student.class === oldClass.name 
-          ? { ...student, class: classData.name! }
-          : student
-      ));
+  const refreshClasses = async () => {
+    try {
+      const response = await ClassesAPI.list();
+      setClasses(response.data || []);
+      setError(null);
+    } catch (err: any) {
+      console.error('Erro ao carregar turmas:', err);
+      setError(err.response?.data?.message || 'Erro ao carregar turmas');
     }
   };
 
-  const deleteClass = (id: number) => {
-    const classToDelete = classes.find(c => c.id === id);
-    
-    setClasses(prev => prev.filter(c => c.id !== id));
-    
-    // Update students who were in this class
-    if (classToDelete) {
-      setStudents(prev => prev.map(student => 
-        student.class === classToDelete.name 
-          ? { ...student, class: "", status: "Inativo" }
-          : student
+  // Class actions
+  const addClass = async (classData: Omit<Class, 'id'>): Promise<Class> => {
+    try {
+      setError(null);
+      const response = await ClassesAPI.create(classData);
+      const newClass = response.data;
+      
+      setClasses(prev => [...prev, newClass]);
+      
+      return newClass;
+    } catch (err: any) {
+      console.error('Erro ao criar turma:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao criar turma';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
+  const updateClass = async (id: number, classData: Partial<Class>): Promise<void> => {
+    try {
+      setError(null);
+      await ClassesAPI.update(id, classData);
+      
+      setClasses(prev => prev.map(cls => 
+        cls.id === id ? { ...cls, ...classData } : cls
       ));
+      
+      // Refresh related data
+      await refreshStudents();
+      
+    } catch (err: any) {
+      console.error('Erro ao atualizar turma:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao atualizar turma';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
+  const deleteClass = async (id: number): Promise<void> => {
+    try {
+      setError(null);
+      await ClassesAPI.delete(id);
+      
+      setClasses(prev => prev.filter(c => c.id !== id));
+      
+      // Refresh students data
+      await refreshStudents();
+      
+    } catch (err: any) {
+      console.error('Erro ao deletar turma:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao deletar turma';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
@@ -673,18 +730,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     classes,
     instructors,
     loading,
+    error,
     addStudent,
     updateStudent,
     deleteStudent,
     getStudentById,
+    refreshStudents,
     addCourse,
     updateCourse,
     deleteCourse,
     getCourseById,
+    refreshCourses,
     addClass,
     updateClass,
     deleteClass,
     getClassById,
+    refreshClasses,
     addInstructor,
     updateInstructor,
     deleteInstructor,
