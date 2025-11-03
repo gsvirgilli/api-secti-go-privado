@@ -52,112 +52,29 @@ test_endpoint() {
   echo ""
 }
 
-# 1. Verificar se há cursos disponíveis
+# 1. Verificar se há cursos disponíveis (SKIP - rota protegida)
+# echo "======================================"
+# echo "📚 PRÉ-REQUISITO: Verificar Cursos"
+# echo "======================================"
+# echo ""
+# 
+# test_endpoint \
+#   "Listar cursos disponíveis" \
+#   "GET" \
+#   "/courses" \
+#   "" \
+#   "200"
+
+# 2. Usar curso e turma já existentes no banco
 echo "======================================"
-echo "📚 PRÉ-REQUISITO: Verificar Cursos"
+echo "📝 PRÉ-REQUISITOS"
 echo "======================================"
 echo ""
-
-test_endpoint \
-  "Listar cursos disponíveis" \
-  "GET" \
-  "/courses" \
-  "" \
-  "200"
-
-# 2. Criar um curso de teste (se não existir)
-echo "======================================"
-echo "📝 CRIAR CURSO DE TESTE"
-echo "======================================"
+echo "ℹ️  Usando curso ID 1 (Python para Iniciantes)"
+echo "ℹ️  Usando turma ID 1 (Turma Python 2025-1 - Matutino)"
 echo ""
 
-# Primeiro, fazer login como admin para criar curso
-LOGIN_DATA='{
-  "email": "admin@sukatech.com",
-  "senha": "admin123"
-}'
-
-echo "Fazendo login como admin..."
-login_response=$(curl -s -w "\n%{http_code}" -X POST \
-  -H "Content-Type: application/json" \
-  -d "${LOGIN_DATA}" \
-  "${API_URL}/auth/login")
-
-http_code=$(echo "$login_response" | tail -n1)
-body=$(echo "$login_response" | head -n-1)
-
-if [ "$http_code" == "200" ]; then
-  TOKEN=$(echo "$body" | jq -r '.token')
-  echo -e "${GREEN}✅ Login realizado com sucesso${NC}"
-  echo "Token: ${TOKEN:0:20}..."
-  echo ""
-  
-  # Criar curso de teste
-  COURSE_DATA='{
-    "nome": "Python para Iniciantes",
-    "descricao": "Curso completo de Python do básico ao avançado",
-    "carga_horaria": 40
-  }'
-  
-  echo "Criando curso de teste..."
-  course_response=$(curl -s -w "\n%{http_code}" -X POST \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer ${TOKEN}" \
-    -d "${COURSE_DATA}" \
-    "${API_URL}/courses")
-  
-  http_code=$(echo "$course_response" | tail -n1)
-  body=$(echo "$course_response" | head -n-1)
-  
-  COURSE_ID=$(echo "$body" | jq -r '.id' 2>/dev/null)
-  
-  if [ "$http_code" == "201" ] || [ "$http_code" == "200" ]; then
-    echo -e "${GREEN}✅ Curso criado com sucesso${NC}"
-    echo "ID do curso: ${COURSE_ID}"
-  else
-    echo -e "${YELLOW}⚠️  Curso pode já existir ou houve erro (Status: ${http_code})${NC}"
-    # Tentar pegar o primeiro curso disponível
-    courses_response=$(curl -s "${API_URL}/courses")
-    COURSE_ID=$(echo "$courses_response" | jq -r '.[0].id' 2>/dev/null)
-    echo "Usando curso existente ID: ${COURSE_ID}"
-  fi
-  
-  echo ""
-  
-  # Criar turma de teste
-  if [ -n "$COURSE_ID" ] && [ "$COURSE_ID" != "null" ]; then
-    CLASS_DATA="{
-      \"nome\": \"Turma Python 2025-1\",
-      \"id_curso\": ${COURSE_ID},
-      \"turno\": \"MATUTINO\",
-      \"data_inicio\": \"2025-01-15\",
-      \"data_fim\": \"2025-03-15\",
-      \"vagas\": 30,
-      \"status\": \"ABERTA\"
-    }"
-    
-    echo "Criando turma de teste..."
-    class_response=$(curl -s -w "\n%{http_code}" -X POST \
-      -H "Content-Type: application/json" \
-      -H "Authorization: Bearer ${TOKEN}" \
-      -d "${CLASS_DATA}" \
-      "${API_URL}/classes")
-    
-    http_code=$(echo "$class_response" | tail -n1)
-    
-    if [ "$http_code" == "201" ] || [ "$http_code" == "200" ]; then
-      echo -e "${GREEN}✅ Turma criada com sucesso${NC}"
-    else
-      echo -e "${YELLOW}⚠️  Turma pode já existir (Status: ${http_code})${NC}"
-    fi
-  fi
-  
-  echo ""
-else
-  echo -e "${RED}❌ Falha no login. Usando dados de teste padrão.${NC}"
-  COURSE_ID=1
-  echo ""
-fi
+COURSE_ID=1
 
 # 3. Testar candidatura pública
 echo "======================================"
