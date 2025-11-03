@@ -64,22 +64,181 @@ router.get('/:id/public', CourseController.showPublic);
  * Todas as rotas abaixo requerem autenticação
  */
 
-// GET /api/courses/statistics - Obter estatísticas dos cursos
+/**
+ * @swagger
+ * /api/courses/statistics:
+ *   get:
+ *     summary: Obter estatísticas dos cursos
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Estatísticas dos cursos
+ *       401:
+ *         description: Não autenticado
+ */
 router.get('/statistics', isAuthenticated, CourseController.statistics);
 
-// GET /api/courses - Listar todos os cursos com filtros opcionais
+/**
+ * @swagger
+ * /api/courses:
+ *   get:
+ *     summary: Listar todos os cursos (autenticado)
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: nome
+ *         schema:
+ *           type: string
+ *         description: Filtrar por nome
+ *       - in: query
+ *         name: carga_horaria_min
+ *         schema:
+ *           type: integer
+ *         description: Carga horária mínima
+ *       - in: query
+ *         name: carga_horaria_max
+ *         schema:
+ *           type: integer
+ *         description: Carga horária máxima
+ *     responses:
+ *       200:
+ *         description: Lista de cursos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Course'
+ *       401:
+ *         description: Não autenticado
+ *   post:
+ *     summary: Criar novo curso
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - nome
+ *               - carga_horaria
+ *             properties:
+ *               nome:
+ *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 100
+ *                 example: Python Fundamentals
+ *               descricao:
+ *                 type: string
+ *                 example: Curso completo de Python
+ *               carga_horaria:
+ *                 type: integer
+ *                 minimum: 1
+ *                 example: 40
+ *     responses:
+ *       201:
+ *         description: Curso criado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Course'
+ *       400:
+ *         description: Dados inválidos
+ *       401:
+ *         description: Não autenticado
+ */
 router.get('/', isAuthenticated, validateCourseFilters, CourseController.index);
-
-// GET /api/courses/:id - Buscar curso específico por ID
-router.get('/:id', isAuthenticated, validateGetCourse, CourseController.show);
-
-// POST /api/courses - Criar novo curso
 router.post('/', isAuthenticated, validateCreateCourse, CourseController.store);
 
-// PUT /api/courses/:id - Atualizar curso
+/**
+ * @swagger
+ * /api/courses/{id}:
+ *   get:
+ *     summary: Buscar curso por ID (autenticado)
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID do curso
+ *     responses:
+ *       200:
+ *         description: Dados do curso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Course'
+ *       404:
+ *         description: Curso não encontrado
+ *       401:
+ *         description: Não autenticado
+ *   put:
+ *     summary: Atualizar curso
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID do curso
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome:
+ *                 type: string
+ *               descricao:
+ *                 type: string
+ *               carga_horaria:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Curso atualizado com sucesso
+ *       404:
+ *         description: Curso não encontrado
+ *       401:
+ *         description: Não autenticado
+ *   delete:
+ *     summary: Deletar curso (verifica se não há turmas)
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID do curso
+ *     responses:
+ *       200:
+ *         description: Curso deletado com sucesso
+ *       400:
+ *         description: Curso possui turmas associadas
+ *       404:
+ *         description: Curso não encontrado
+ *       401:
+ *         description: Não autenticado
+ */
+router.get('/:id', isAuthenticated, validateGetCourse, CourseController.show);
 router.put('/:id', isAuthenticated, validateUpdateCourse, CourseController.update);
-
-// DELETE /api/courses/:id - Deletar curso
 router.delete('/:id', isAuthenticated, validateGetCourse, CourseController.destroy);
 
 export default router;
