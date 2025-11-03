@@ -31,4 +31,29 @@ InstructorClass.init({
   timestamps: false, // Geralmente tabelas de junção não precisam de timestamps
 });
 
+// Associações
+InstructorClass.belongsTo(Instructor, {
+  foreignKey: 'id_instrutor',
+  as: 'instrutor'
+});
+
+InstructorClass.belongsTo(Class, {
+  foreignKey: 'id_turma',
+  as: 'turma'
+});
+
+Instructor.belongsToMany(Class, {
+  through: InstructorClass,
+  foreignKey: 'id_instrutor',
+  otherKey: 'id_turma',
+  as: 'turmas'
+});
+
+Class.belongsToMany(Instructor, {
+  through: InstructorClass,
+  foreignKey: 'id_turma',
+  otherKey: 'id_instrutor',
+  as: 'instrutores'
+});
+
 export default InstructorClass;

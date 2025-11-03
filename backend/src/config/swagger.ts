@@ -324,6 +324,45 @@ const options: swaggerJsdoc.Options = {
               format: 'date-time'
             }
           }
+        },
+        Instructor: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'integer',
+              description: 'ID do instrutor'
+            },
+            cpf: {
+              type: 'string',
+              pattern: '^\\d{11}$',
+              description: 'CPF com 11 dígitos'
+            },
+            nome: {
+              type: 'string',
+              minLength: 3,
+              maxLength: 100,
+              description: 'Nome completo do instrutor'
+            },
+            email: {
+              type: 'string',
+              format: 'email',
+              description: 'Email único do instrutor'
+            },
+            especialidade: {
+              type: 'string',
+              maxLength: 100,
+              nullable: true,
+              description: 'Área de especialidade do instrutor'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time'
+            }
+          }
         }
       }
     },
@@ -352,6 +391,10 @@ const options: swaggerJsdoc.Options = {
       {
         name: 'Students',
         description: 'Gestão de alunos'
+      },
+      {
+        name: 'Instructors',
+        description: 'Gestão de instrutores e atribuição a turmas'
       },
       {
         name: 'Enrollments',
