@@ -83,18 +83,21 @@ const CourseFormModal = ({ isOpen, onClose, courseData, mode }: CourseFormModalP
     }
 
     try {
-      // Mapear campos do frontend para o formato do backend
-      const backendData = {
-        nome: formData.title,
-        carga_horaria: parseInt(formData.duration.replace(/\D/g, '')) || 0, // Extrai números da string
-        descricao: formData.description || undefined,
-        ativo: formData.status === "Ativo"
+      // AppContext agora faz a transformação internamente, então enviar dados no formato frontend
+      const courseDataForContext = {
+        title: formData.title,
+        duration: formData.duration,
+        description: formData.description,
+        status: formData.status,
+        students: courseData?.students || 0,
+        level: courseData?.level || 'Intermediário',
+        color: courseData?.color || 'bg-blue-500'
       };
 
       if (mode === "create") {
-        await addCourse(backendData);
+        await addCourse(courseDataForContext);
       } else if (courseData) {
-        await updateCourse(courseData.id, backendData);
+        await updateCourse(courseData.id, courseDataForContext);
       }
 
       const action = mode === "create" ? "CRIADO" : "ATUALIZADO";

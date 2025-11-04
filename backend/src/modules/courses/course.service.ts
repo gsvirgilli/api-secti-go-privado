@@ -53,9 +53,26 @@ class CourseService {
     // Buscar total de registros
     const total = await Course.count({ where: whereClause });
 
+    // Importar Student para o include
+    const Student = (await import('../students/student.model.js')).default;
+
     // Buscar cursos com paginação
     const data = await Course.findAll({
       where: whereClause,
+      include: [
+        {
+          model: Class,
+          as: 'turmas',
+          attributes: ['id', 'nome', 'vagas', 'status'],
+          include: [
+            {
+              model: Student,
+              as: 'alunos',
+              attributes: ['id', 'nome', 'status']
+            }
+          ]
+        }
+      ],
       order: [['nome', 'ASC']],
       limit,
       offset: calculateOffset(page, limit)

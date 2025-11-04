@@ -7,13 +7,16 @@ import { sequelize } from '../../config/database.js';
  */
 class Student extends Model {
   declare id: number;
-  declare candidato_id: number;
-  declare usuario_id: number;
+  declare candidato_id: number | null;
+  declare usuario_id: number | null;
   declare matricula: string;
   declare cpf: string;
   declare nome: string;
   declare email: string;
-  declare turma_id: number;
+  declare telefone: string | null;
+  declare data_nascimento: Date | null;
+  declare endereco: string | null;
+  declare turma_id: number | null;
   declare status: 'ativo' | 'trancado' | 'concluido' | 'desistente';
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -27,7 +30,7 @@ Student.init({
   },
   candidato_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true, // Permitir null para cadastro direto
     unique: true,
     references: {
       model: 'candidatos',
@@ -36,7 +39,7 @@ Student.init({
   },
   usuario_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true, // Permitir null para cadastro direto
     unique: true,
     references: {
       model: 'usuarios',
@@ -67,9 +70,21 @@ Student.init({
     allowNull: false,
     unique: true,
   },
+  telefone: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+  },
+  data_nascimento: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  endereco: {
+    type: DataTypes.STRING(200),
+    allowNull: true,
+  },
   turma_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true, // Permitir null para cadastro direto
     references: {
       model: 'turmas',
       key: 'id'
@@ -96,8 +111,13 @@ Student.init({
     {
       unique: true,
       fields: ['usuario_id']
+    },
+    {
+      fields: ['turma_id']
     }
   ]
 });
+
+// Associações serão configuradas em src/models/associations.ts
 
 export default Student;

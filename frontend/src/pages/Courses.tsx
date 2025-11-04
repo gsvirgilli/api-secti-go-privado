@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DataBot } from "@/components/ui/DataBot";
 import { Plus, Search, Clock, Users, GraduationCap, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,11 +16,54 @@ const Courses = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [displayedCourses, setDisplayedCourses] = useState<Course[]>([]);
+  const [itemsToShow, setItemsToShow] = useState(10);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const filteredCourses = courses.filter(course =>
-    course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    course.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Atualizar cursos exibidos quando courses mudar ou quando itemsToShow mudar
+  useEffect(() => {
+    if (!isSearching) {
+      setDisplayedCourses(courses.slice(0, itemsToShow));
+    }
+  }, [courses, itemsToShow, isSearching]);
+
+  // Buscar cursos (localmente por enquanto, depois pode ser API)
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    
+    if (value.trim() === "") {
+      // Se limpar a pesquisa, volta ao estado inicial
+      setIsSearching(false);
+      setDisplayedCourses(courses.slice(0, itemsToShow));
+    } else {
+      // Pesquisa em TODOS os cursos do contexto
+      setIsSearching(true);
+      const filtered = courses.filter(course =>
+        course.title.toLowerCase().includes(value.toLowerCase()) ||
+        course.description.toLowerCase().includes(value.toLowerCase())
+      );
+      setDisplayedCourses(filtered);
+    }
+  };
+
+  const handleLoadMore = () => {
+    const newItemsToShow = itemsToShow + 10;
+    setItemsToShow(newItemsToShow);
+    setDisplayedCourses(courses.slice(0, newItemsToShow));
+  };
+
+  const hasMore = !isSearching && itemsToShow < courses.length;
+
+  // Debug
+  console.log('📊 Courses Debug:', {
+    totalCourses: courses.length,
+    itemsToShow,
+    displayedCoursesLength: displayedCourses.length,
+    isSearching,
+    hasMore,
+    firstCourseTitles: courses.slice(0, 3).map(c => c.title),
+    displayedTitles: displayedCourses.slice(0, 3).map(c => c.title)
+  });
 
   const handleEditCourse = (course: Course) => {
     console.log('Editar curso:', course);
@@ -77,17 +120,35 @@ const Courses = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Pesquisar cursos..."
+            placeholder="Pesquisar cursos em todos os registros..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             className="pl-10"
           />
         </div>
       </div>
 
+      {/* Info */}
+      {displayedCourses.length > 0 && (
+        <div className="text-sm text-muted-foreground">
+          {isSearching 
+            ? `${displayedCourses.length} curso(s) encontrado(s)`
+            : `Mostrando ${displayedCourses.length} de ${courses.length} curso(s)`
+          }
+        </div>
+      )}
+
       {/* Courses Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCourses.map((course) => (
+        {displayedCourses.length === 0 ? (
+          <div className="col-span-full text-center py-12">
+            <GraduationCap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">
+              {searchTerm ? "Nenhum curso encontrado com este termo" : "Nenhum curso cadastrado"}
+            </p>
+          </div>
+        ) : (
+          displayedCourses.map((course) => (
           <Card key={course.id} className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
@@ -164,8 +225,24 @@ const Courses = () => {
               </div>
             </CardContent>
           </Card>
-        ))}
+        ))
+        )}
       </div>
+
+      {/* Load More Button */}
+      {hasMore && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={handleLoadMore}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Carregar Mais 10 Cursos ({courses.length - itemsToShow} restantes)
+          </Button>
+        </div>
+      )}
 
       <CourseFormModal
         isOpen={isFormModalOpen}

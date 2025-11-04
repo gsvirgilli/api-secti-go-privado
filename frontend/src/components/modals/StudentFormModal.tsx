@@ -212,12 +212,13 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="course">Curso</Label>
-              <Select value={formData.course} onValueChange={(value) => handleInputChange("course", value)}>
+              <Label htmlFor="course">Curso (opcional)</Label>
+              <Select value={formData.course || "none"} onValueChange={(value) => handleInputChange("course", value === "none" ? "" : value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o curso" />
+                  <SelectValue placeholder="Selecione o curso (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">Nenhum curso</SelectItem>
                   {courses.map((course) => (
                     <SelectItem key={course.id} value={course.title}>
                       {course.title}
@@ -228,12 +229,13 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="class">Turma</Label>
-              <Select value={formData.class} onValueChange={(value) => handleInputChange("class", value)}>
+              <Label htmlFor="class">Turma (opcional)</Label>
+              <Select value={formData.class || "none"} onValueChange={(value) => handleInputChange("class", value === "none" ? "" : value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione a turma" />
+                  <SelectValue placeholder="Selecione a turma (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">Nenhuma turma</SelectItem>
                   {classes.map((classItem) => (
                     <SelectItem key={classItem.id} value={classItem.name}>
                       {classItem.name} - {classItem.course}

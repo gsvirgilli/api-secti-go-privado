@@ -27,6 +27,9 @@ const Classes = () => {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   
+  // Pesquisa por texto
+  const [searchTerm, setSearchTerm] = useState("");
+  
   // Filtros avançados
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [courseFilter, setCourseFilter] = useState<string>("all");
@@ -60,7 +63,14 @@ const Classes = () => {
 
   // Filtros e ordenação
   const filteredAndSortedClasses = useMemo(() => {
-    let filtered = classes.filter(classItem => {
+    const filtered = classes.filter(classItem => {
+      // Filtro de pesquisa por texto (nome, curso, instrutor)
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = searchTerm === "" || 
+        classItem.name.toLowerCase().includes(searchLower) ||
+        classItem.course.toLowerCase().includes(searchLower) ||
+        classItem.instructor.toLowerCase().includes(searchLower);
+      
       const matchesStatus = statusFilter === "all" || classItem.status === statusFilter;
       const matchesCourse = courseFilter === "all" || classItem.course === courseFilter;
       const matchesInstructor = instructorFilter === "all" || classItem.instructor === instructorFilter;
@@ -102,20 +112,20 @@ const Classes = () => {
         }
       }
 
-      return matchesStatus && matchesCourse && matchesInstructor && matchesCapacity && matchesTemporal;
+      return matchesSearch && matchesStatus && matchesCourse && matchesInstructor && matchesCapacity && matchesTemporal;
     });
 
     // Ordenação
     filtered.sort((a, b) => {
-      let aValue: any = a[sortField];
-      let bValue: any = b[sortField];
+      let aValue: string | number | Date = a[sortField];
+      let bValue: string | number | Date = b[sortField];
       
-      if (sortField === "startDate") {
+      if (sortField === "startDate" && typeof aValue === "string" && typeof bValue === "string") {
         aValue = new Date(aValue.split('/').reverse().join('-'));
         bValue = new Date(bValue.split('/').reverse().join('-'));
       }
       
-      if (typeof aValue === "string") {
+      if (typeof aValue === "string" && typeof bValue === "string") {
         aValue = aValue.toLowerCase();
         bValue = bValue.toLowerCase();
       }
@@ -128,7 +138,7 @@ const Classes = () => {
     });
 
     return filtered;
-  }, [classes, statusFilter, courseFilter, instructorFilter, capacityFilter, sortField, sortOrder]);
+  }, [classes, searchTerm, statusFilter, courseFilter, instructorFilter, capacityFilter, temporalFilter, sortField, sortOrder]);
 
   // Paginação
   const totalPages = Math.ceil(filteredAndSortedClasses.length / itemsPerPage);
@@ -363,6 +373,21 @@ const Classes = () => {
           ))}
         </div>
       )}
+
+      {/* Pesquisa */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar turmas por nome, curso ou instrutor..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filtros */}
       <Card>

@@ -286,6 +286,55 @@ router.get(
   StudentController.findById
 );
 
+/**
+ * @swagger
+ * /api/students:
+ *   post:
+ *     summary: Criar um novo aluno
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - nome
+ *               - cpf
+ *               - email
+ *             properties:
+ *               nome:
+ *                 type: string
+ *               cpf:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               telefone:
+ *                 type: string
+ *               data_nascimento:
+ *                 type: string
+ *               endereco:
+ *                 type: string
+ *               id_curso:
+ *                 type: integer
+ *               id_turma:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Aluno criado com sucesso
+ *       400:
+ *         description: Erro de validação
+ *       401:
+ *         description: Não autenticado
+ */
+router.post(
+  '/',
+  isAuthenticated,
+  StudentController.create
+);
+
 router.put(
   '/:id',
   isAuthenticated,
