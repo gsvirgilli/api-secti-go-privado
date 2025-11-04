@@ -180,8 +180,8 @@ export const listClassFiltersSchema = z.object({
  */
 export const updateClassStatusSchema = z.object({
   status: z
-    .enum(['ATIVA', 'ENCERRADA', 'CANCELADA'], {
-      message: 'Status deve ser ATIVA, ENCERRADA ou CANCELADA'
+    .enum(['ATIVA', 'PLANEJADA', 'ENCERRADA', 'CANCELADA'], {
+      message: 'Status deve ser ATIVA, PLANEJADA, ENCERRADA ou CANCELADA'
     })
 });
 

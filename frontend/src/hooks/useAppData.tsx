@@ -20,21 +20,8 @@ export const useAppData = () => {
 
   const classStats = {
     total: context.classes.length,
-    // "Ativo" representa turmas em andamento
-    active: context.classes.filter(c => {
-      if (c.status !== "Ativo") return false;
-      // Considerar "ativo" se já começou
-      const today = new Date();
-      const startDate = new Date(c.startDate.split('/').reverse().join('-'));
-      return startDate <= today;
-    }).length,
-    // "Planejada" = turmas ativas mas que ainda não começaram
-    planned: context.classes.filter(c => {
-      if (c.status !== "Ativo") return false;
-      const today = new Date();
-      const startDate = new Date(c.startDate.split('/').reverse().join('-'));
-      return startDate > today;
-    }).length,
+    active: context.classes.filter(c => c.status === "Ativo").length,
+    planned: context.classes.filter(c => c.status === "Planejada").length,
     completed: context.classes.filter(c => c.status === "Concluída").length,
     cancelled: context.classes.filter(c => c.status === "Cancelada").length,
   };

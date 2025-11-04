@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,33 @@ interface ClassFormModalProps {
 const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProps) => {
   const { toast } = useToast();
   const { addClass, updateClass, courses, instructors } = useAppData();
+  
+  // Converter dd/mm/yyyy para yyyy-MM-dd (para input type="date")
+  const convertToInputFormat = (date: string) => {
+    if (!date) return "";
+    const parts = date.split('/');
+    if (parts.length === 3) {
+      const day = parts[0].padStart(2, '0');
+      const month = parts[1].padStart(2, '0');
+      const year = parts[2];
+      return `${year}-${month}-${day}`;
+    }
+    return date;
+  };
+  
+  // Converter yyyy-MM-dd para dd/mm/yyyy (para backend)
+  const convertToDisplayFormat = (date: string) => {
+    if (!date) return "";
+    const parts = date.split('-');
+    if (parts.length === 3) {
+      const year = parts[0];
+      const month = parts[1].padStart(2, '0');
+      const day = parts[2].padStart(2, '0');
+      return `${day}/${month}/${year}`;
+    }
+    return date;
+  };
+  
   const [formData, setFormData] = useState({
     name: classData?.name || "",
     course: classData?.course || "",
@@ -28,11 +55,47 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
     schedule: classData?.schedule || "",
     duration: classData?.duration || "",
     status: classData?.status || "Planejada",
-    startDate: classData?.startDate || "",
-    endDate: classData?.endDate || "",
+    startDate: convertToInputFormat(classData?.startDate || ""),
+    endDate: convertToInputFormat(classData?.endDate || ""),
     enrolled: classData?.enrolled || 0,
     students: classData?.students || [],
   });
+
+  // Atualizar formData quando classData mudar (modo edição)
+  useEffect(() => {
+    if (classData && mode === "edit") {
+      setFormData({
+        name: classData.name || "",
+        course: classData.course || "",
+        instructor: classData.instructor || "",
+        instructorId: classData.instructorId || 0,
+        capacity: classData.capacity || 0,
+        schedule: classData.schedule || "",
+        duration: classData.duration || "",
+        status: classData.status || "Planejada",
+        startDate: convertToInputFormat(classData.startDate || ""),
+        endDate: convertToInputFormat(classData.endDate || ""),
+        enrolled: classData.enrolled || 0,
+        students: classData.students || [],
+      });
+    } else if (mode === "create") {
+      // Resetar form ao criar
+      setFormData({
+        name: "",
+        course: "",
+        instructor: "",
+        instructorId: 0,
+        capacity: 0,
+        schedule: "",
+        duration: "",
+        status: "Planejada",
+        startDate: "",
+        endDate: "",
+        enrolled: 0,
+        students: [],
+      });
+    }
+  }, [classData, mode]);
 
   const handleInputChange = (field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -51,10 +114,17 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
     }
 
     try {
+      // Converter datas de volta para formato dd/mm/yyyy antes de enviar (ou vazio se não informado)
+      const dataToSend = {
+        ...formData,
+        startDate: formData.startDate ? convertToDisplayFormat(formData.startDate) : "",
+        endDate: formData.endDate ? convertToDisplayFormat(formData.endDate) : ""
+      };
+      
       if (mode === "create") {
-        await addClass(formData);
+        await addClass(dataToSend);
       } else if (classData) {
-        await updateClass(classData.id, formData);
+        await updateClass(classData.id, dataToSend);
       }
 
       const action = mode === "create" ? "CRIADA" : "ATUALIZADA";
@@ -177,23 +247,51 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="startDate">Data de Início</Label>
-              <Input
-                id="startDate"
-                value={formData.startDate}
-                onChange={(e) => handleInputChange("startDate", e.target.value)}
-                placeholder="dd/mm/aaaa"
-              />
+              <Label htmlFor="startDate">Data de Início (opcional)</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) => handleInputChange("startDate", e.target.value)}
+                  className="flex-1"
+                />
+                {formData.startDate && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleInputChange("startDate", "")}
+                    title="Limpar data"
+                  >
+                    ✕
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="endDate">Data de Término</Label>
-              <Input
-                id="endDate"
-                value={formData.endDate}
-                onChange={(e) => handleInputChange("endDate", e.target.value)}
-                placeholder="dd/mm/aaaa"
-              />
+              <Label htmlFor="endDate">Data de Término (opcional)</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) => handleInputChange("endDate", e.target.value)}
+                  className="flex-1"
+                />
+                {formData.endDate && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleInputChange("endDate", "")}
+                    title="Limpar data"
+                  >
+                    ✕
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 

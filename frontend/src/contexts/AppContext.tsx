@@ -646,8 +646,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const frontendClasses: Class[] = backendClasses.map((bc: any) => {
           const formatDate = (date: string | null) => {
             if (!date) return '';
-            const d = new Date(date);
-            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+            // Se já está em formato dd/mm/yyyy, retorna direto
+            if (date.includes('/')) return date;
+            // Se está em formato yyyy-MM-dd, converte sem usar new Date para evitar problema de timezone
+            const parts = date.split('T')[0].split('-'); // Remove hora se tiver e separa
+            if (parts.length === 3) {
+              return `${parts[2]}/${parts[1]}/${parts[0]}`; // dd/mm/yyyy
+            }
+            return date;
           };
           
           // Transformar alunos da turma
@@ -670,6 +676,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           // Mapear status do backend para frontend
           const statusMap: Record<string, string> = {
             'ATIVA': 'Ativo',
+            'PLANEJADA': 'Planejada',
             'ENCERRADA': 'Concluída',
             'CANCELADA': 'Cancelada'
           };
@@ -1218,8 +1225,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const frontendClasses: Class[] = backendClasses.map((bc: any) => {
         const formatDate = (date: string | null) => {
           if (!date) return '';
-          const d = new Date(date);
-          return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+          // Se já está em formato dd/mm/yyyy, retorna direto
+          if (date.includes('/')) return date;
+          // Se está em formato yyyy-MM-dd, converte sem usar new Date para evitar problema de timezone
+          const parts = date.split('T')[0].split('-'); // Remove hora se tiver e separa
+          if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`; // dd/mm/yyyy
+          }
+          return date;
         };
         // Transformar alunos da turma (se houver) e ajustar contador
         const students = (bc.alunos || []).map((aluno: any) => ({
@@ -1241,6 +1254,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         // Mapear status do backend para frontend
         const statusMap: Record<string, string> = {
           'ATIVA': 'Ativo',
+          'PLANEJADA': 'Planejada',
           'ENCERRADA': 'Concluída',
           'CANCELADA': 'Cancelada'
         };
@@ -1312,17 +1326,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (classData.name) backendData.nome = classData.name;
       // Converter datas no formato dd/mm/yyyy para ISO
       const parseDate = (d?: string) => {
-        if (!d) return undefined;
+        if (!d || d.trim() === '') return null; // Retorna null para campo vazio
         const parts = d.split('/');
-        if (parts.length !== 3) return undefined;
+        if (parts.length !== 3) return null;
         const iso = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
         return iso;
       };
 
       const dataInicio = parseDate(classData.startDate as string | undefined);
       const dataFim = parseDate(classData.endDate as string | undefined);
-      if (dataInicio) backendData.data_inicio = dataInicio;
-      if (dataFim) backendData.data_fim = dataFim;
+      // Sempre envia as datas (null limpa o campo no backend)
+      if (dataInicio !== undefined) backendData.data_inicio = dataInicio;
+      if (dataFim !== undefined) backendData.data_fim = dataFim;
 
       // Map course title to id_curso if possível
       if (classData.course) {
@@ -1335,6 +1350,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       // Only call update if we have backend-updatable fields
       if (Object.keys(backendData).length > 0) {
+        console.log('🔄 Atualizando campos da turma:', backendData);
         await ClassesAPI.update(id, backendData);
       }
 
@@ -1343,13 +1359,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         // Map frontend display status to backend enum
         const statusMap: Record<string, string> = {
           'Ativo': 'ATIVA',
-          'Planejada': 'ATIVA', // backend doesn't have 'Planejada', map to ATIVA
+          'Planejada': 'PLANEJADA',
           'Concluída': 'ENCERRADA',
           'Cancelada': 'CANCELADA'
         };
-        const mapped = statusMap[classData.status] || undefined;
-        if (mapped) {
-          await ClassesAPI.updateStatus(id, { status: mapped });
+        const mapped = statusMap[classData.status];
+        
+        // Get current class to check if status actually changed
+        const currentClass = classes.find(c => c.id === id);
+        const currentBackendStatus = currentClass ? statusMap[currentClass.status] : undefined;
+        
+        if (mapped && mapped !== currentBackendStatus) {
+          console.log('🔄 Atualizando status da turma:', { id, from: currentBackendStatus, to: mapped });
+          try {
+            await ClassesAPI.updateStatus(id, { status: mapped });
+            console.log('✅ Status atualizado com sucesso');
+          } catch (statusError) {
+            console.error('❌ Erro ao atualizar status:', (statusError as any)?.response?.data);
+            // Don't throw - continue with other updates
+          }
         }
       }
 

@@ -363,21 +363,21 @@ class ClassService {
   /**
    * Altera o status de uma turma
    */
-  async updateStatus(id: number, status: 'ATIVA' | 'ENCERRADA' | 'CANCELADA') {
+  async updateStatus(id: number, status: 'ATIVA' | 'PLANEJADA' | 'ENCERRADA' | 'CANCELADA') {
     const turma = await this.findById(id);
     const statusAnterior = turma.status;
 
     // Validações específicas por tipo de transição
     if (status === 'ENCERRADA') {
-      // Pode encerrar turma ATIVA
-      if (turma.status !== 'ATIVA') {
-        throw new Error('Apenas turmas ATIVAS podem ser encerradas');
+      // Pode encerrar turma ATIVA ou PLANEJADA
+      if (turma.status !== 'ATIVA' && turma.status !== 'PLANEJADA') {
+        throw new Error('Apenas turmas ATIVAS ou PLANEJADAS podem ser encerradas');
       }
     }
 
     if (status === 'CANCELADA') {
-      // Pode cancelar turma ATIVA
-      if (turma.status !== 'ATIVA') {
+      // Pode cancelar turma ATIVA ou PLANEJADA
+      if (turma.status !== 'ATIVA' && turma.status !== 'PLANEJADA') {
         throw new Error('Apenas turmas ATIVAS podem ser canceladas');
       }
     }
@@ -477,8 +477,8 @@ class ClassService {
       throw new Error('Instrutor não encontrado');
     }
 
-    // @ts-ignore - Sequelize association method
-    await turma.addInstrutor(instructor);
+    // @ts-ignore - Sequelize association method (addInstrutores é gerado automaticamente pelo belongsToMany)
+    await turma.addInstrutores(instructor);
 
     // Retornar turma atualizada com instrutores
     return await this.findById(classId);
@@ -490,8 +490,8 @@ class ClassService {
   async removeInstructor(classId: number, instructorId: number) {
     const turma = await this.findById(classId);
 
-    // @ts-ignore - Sequelize association method
-    await turma.removeInstrutor(instructorId);
+    // @ts-ignore - Sequelize association method (removeInstrutores é gerado automaticamente pelo belongsToMany)
+    await turma.removeInstrutores(instructorId);
 
     return true;
   }
