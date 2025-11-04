@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { StudentsAPI, CoursesAPI, ClassesAPI } from '@/lib/api';
+import { StudentsAPI, CoursesAPI, ClassesAPI, InstructorsAPI } from '@/lib/api';
 
 // Types
 export interface Student {
@@ -35,6 +35,7 @@ export interface Class {
   name: string;
   course: string;
   instructor: string;
+  instructorId?: number; // ID do instrutor associado
   capacity: number;
   enrolled: number;
   schedule: string;
@@ -98,9 +99,9 @@ interface AppContextType {
   refreshClasses: () => Promise<void>;
   
   // Instructor actions
-  addInstructor: (instructor: Omit<Instructor, 'id'>) => void;
-  updateInstructor: (id: number, instructor: Partial<Instructor>) => void;
-  deleteInstructor: (id: number) => void;
+  addInstructor: (instructor: Omit<Instructor, 'id'>) => Promise<void>;
+  updateInstructor: (id: number, instructor: Partial<Instructor>) => Promise<void>;
+  deleteInstructor: (id: number) => Promise<void>;
   getInstructorById: (id: number) => Instructor | undefined;
   
   // Utils
@@ -505,10 +506,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         };
         
         // Carregar dados (com limit maior para pegar todos)
-        const [studentsRes, coursesRes, classesRes] = await Promise.all([
+        const [studentsRes, coursesRes, classesRes, instructorsRes] = await Promise.all([
           StudentsAPI.list({ limit: 100, page: 1 }).catch(() => ({ data: [] })),
           loadAllCourses().catch(() => ({ data: { data: { data: [] } } })),
-          ClassesAPI.list({ limit: 100, page: 1 }).catch(() => ({ data: [] }))
+          ClassesAPI.list({ limit: 100, page: 1 }).catch(() => ({ data: [] })),
+          InstructorsAPI.list().catch(() => ({ data: [] }))
         ]);
 
         console.log('📦 CoursesRes recebido:', coursesRes);
@@ -538,6 +540,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
           };
           
+          // Converter status do backend (minúsculo) para frontend (primeira letra maiúscula)
+          const formatStatus = (status: string) => {
+            if (!status) return 'Ativo';
+            return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+          };
+          
           return {
             id: bs.id,
             name: bs.nome || '',
@@ -547,8 +555,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             birthDate: formatDate(bs.data_nascimento),
             address: bs.endereco || '',
             enrollmentDate: formatDate(bs.createdAt),
-            status: bs.status || 'Ativo',
-            course: bs.curso?.nome || '',
+            status: formatStatus(bs.status),
+            course: bs.turma?.curso?.nome || '', // Curso vem através da turma
             class: bs.turma?.nome || '',
             progress: 0,
             attendance: 0,
@@ -598,8 +606,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             description: bc.descricao || '',
             duration: `${bc.carga_horaria}h`,
             students: totalStudents,
-            level: 'Intermediário',
-            status: bc.ativo !== false ? 'Ativo' : 'Inativo',
+            level: ((): string => {
+              const map: Record<string, string> = {
+                'INICIANTE': 'Iniciante',
+                'INTERMEDIARIO': 'Intermediário',
+                'AVANCADO': 'Avançado'
+              };
+              return bc.nivel ? (map[bc.nivel] || 'Intermediário') : 'Intermediário';
+            })(),
+            status: ((): string => {
+              const map: Record<string, string> = {
+                'ATIVO': 'Ativo',
+                'INATIVO': 'Inativo',
+                'EM_DESENVOLVIMENTO': 'Em Desenvolvimento'
+              };
+              return bc.status ? (map[bc.status] || 'Ativo') : 'Ativo';
+            })(),
             color: 'bg-blue-500'
           };
         });
@@ -637,16 +659,33 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             status: aluno.status
           }));
           
+          // Pegar primeiro instrutor (se houver)
+          const instructor = bc.instrutores && bc.instrutores.length > 0 
+            ? bc.instrutores[0].nome 
+            : 'A definir';
+          const instructorId = bc.instrutores && bc.instrutores.length > 0 
+            ? bc.instrutores[0].id 
+            : undefined;
+          
+          // Mapear status do backend para frontend
+          const statusMap: Record<string, string> = {
+            'ATIVA': 'Ativo',
+            'ENCERRADA': 'Concluída',
+            'CANCELADA': 'Cancelada'
+          };
+          const frontendStatus = bc.status ? (statusMap[bc.status] || 'Planejada') : 'Planejada';
+          
           return {
             id: bc.id,
             name: bc.nome || '',
             course: bc.curso?.nome || bc.id_curso?.toString() || '',
-            instructor: 'A definir',
+            instructor: instructor,
+            instructorId: instructorId,
             capacity: bc.vagas || 0,
             enrolled: students.length,
             schedule: bc.turno || '',
             duration: '6 meses',
-            status: bc.status || 'Planejada',
+            status: frontendStatus,
             startDate: formatDate(bc.data_inicio),
             endDate: formatDate(bc.data_fim),
             students: students
@@ -656,7 +695,48 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         console.log('✅ Classes no loadData:', frontendClasses);
         setClasses(frontendClasses);
         
-        setInstructors(initialInstructors); // Por enquanto, usar mock para instrutores
+        // Transformar instructors do backend para formato frontend
+        let backendInstructors = [];
+        if (instructorsRes.data && typeof instructorsRes.data === 'object') {
+          if (Array.isArray(instructorsRes.data)) {
+            backendInstructors = instructorsRes.data;
+          } else if (Array.isArray(instructorsRes.data.data)) {
+            backendInstructors = instructorsRes.data.data;
+          }
+        }
+        
+        const frontendInstructors: Instructor[] = backendInstructors.map((bi: any) => {
+          const formatDate = (date: string | null) => {
+            if (!date) return '';
+            const d = new Date(date);
+            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+          };
+          
+          // Mapear turmas associadas
+          const classes = (bi.turmas || []).map((turma: any) => ({
+            id: turma.id,
+            name: turma.nome,
+            status: turma.status,
+            courseName: turma.curso?.nome || ''
+          }));
+          
+          return {
+            id: bi.id,
+            name: bi.nome || '',
+            cpf: bi.cpf || '',
+            email: bi.email || '',
+            phone: bi.telefone || '',
+            birthDate: formatDate(bi.data_nascimento),
+            address: bi.endereco || '',
+            specialization: bi.especialidade || '',
+            experience: bi.experiencia || '',
+            status: bi.status || 'Ativo',
+            classes: classes
+          };
+        });
+        
+        console.log('✅ Instrutores carregados:', frontendInstructors);
+        setInstructors(frontendInstructors);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
         // Em caso de erro, usar arrays vazios ao invés de dados mockados
@@ -696,6 +776,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
         };
         
+        // Converter status do backend (minúsculo) para frontend (primeira letra maiúscula)
+        const formatStatus = (status: string) => {
+          if (!status) return 'Ativo';
+          return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+        };
+        
         return {
           id: bs.id,
           name: bs.nome || '',
@@ -705,7 +791,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           birthDate: formatDate(bs.data_nascimento),
           address: bs.endereco || '',
           enrollmentDate: formatDate(bs.createdAt),
-          status: bs.status || 'Ativo',
+          status: formatStatus(bs.status),
           course: bs.turma?.curso?.nome || '',
           class: bs.turma?.nome || '',
           progress: 0,
@@ -771,6 +857,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
       };
       
+      // Converter status do backend (minúsculo) para frontend (primeira letra maiúscula)
+      const formatStatus = (status: string) => {
+        if (!status) return 'Ativo';
+        return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+      };
+      
       const newStudent: Student = {
         id: backendStudent.id,
         name: backendStudent.nome,
@@ -780,8 +872,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         birthDate: formatDate(backendStudent.data_nascimento),
         address: backendStudent.endereco || '',
         enrollmentDate: formatDate(backendStudent.createdAt),
-        status: backendStudent.status || 'Ativo',
-        course: backendStudent.curso?.nome || '',
+        status: formatStatus(backendStudent.status),
+        course: backendStudent.turma?.curso?.nome || '', // Curso vem através da turma
         class: backendStudent.turma?.nome || '',
         progress: 0,
         attendance: 0,
@@ -817,26 +909,52 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       console.log('✏️ Atualizando aluno:', id, studentData);
       
       // Transform frontend format to backend format
+      // IMPORTANTE: Enviar APENAS os campos que o backend aceita (nome, email, telefone, turma_id, status)
       const backendData: Record<string, unknown> = {};
-      if (studentData.name) backendData.nome = studentData.name;
-      if (studentData.email) backendData.email = studentData.email;
-      if (studentData.phone) backendData.telefone = studentData.phone;
+      if (studentData.name !== undefined) backendData.nome = studentData.name;
+      if (studentData.email !== undefined) backendData.email = studentData.email;
+      if (studentData.phone !== undefined) backendData.telefone = studentData.phone;
+      
+      // Buscar turma_id se turma foi alterada
+      if (studentData.class !== undefined) {
+        if (studentData.class === "" || studentData.class === null) {
+          backendData.turma_id = null; // Remover da turma
+        } else {
+          const turma = classes.find(c => c.name === studentData.class);
+          if (turma) {
+            backendData.turma_id = turma.id;
+          }
+        }
+      }
+      
+      if (studentData.status !== undefined) {
+        console.log('🔍 Status enviado:', studentData.status);
+        backendData.status = studentData.status; // Backend vai converter automaticamente
+      }
       
       console.log('✏️ Dados para backend:', backendData);
+      console.log('✏️ Dados em JSON:', JSON.stringify(backendData, null, 2));
       
-      await StudentsAPI.update(id, backendData);
+      // Verificar se há dados para enviar
+      if (Object.keys(backendData).length === 0) {
+        console.warn('⚠️ Nenhum dado para atualizar');
+        return;
+      }
       
-      // Update local state with frontend format
-      setStudents(prev => prev.map(student => 
-        student.id === id ? { ...student, ...studentData } : student
-      ));
+      const response = await StudentsAPI.update(id, backendData);
+      console.log('✅ Resposta do backend:', response.data);
+      
+      // Recarregar a lista de alunos do backend para garantir sincronização
+      await refreshStudents();
       
       // Refresh related data
       await refreshClasses();
       
     } catch (err: unknown) {
-      console.error('Erro ao atualizar aluno:', err);
-      const error = err as { response?: { data?: { error?: string; message?: string } } };
+      console.error('❌ Erro completo ao atualizar aluno:', err);
+      const error = err as { response?: { data?: { error?: string; message?: string; details?: any } } };
+      console.error('❌ Resposta do servidor:', error.response?.data);
+      console.error('❌ Detalhes da validação:', JSON.stringify(error.response?.data?.details, null, 2));
       const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Erro ao atualizar aluno';
       setError(errorMessage);
       throw new Error(errorMessage);
@@ -901,8 +1019,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           description: bc.descricao || '',
           duration: `${bc.carga_horaria}h`,
           students: totalStudents,
-          level: 'Intermediário',
-          status: bc.ativo !== false ? 'Ativo' : 'Inativo',
+          level: ((): string => {
+            const map: Record<string, string> = {
+              'INICIANTE': 'Iniciante',
+              'INTERMEDIARIO': 'Intermediário',
+              'AVANCADO': 'Avançado'
+            };
+            return bc.nivel ? (map[bc.nivel] || 'Intermediário') : 'Intermediário';
+          })(),
+          status: ((): string => {
+            const map: Record<string, string> = {
+              'ATIVO': 'Ativo',
+              'INATIVO': 'Inativo',
+              'EM_DESENVOLVIMENTO': 'Em Desenvolvimento'
+            };
+            return bc.status ? (map[bc.status] || 'Ativo') : 'Ativo';
+          })(),
           color: 'bg-blue-500'
         };
       });
@@ -924,12 +1056,29 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       console.log('➕ Criando curso:', courseData);
       
       // Transform frontend format to backend format
-      const backendData = {
+      const backendData: any = {
         nome: courseData.title,
         carga_horaria: parseInt(courseData.duration.replace(/\D/g, '')) || 0,
-        descricao: courseData.description || undefined,
-        ativo: courseData.status === "Ativo"
+        descricao: courseData.description || undefined
       };
+      // Map level to backend enum if provided
+      if (courseData.level) {
+        const mapToBackend: Record<string, string> = {
+          'Iniciante': 'INICIANTE',
+          'Intermediário': 'INTERMEDIARIO',
+          'Avançado': 'AVANCADO'
+        };
+        backendData.nivel = mapToBackend[courseData.level] || 'INTERMEDIARIO';
+      }
+      // Map status to backend enum if provided
+      if (courseData.status) {
+        const mapToBackend: Record<string, string> = {
+          'Ativo': 'ATIVO',
+          'Inativo': 'INATIVO',
+          'Em Desenvolvimento': 'EM_DESENVOLVIMENTO'
+        };
+        backendData.status = mapToBackend[courseData.status] || 'ATIVO';
+      }
       
       console.log('➕ Dados para backend:', backendData);
       
@@ -947,8 +1096,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         description: backendCourse.descricao || '',
         duration: `${backendCourse.carga_horaria}h`,
         students: 0,
-        level: 'Intermediário',
-        status: 'Ativo',
+        level: ((): string => {
+          const map: Record<string, string> = {
+            'INICIANTE': 'Iniciante',
+            'INTERMEDIARIO': 'Intermediário',
+            'AVANCADO': 'Avançado'
+          };
+          return backendCourse.nivel ? (map[backendCourse.nivel] || 'Intermediário') : 'Intermediário';
+        })(),
+        status: ((): string => {
+          const map: Record<string, string> = {
+            'ATIVO': 'Ativo',
+            'INATIVO': 'Inativo',
+            'EM_DESENVOLVIMENTO': 'Em Desenvolvimento'
+          };
+          return backendCourse.status ? (map[backendCourse.status] || 'Ativo') : 'Ativo';
+        })(),
         color: 'bg-blue-500'
       };
       
@@ -979,7 +1142,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (courseData.title) backendData.nome = courseData.title;
       if (courseData.duration) backendData.carga_horaria = parseInt(courseData.duration.replace(/\D/g, '')) || 0;
       if (courseData.description !== undefined) backendData.descricao = courseData.description || undefined;
-      if (courseData.status) backendData.ativo = courseData.status === "Ativo";
+      if (courseData.level) {
+        const mapToBackend: Record<string, string> = {
+          'Iniciante': 'INICIANTE',
+          'Intermediário': 'INTERMEDIARIO',
+          'Avançado': 'AVANCADO'
+        };
+        backendData.nivel = mapToBackend[courseData.level] || 'INTERMEDIARIO';
+      }
+      if (courseData.status) {
+        const mapToBackend: Record<string, string> = {
+          'Ativo': 'ATIVO',
+          'Inativo': 'INATIVO',
+          'Em Desenvolvimento': 'EM_DESENVOLVIMENTO'
+        };
+        backendData.status = mapToBackend[courseData.status] || 'ATIVO';
+      }
       
       console.log('🔧 Dados backend:', backendData);
       
@@ -1043,20 +1221,45 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           const d = new Date(date);
           return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
         };
-        
+        // Transformar alunos da turma (se houver) e ajustar contador
+        const students = (bc.alunos || []).map((aluno: any) => ({
+          id: aluno.id,
+          name: aluno.nome,
+          matricula: aluno.matricula,
+          email: aluno.email,
+          status: aluno.status
+        }));
+
+        // Pegar primeiro instrutor (se houver)
+        const instructor = bc.instrutores && bc.instrutores.length > 0 
+          ? bc.instrutores[0].nome 
+          : 'A definir';
+        const instructorId = bc.instrutores && bc.instrutores.length > 0 
+          ? bc.instrutores[0].id 
+          : undefined;
+
+        // Mapear status do backend para frontend
+        const statusMap: Record<string, string> = {
+          'ATIVA': 'Ativo',
+          'ENCERRADA': 'Concluída',
+          'CANCELADA': 'Cancelada'
+        };
+        const frontendStatus = bc.status ? (statusMap[bc.status] || 'Planejada') : 'Planejada';
+
         return {
           id: bc.id,
           name: bc.nome || '',
           course: bc.curso?.nome || bc.id_curso?.toString() || '',
-          instructor: 'A definir',
+          instructor: instructor,
+          instructorId: instructorId,
           capacity: bc.vagas || 0,
-          enrolled: 0,
+          enrolled: students.length,
           schedule: bc.turno || '',
           duration: '6 meses',
-          status: bc.status || 'Planejada',
+          status: frontendStatus,
           startDate: formatDate(bc.data_inicio),
           endDate: formatDate(bc.data_fim),
-          students: []
+          students: students
         };
       });
       
@@ -1075,7 +1278,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const response = await ClassesAPI.create(classData);
       const newClass = response.data;
       
+      // Associate instructor if provided
+      if (classData.instructorId && newClass.id) {
+        try {
+          await ClassesAPI.addInstructor(newClass.id, classData.instructorId);
+          console.log(`✅ Instrutor ${classData.instructorId} associado à turma ${newClass.id}`);
+        } catch (error) {
+          console.error('Erro ao associar instrutor:', error);
+          // Don't throw - allow class creation to succeed
+        }
+      }
+      
       setClasses(prev => [...prev, newClass]);
+      
+      // Refresh to get updated data with instructor
+      await refreshClasses();
       
       return newClass;
     } catch (err: any) {
@@ -1089,14 +1306,83 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const updateClass = async (id: number, classData: Partial<Class>): Promise<void> => {
     try {
       setError(null);
-      await ClassesAPI.update(id, classData);
-      
+      // Map frontend fields to backend fields
+      const backendData: any = {};
+
+      if (classData.name) backendData.nome = classData.name;
+      // Converter datas no formato dd/mm/yyyy para ISO
+      const parseDate = (d?: string) => {
+        if (!d) return undefined;
+        const parts = d.split('/');
+        if (parts.length !== 3) return undefined;
+        const iso = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        return iso;
+      };
+
+      const dataInicio = parseDate(classData.startDate as string | undefined);
+      const dataFim = parseDate(classData.endDate as string | undefined);
+      if (dataInicio) backendData.data_inicio = dataInicio;
+      if (dataFim) backendData.data_fim = dataFim;
+
+      // Map course title to id_curso if possível
+      if (classData.course) {
+        const selectedCourse = courses.find(c => c.title === classData.course);
+        if (selectedCourse) backendData.id_curso = selectedCourse.id;
+      }
+
+      // Map capacity to vagas
+      if (typeof classData.capacity === 'number') backendData.vagas = classData.capacity;
+
+      // Only call update if we have backend-updatable fields
+      if (Object.keys(backendData).length > 0) {
+        await ClassesAPI.update(id, backendData);
+      }
+
+      // Handle status separately via dedicated endpoint
+      if (classData.status) {
+        // Map frontend display status to backend enum
+        const statusMap: Record<string, string> = {
+          'Ativo': 'ATIVA',
+          'Planejada': 'ATIVA', // backend doesn't have 'Planejada', map to ATIVA
+          'Concluída': 'ENCERRADA',
+          'Cancelada': 'CANCELADA'
+        };
+        const mapped = statusMap[classData.status] || undefined;
+        if (mapped) {
+          await ClassesAPI.updateStatus(id, { status: mapped });
+        }
+      }
+
+      // Handle instructor association if instructorId is provided
+      if (classData.instructorId) {
+        // Get current class to check if instructor changed
+        const currentClass = classes.find(c => c.id === id);
+        
+        // If instructor changed, update association
+        if (!currentClass || currentClass.instructorId !== classData.instructorId) {
+          try {
+            // Remove old instructor if exists
+            if (currentClass?.instructorId) {
+              await ClassesAPI.removeInstructor(id, currentClass.instructorId);
+            }
+            // Add new instructor
+            await ClassesAPI.addInstructor(id, classData.instructorId);
+            console.log(`✅ Instrutor ${classData.instructorId} associado à turma ${id}`);
+          } catch (error) {
+            console.error('Erro ao atualizar instrutor da turma:', error);
+            // Don't throw - allow other updates to succeed
+          }
+        }
+      }
+
+      // Update local state: merge changes (keep students etc.)
       setClasses(prev => prev.map(cls => 
         cls.id === id ? { ...cls, ...classData } : cls
       ));
-      
+
       // Refresh related data
       await refreshStudents();
+      await refreshClasses();
       
     } catch (err: any) {
       console.error('Erro ao atualizar turma:', err);
@@ -1118,7 +1404,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       
     } catch (err: any) {
       console.error('Erro ao deletar turma:', err);
-      const errorMessage = err.response?.data?.message || 'Erro ao deletar turma';
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Erro ao deletar turma';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -1137,19 +1423,127 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     classes.filter(c => c.course === courseName);
 
   // Instructor actions
-  const addInstructor = (instructorData: Omit<Instructor, 'id'>) => {
-    const newId = Math.max(...instructors.map(i => i.id), 0) + 1;
-    setInstructors(prev => [...prev, { ...instructorData, id: newId }]);
+  const addInstructor = async (instructorData: Omit<Instructor, 'id'>): Promise<void> => {
+    try {
+      setError(null);
+      
+      const backendData = {
+        nome: instructorData.name,
+        cpf: instructorData.cpf.replace(/\D/g, ''), // Remove formatação
+        email: instructorData.email,
+        data_nascimento: instructorData.birthDate || null,
+        endereco: instructorData.address,
+        especialidade: instructorData.specialization,
+        experiencia: instructorData.experience,
+        status: instructorData.status
+      };
+      
+      await InstructorsAPI.create(backendData);
+      
+      // Recarregar instrutores
+      const response = await InstructorsAPI.list();
+      let backendInstructors = [];
+      if (response.data && typeof response.data === 'object') {
+        if (Array.isArray(response.data)) {
+          backendInstructors = response.data;
+        } else if (Array.isArray(response.data.data)) {
+          backendInstructors = response.data.data;
+        }
+      }
+      
+      const frontendInstructors: Instructor[] = backendInstructors.map((bi: any) => {
+        return {
+          id: bi.id,
+          name: bi.nome || '',
+          cpf: bi.cpf || '',
+          email: bi.email || '',
+          phone: '',
+          birthDate: bi.data_nascimento || '',
+          address: bi.endereco || '',
+          specialization: bi.especialidade || '',
+          experience: bi.experiencia || '',
+          status: bi.status || 'Ativo',
+          classes: []
+        };
+      });
+      
+      setInstructors(frontendInstructors);
+    } catch (err: any) {
+      console.error('Erro ao criar instrutor:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao criar instrutor';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
   };
 
-  const updateInstructor = (id: number, instructorData: Partial<Instructor>) => {
-    setInstructors(prev => prev.map(instructor => 
-      instructor.id === id ? { ...instructor, ...instructorData } : instructor
-    ));
+  const updateInstructor = async (id: number, instructorData: Partial<Instructor>): Promise<void> => {
+    try {
+      setError(null);
+      
+      const backendData: any = {};
+      if (instructorData.name !== undefined) backendData.nome = instructorData.name;
+      if (instructorData.cpf !== undefined) backendData.cpf = instructorData.cpf.replace(/\D/g, '');
+      if (instructorData.email !== undefined) backendData.email = instructorData.email;
+      if (instructorData.birthDate !== undefined) backendData.data_nascimento = instructorData.birthDate || null;
+      if (instructorData.address !== undefined) backendData.endereco = instructorData.address;
+      if (instructorData.specialization !== undefined) backendData.especialidade = instructorData.specialization;
+      if (instructorData.experience !== undefined) backendData.experiencia = instructorData.experience;
+      if (instructorData.status !== undefined) backendData.status = instructorData.status;
+      
+      console.log('🔄 Atualizando instrutor ID:', id);
+      console.log('📤 Dados enviados:', backendData);
+      
+      const updateResponse = await InstructorsAPI.update(id, backendData);
+      console.log('✅ Resposta da API:', updateResponse.data);
+      
+      // Recarregar instrutores
+      const response = await InstructorsAPI.list();
+      let backendInstructors = [];
+      if (response.data && typeof response.data === 'object') {
+        if (Array.isArray(response.data)) {
+          backendInstructors = response.data;
+        } else if (Array.isArray(response.data.data)) {
+          backendInstructors = response.data.data;
+        }
+      }
+      
+      const frontendInstructors: Instructor[] = backendInstructors.map((bi: any) => {
+        return {
+          id: bi.id,
+          name: bi.nome || '',
+          cpf: bi.cpf || '',
+          email: bi.email || '',
+          phone: '',
+          birthDate: bi.data_nascimento || '',
+          address: bi.endereco || '',
+          specialization: bi.especialidade || '',
+          experience: bi.experiencia || '',
+          status: bi.status || 'Ativo',
+          classes: []
+        };
+      });
+      
+      setInstructors(frontendInstructors);
+    } catch (err: any) {
+      console.error('Erro ao atualizar instrutor:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao atualizar instrutor';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
   };
 
-  const deleteInstructor = (id: number) => {
-    setInstructors(prev => prev.filter(i => i.id !== id));
+  const deleteInstructor = async (id: number): Promise<void> => {
+    try {
+      setError(null);
+      await InstructorsAPI.delete(id);
+      
+      setInstructors(prev => prev.filter(i => i.id !== id));
+    } catch (err: any) {
+      console.error('Erro ao deletar instrutor:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao deletar instrutor';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
   };
 
   const getInstructorById = (id: number) => instructors.find(i => i.id === id);

@@ -52,14 +52,23 @@ const Instructors = () => {
     setIsAssignModalOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (selectedInstructor) {
-      deleteInstructor(selectedInstructor.id);
-      toast({
-        title: "INSTRUTOR EXCLUÍDO",
-        description: `O instrutor ${selectedInstructor.name} foi excluído do sistema`,
-        className: "bg-red-100 text-red-800 border-red-200",
-      });
+      try {
+        await deleteInstructor(selectedInstructor.id);
+        toast({
+          title: "INSTRUTOR EXCLUÍDO",
+          description: `O instrutor ${selectedInstructor.name} foi excluído do sistema`,
+          className: "bg-red-100 text-red-800 border-red-200",
+        });
+      } catch (error: any) {
+        console.error('Erro ao excluir instrutor:', error);
+        toast({
+          title: "Erro ao excluir",
+          description: error.message || "Não foi possível excluir o instrutor",
+          variant: "destructive",
+        });
+      }
     }
     setIsDeleteModalOpen(false);
   };
@@ -95,7 +104,7 @@ const Instructors = () => {
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-primary">5</p>
+              <p className="text-2xl font-bold text-primary">{instructors.length}</p>
               <p className="text-sm text-muted-foreground">Total de Instrutores</p>
             </div>
           </CardContent>
@@ -103,7 +112,9 @@ const Instructors = () => {
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-emerald-600">4</p>
+              <p className="text-2xl font-bold text-emerald-600">
+                {instructors.filter(i => i.status === "Ativo").length}
+              </p>
               <p className="text-sm text-muted-foreground">Instrutores Ativos</p>
             </div>
           </CardContent>
@@ -111,7 +122,9 @@ const Instructors = () => {
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-amber-600">7</p>
+              <p className="text-2xl font-bold text-amber-600">
+                {instructors.reduce((total, instructor) => total + (instructor.classes?.length || 0), 0)}
+              </p>
               <p className="text-sm text-muted-foreground">Turmas Atribuídas</p>
             </div>
           </CardContent>
@@ -119,7 +132,11 @@ const Instructors = () => {
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-blue-600">95%</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {instructors.length > 0 
+                  ? Math.round((instructors.filter(i => i.status === "Ativo").length / instructors.length) * 100)
+                  : 0}%
+              </p>
               <p className="text-sm text-muted-foreground">Taxa de Ocupação</p>
             </div>
           </CardContent>

@@ -119,7 +119,7 @@ class CourseController {
         throw new AppError('ID do curso deve ser um número', 400);
       }
 
-      const { nome, carga_horaria, descricao } = req.body;
+      const { nome, carga_horaria, descricao, nivel, status } = req.body;
 
       const updateData: any = {};
 
@@ -133,6 +133,14 @@ class CourseController {
 
       if (descricao !== undefined) {
         updateData.descricao = descricao?.trim() || null;
+      }
+
+      if (nivel !== undefined) {
+        updateData.nivel = nivel;
+      }
+
+      if (status !== undefined) {
+        updateData.status = status;
       }
 
       // Verificar se há dados para atualizar

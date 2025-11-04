@@ -37,9 +37,14 @@ interface CreateInstructorData {
  * Interface para dados de atualização de instrutor
  */
 interface UpdateInstructorData {
+  cpf?: string;
   nome?: string;
   email?: string;
+  endereco?: string | null;
+  data_nascimento?: string | null;
   especialidade?: string | null;
+  experiencia?: string | null;
+  status?: string | null;
 }
 
 /**
@@ -88,9 +93,24 @@ class InstructorService {
     // Buscar total de registros
     const total = await Instructor.count({ where });
 
-    // Buscar instrutores com paginação
+    // Buscar instrutores com paginação e incluir turmas associadas
     const data = await Instructor.findAll({
       where,
+      include: [
+        {
+          model: Class,
+          as: 'turmas',
+          through: { attributes: [] }, // Não incluir atributos da tabela de junção
+          attributes: ['id', 'nome', 'status'],
+          include: [
+            {
+              model: Course,
+              as: 'curso',
+              attributes: ['id', 'nome']
+            }
+          ]
+        }
+      ],
       order: [['nome', 'ASC']],
       limit,
       offset: calculateOffset(page, limit)
@@ -202,9 +222,14 @@ class InstructorService {
     }
 
     // Atualiza apenas os campos fornecidos
+    if (data.cpf !== undefined) instructor.cpf = data.cpf;
     if (data.nome !== undefined) instructor.nome = data.nome;
     if (data.email !== undefined) instructor.email = data.email.toLowerCase();
+    if (data.endereco !== undefined) instructor.endereco = data.endereco;
+    if (data.data_nascimento !== undefined) instructor.data_nascimento = data.data_nascimento;
     if (data.especialidade !== undefined) instructor.especialidade = data.especialidade;
+    if (data.experiencia !== undefined) instructor.experiencia = data.experiencia;
+    if (data.status !== undefined) instructor.status = data.status;
 
     await instructor.save();
 

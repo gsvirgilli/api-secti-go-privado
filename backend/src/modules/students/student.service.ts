@@ -41,6 +41,8 @@ interface UpdateStudentData {
   nome?: string;
   email?: string;
   telefone?: string;
+  turma_id?: number | null;
+  status?: 'ativo' | 'trancado' | 'concluido' | 'desistente';
 }
 
 /**

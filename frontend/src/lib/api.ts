@@ -146,13 +146,50 @@ export const ClassesAPI = {
   
   update: (id: number, data: any) => 
     api.put(`/classes/${id}`, data),
+  updateStatus: (id: number, data: { status: string }) =>
+    api.patch(`/classes/${id}/status`, data),
+  
+  addInstructor: (classId: number, instructorId: number) =>
+    api.post(`/classes/${classId}/instructors/${instructorId}`),
+  
+  removeInstructor: (classId: number, instructorId: number) =>
+    api.delete(`/classes/${classId}/instructors/${instructorId}`),
   
   delete: (id: number) => 
     api.delete(`/classes/${id}`),
 };
 
 // ======================================
-// 📝 MATRÍCULAS
+// �‍🏫 INSTRUTORES
+// ======================================
+export const InstructorsAPI = {
+  list: (params?: { nome?: string; cpf?: string; email?: string; especialidade?: string }) => 
+    api.get("/instructors", { params }),
+  
+  findOne: (id: number) => 
+    api.get(`/instructors/${id}`),
+  
+  findByCPF: (cpf: string) => 
+    api.get(`/instructors/cpf/${cpf}`),
+  
+  findByEmail: (email: string) => 
+    api.get(`/instructors/email/${email}`),
+  
+  create: (data: { cpf: string; nome: string; email: string; especialidade?: string }) => 
+    api.post("/instructors", data),
+  
+  update: (id: number, data: any) => 
+    api.put(`/instructors/${id}`, data),
+  
+  delete: (id: number) => 
+    api.delete(`/instructors/${id}`),
+  
+  statistics: () => 
+    api.get("/instructors/statistics"),
+};
+
+// ======================================
+// �📝 MATRÍCULAS
 // ======================================
 export const EnrollmentsAPI = {
   list: (params?: { status?: string; page?: number; limit?: number }) => 

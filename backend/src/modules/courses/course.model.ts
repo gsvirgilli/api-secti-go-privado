@@ -6,6 +6,8 @@ export interface CourseAttributes {
   nome: string;
   carga_horaria: number;
   descricao?: string;
+  nivel?: 'INICIANTE' | 'INTERMEDIARIO' | 'AVANCADO';
+  status?: 'ATIVO' | 'INATIVO' | 'EM_DESENVOLVIMENTO';
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -14,6 +16,8 @@ export interface CourseCreationAttributes {
   nome: string;
   carga_horaria: number;
   descricao?: string;
+  nivel?: 'INICIANTE' | 'INTERMEDIARIO' | 'AVANCADO';
+  status?: 'ATIVO' | 'INATIVO' | 'EM_DESENVOLVIMENTO';
 }
 
 class Course extends Model<CourseAttributes, CourseCreationAttributes> implements CourseAttributes {
@@ -67,6 +71,29 @@ Course.init({
       len: {
         args: [0, 1000],
         msg: 'Descrição não pode exceder 1000 caracteres'
+      }
+    }
+  }
+  ,
+  nivel: {
+    type: DataTypes.ENUM('INICIANTE', 'INTERMEDIARIO', 'AVANCADO'),
+    allowNull: false,
+    defaultValue: 'INTERMEDIARIO',
+    validate: {
+      isIn: {
+        args: [['INICIANTE', 'INTERMEDIARIO', 'AVANCADO']],
+        msg: 'Nível inválido'
+      }
+    }
+  },
+  status: {
+    type: DataTypes.ENUM('ATIVO', 'INATIVO', 'EM_DESENVOLVIMENTO'),
+    allowNull: false,
+    defaultValue: 'ATIVO',
+    validate: {
+      isIn: {
+        args: [['ATIVO', 'INATIVO', 'EM_DESENVOLVIMENTO']],
+        msg: 'Status inválido'
       }
     }
   }

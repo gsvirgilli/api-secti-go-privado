@@ -154,13 +154,19 @@ class InstructorController {
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      console.log('🔄 PUT /api/instructors/:id - ID:', id);
+      console.log('📥 Body recebido:', JSON.stringify(req.body, null, 2));
+      
       const data = updateInstructorSchema.parse(req.body);
+      console.log('✅ Dados validados:', JSON.stringify(data, null, 2));
       
       const instructor = await InstructorService.update(Number(id), data);
+      console.log('✅ Instrutor atualizado:', JSON.stringify(instructor, null, 2));
       
       return res.status(200).json(instructor);
     } catch (error) {
       if (error instanceof ZodError) {
+        console.error('❌ Erro de validação:', JSON.stringify(error.issues, null, 2));
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -168,12 +174,13 @@ class InstructorController {
       }
 
       if (error instanceof AppError) {
+        console.error('❌ AppError:', error.message);
         return res.status(error.statusCode).json({
           error: error.message
         });
       }
 
-      console.error('Erro ao atualizar instrutor:', error);
+      console.error('❌ Erro ao atualizar instrutor:', error);
       return res.status(500).json({
         error: 'Erro ao atualizar instrutor'
       });

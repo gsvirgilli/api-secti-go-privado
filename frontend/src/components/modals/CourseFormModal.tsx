@@ -23,7 +23,7 @@ const CourseFormModal = ({ isOpen, onClose, courseData, mode }: CourseFormModalP
     title: "",
     description: "",
     duration: "",
-    level: "Básico",
+    level: "Intermediário",
     status: "Ativo",
     color: "bg-blue-500",
     students: 0,
@@ -36,7 +36,7 @@ const CourseFormModal = ({ isOpen, onClose, courseData, mode }: CourseFormModalP
         title: courseData.title || "",
         description: courseData.description || "",
         duration: courseData.duration || "",
-        level: courseData.level || "Básico",
+        level: courseData.level || "Intermediário",
         status: courseData.status || "Ativo",
         color: courseData.color || "bg-blue-500",
         students: courseData.students || 0,
@@ -47,7 +47,7 @@ const CourseFormModal = ({ isOpen, onClose, courseData, mode }: CourseFormModalP
         title: "",
         description: "",
         duration: "",
-        level: "Básico",
+        level: "Intermediário",
         status: "Ativo",
         color: "bg-blue-500",
         students: 0,
@@ -90,8 +90,8 @@ const CourseFormModal = ({ isOpen, onClose, courseData, mode }: CourseFormModalP
         description: formData.description,
         status: formData.status,
         students: courseData?.students || 0,
-        level: courseData?.level || 'Intermediário',
-        color: courseData?.color || 'bg-blue-500'
+        level: formData.level,
+        color: formData.color
       };
 
       if (mode === "create") {
@@ -167,7 +167,6 @@ const CourseFormModal = ({ isOpen, onClose, courseData, mode }: CourseFormModalP
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Básico">Básico</SelectItem>
                   <SelectItem value="Iniciante">Iniciante</SelectItem>
                   <SelectItem value="Intermediário">Intermediário</SelectItem>
                   <SelectItem value="Avançado">Avançado</SelectItem>

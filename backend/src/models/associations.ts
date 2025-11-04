@@ -6,6 +6,7 @@
 import Course from '../modules/courses/course.model.js';
 import Class from '../modules/classes/class.model.js';
 import Student from '../modules/students/student.model.js';
+import Instructor from '../modules/instructors/instructor.model.js';
 
 /**
  * Define todas as associações entre modelos
@@ -33,6 +34,8 @@ export function setupAssociations() {
     foreignKey: 'turma_id',
     as: 'turma'
   });
+
+  // Associação Turma ↔ Instrutor (N:M) já está definida em instructor_class.model.ts
 
   console.log('✅ Associações entre modelos configuradas com sucesso');
 }

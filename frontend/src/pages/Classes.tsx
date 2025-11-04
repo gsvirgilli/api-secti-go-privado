@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DataBot } from "@/components/ui/DataBot";
 import { Plus, Search, Eye, Grid, List, Filter, Download, MoreHorizontal, Calendar, Users, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,7 @@ const Classes = () => {
   const uniqueCourses = useMemo(() => {
     const courses = [...new Set(classes.map(c => c.course))];
     return courses.sort();
-  }, [classes]);
+  }, [classes, selectedClass]);
 
   const uniqueInstructors = useMemo(() => {
     const instructors = [...new Set(classes.map(c => c.instructor))];
@@ -201,6 +201,16 @@ const Classes = () => {
     setSelectedClass(classData);
     setIsModalOpen(true);
   };
+
+  // Se a lista de classes for atualizada (ex.: refresh), sincronizar selectedClass
+  // para refletir mudanças (como alunos atualizados) enquanto o modal estiver aberto.
+  useEffect(() => {
+    if (!selectedClass) return;
+    const updated = classes.find(c => c.id === selectedClass.id);
+    if (updated) {
+      setSelectedClass(updated);
+    }
+  }, [classes]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -404,6 +414,7 @@ const Classes = () => {
                   <SelectItem value="Ativo">Ativo</SelectItem>
                   <SelectItem value="Planejada">Planejada</SelectItem>
                   <SelectItem value="Concluída">Concluída</SelectItem>
+                  <SelectItem value="Cancelada">Cancelada</SelectItem>
                 </SelectContent>
               </Select>
             </div>

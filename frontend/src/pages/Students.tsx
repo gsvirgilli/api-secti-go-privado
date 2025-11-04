@@ -342,7 +342,7 @@ const Students = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-amber-600">{stats.students.inactive}</p>
-                <p className="text-sm text-muted-foreground">Alunos Inativos</p>
+                <p className="text-sm text-muted-foreground">Não Ativos</p>
               </div>
               <XCircle className="h-8 w-8 text-amber-600" />
             </div>

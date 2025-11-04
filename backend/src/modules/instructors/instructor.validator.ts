@@ -34,6 +34,12 @@ export const createInstructorSchema = z.object({
  * Schema de validação para atualização de instrutor
  */
 export const updateInstructorSchema = z.object({
+  cpf: z
+    .string({ message: 'CPF deve ser uma string' })
+    .regex(/^\d{11}$/, 'CPF deve conter exatamente 11 dígitos numéricos')
+    .trim()
+    .optional(),
+
   nome: z
     .string({ message: 'Nome deve ser uma string' })
     .min(3, 'Nome deve ter no mínimo 3 caracteres')
@@ -49,10 +55,34 @@ export const updateInstructorSchema = z.object({
     .trim()
     .optional(),
 
+  endereco: z
+    .string()
+    .max(255, 'Endereço deve ter no máximo 255 caracteres')
+    .optional()
+    .nullable(),
+
+  data_nascimento: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data de nascimento deve estar no formato YYYY-MM-DD')
+    .optional()
+    .nullable(),
+
   especialidade: z
     .string()
     .max(100, 'Especialidade deve ter no máximo 100 caracteres')
     .trim()
+    .optional()
+    .nullable(),
+
+  experiencia: z
+    .string()
+    .max(255, 'Experiência deve ter no máximo 255 caracteres')
+    .optional()
+    .nullable(),
+
+  status: z
+    .string()
+    .max(50, 'Status deve ter no máximo 50 caracteres')
     .optional()
     .nullable()
 });

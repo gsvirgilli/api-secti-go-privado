@@ -15,6 +15,12 @@ export const createCourseSchema = z.object({
       .int('Carga horária deve ser um número inteiro')
       .min(1, 'Carga horária deve ser maior que zero')
       .max(1000, 'Carga horária não pode exceder 1000 horas'),
+    nivel: z
+      .enum(['INICIANTE', 'INTERMEDIARIO', 'AVANCADO'])
+      .optional(),
+    status: z
+      .enum(['ATIVO', 'INATIVO', 'EM_DESENVOLVIMENTO'])
+      .optional(),
     descricao: z
       .string()
       .max(1000, 'Descrição não pode exceder 1000 caracteres')
@@ -37,6 +43,12 @@ export const updateCourseSchema = z.object({
       .int('Carga horária deve ser um número inteiro')
       .min(1, 'Carga horária deve ser maior que zero')
       .max(1000, 'Carga horária não pode exceder 1000 horas')
+      .optional(),
+    nivel: z
+      .enum(['INICIANTE', 'INTERMEDIARIO', 'AVANCADO'])
+      .optional(),
+    status: z
+      .enum(['ATIVO', 'INATIVO', 'EM_DESENVOLVIMENTO'])
       .optional(),
     descricao: z
       .string()

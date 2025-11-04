@@ -52,7 +52,9 @@ export const createStudentSchema = z.object({
     .nullable(),
 
   status: z
-    .enum(['ativo', 'trancado', 'concluido', 'desistente'])
+    .string()
+    .transform((val) => val.toLowerCase())
+    .pipe(z.enum(['ativo', 'trancado', 'concluido', 'desistente']))
     .optional()
 });
 
@@ -78,7 +80,20 @@ export const updateStudentSchema = z.object({
     .string()
     .max(20, 'Telefone deve ter no máximo 20 caracteres')
     .optional()
-    .nullable()
+    .nullable(),
+
+  turma_id: z
+    .number({ message: 'ID da turma deve ser um número' })
+    .int('ID da turma deve ser um número inteiro')
+    .positive('ID da turma deve ser positivo')
+    .optional()
+    .nullable(),
+
+  status: z
+    .string()
+    .transform((val) => val.toLowerCase())
+    .pipe(z.enum(['ativo', 'trancado', 'concluido', 'desistente']))
+    .optional()
 });
 
 /**

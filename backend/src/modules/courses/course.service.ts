@@ -219,7 +219,7 @@ class CourseService {
    */
   async findAllPublic() {
     const courses = await Course.findAll({
-      attributes: ['id', 'nome', 'descricao', 'carga_horaria'],
+      attributes: ['id', 'nome', 'descricao', 'carga_horaria', 'nivel', 'status'],
       order: [['nome', 'ASC']]
     });
 
@@ -227,7 +227,9 @@ class CourseService {
       id: course.id,
       nome: course.nome,
       descricao: course.descricao,
-      carga_horaria: course.carga_horaria
+      carga_horaria: course.carga_horaria,
+      nivel: course.nivel,
+      status: course.status
     }));
   }
 
@@ -237,7 +239,7 @@ class CourseService {
    */
   async findByIdPublic(id: number) {
     const course = await Course.findByPk(id, {
-      attributes: ['id', 'nome', 'descricao', 'carga_horaria']
+      attributes: ['id', 'nome', 'descricao', 'carga_horaria', 'nivel', 'status']
     });
 
     if (!course) {
@@ -250,7 +252,8 @@ class CourseService {
       id: courseData.id,
       nome: courseData.nome,
       descricao: courseData.descricao,
-      carga_horaria: courseData.carga_horaria
+      carga_horaria: courseData.carga_horaria,
+      nivel: courseData.nivel || 'INTERMEDIARIO'
     };
   }
 }

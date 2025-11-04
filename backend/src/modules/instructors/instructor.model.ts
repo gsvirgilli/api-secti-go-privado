@@ -1,12 +1,18 @@
-import { Model, DataTypes } from 'sequelize';
+import { Model, DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import { sequelize } from '../../config/database.js';
 
-class Instructor extends Model {
-  public id!: number;
-  public cpf!: string;
-  public nome!: string;
-  public email!: string;
-  public especialidade!: string | null;
+class Instructor extends Model<InferAttributes<Instructor>, InferCreationAttributes<Instructor>> {
+  declare id: number;
+  declare cpf: string;
+  declare nome: string;
+  declare email: string;
+  declare endereco: string | null;
+  declare data_nascimento: string | null;
+  declare especialidade: string | null;
+  declare experiencia: string | null;
+  declare status: string | null;
+  declare createdAt?: Date;
+  declare updatedAt?: Date;
 }
 
 Instructor.init({
@@ -29,8 +35,24 @@ Instructor.init({
     allowNull: false,
     unique: true,
   },
+  endereco: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
+  data_nascimento: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+  },
   especialidade: {
     type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  experiencia: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
+  status: {
+    type: DataTypes.STRING(50),
     allowNull: true,
   },
 }, {

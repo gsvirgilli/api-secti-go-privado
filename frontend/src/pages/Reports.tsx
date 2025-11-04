@@ -332,7 +332,7 @@ const Reports = () => {
                                     Ativos: {data.active} alunos
                                   </p>
                                   <p className="text-xs text-red-600">
-                                    Inativos: {data.inactive} alunos
+                                    Não Ativos: {data.inactive} alunos
                                   </p>
                                   <p className="text-xs text-blue-600">
                                     Total: {data.students} alunos
@@ -345,7 +345,7 @@ const Reports = () => {
                         }}
                       />
                       <Bar dataKey="active" stackId="a" fill="#10b981" name="Ativos" />
-                      <Bar dataKey="inactive" stackId="a" fill="#ef4444" name="Inativos" />
+                      <Bar dataKey="inactive" stackId="a" fill="#ef4444" name="Não Ativos" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

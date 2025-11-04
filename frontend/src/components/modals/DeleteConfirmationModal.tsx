@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 
@@ -22,7 +22,7 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }:
         </DialogHeader>
 
         <div className="text-center space-y-6">
-          <p className="text-muted-foreground">{message}</p>
+          <DialogDescription>{message}</DialogDescription>
           
           <div className="flex gap-4 justify-center">
             <Button

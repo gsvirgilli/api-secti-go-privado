@@ -32,7 +32,6 @@ const InstructorFormModal = ({ isOpen, onClose, instructorData, mode }: Instruct
     name: "",
     cpf: "",
     email: "",
-    phone: "",
     birthDate: "",
     address: "",
     specialization: "",
@@ -47,7 +46,6 @@ const InstructorFormModal = ({ isOpen, onClose, instructorData, mode }: Instruct
         name: instructorData.name || "",
         cpf: instructorData.cpf || "",
         email: instructorData.email || "",
-        phone: instructorData.phone || "",
         birthDate: instructorData.birthDate || "",
         address: instructorData.address || "",
         specialization: instructorData.specialization || "",
@@ -60,7 +58,6 @@ const InstructorFormModal = ({ isOpen, onClose, instructorData, mode }: Instruct
         name: "",
         cpf: "",
         email: "",
-        phone: "",
         birthDate: "",
         address: "",
         specialization: "",
@@ -83,39 +80,41 @@ const InstructorFormModal = ({ isOpen, onClose, instructorData, mode }: Instruct
       .replace(/(-\d{2})\d+?$/, "$1");
   };
 
-  const formatPhone = (value: string) => {
-    return value
-      .replace(/\D/g, "")
-      .replace(/(\d{2})(\d)/, "($1) $2")
-      .replace(/(\d{4,5})(\d{4})/, "$1-$2");
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.cpf || !formData.email || !formData.specialization) {
+    if (!formData.name || !formData.cpf || !formData.email || !formData.specialization || !formData.status) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios (Nome, CPF, E-mail, Especialização e Status)",
         variant: "destructive"
       });
       return;
     }
 
-    if (mode === "create") {
-      addInstructor(formData);
-    } else if (instructorData) {
-      updateInstructor(instructorData.id, formData);
+    try {
+      if (mode === "create") {
+        await addInstructor({ ...formData, phone: '', classes: [] });
+      } else if (instructorData) {
+        await updateInstructor(instructorData.id, formData);
+      }
+
+      const action = mode === "create" ? "CADASTRADO" : "ATUALIZADO";
+      toast({
+        title: `INSTRUTOR ${action}`,
+        description: `O instrutor ${formData.name} foi ${action.toLowerCase()} com sucesso`,
+        className: "bg-green-100 text-green-800 border-green-200",
+      });
+
+      onClose();
+    } catch (error: any) {
+      console.error('Erro ao salvar instrutor:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: error.message || "Não foi possível salvar o instrutor",
+        variant: "destructive",
+      });
     }
-
-    const action = mode === "create" ? "CADASTRADO" : "ATUALIZADO";
-    toast({
-      title: `INSTRUTOR ${action}`,
-      description: `O instrutor ${formData.name} foi ${action.toLowerCase()} com sucesso`,
-      className: "bg-green-100 text-green-800 border-green-200",
-    });
-
-    onClose();
   };
 
   return (
@@ -162,23 +161,12 @@ const InstructorFormModal = ({ isOpen, onClose, instructorData, mode }: Instruct
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => handleInputChange("phone", formatPhone(e.target.value))}
-                placeholder="(11) 99999-9999"
-                maxLength={15}
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="birthDate">Data de Nascimento</Label>
               <Input
                 id="birthDate"
+                type="date"
                 value={formData.birthDate}
                 onChange={(e) => handleInputChange("birthDate", e.target.value)}
-                placeholder="dd/mm/aaaa"
               />
             </div>
 
@@ -194,19 +182,12 @@ const InstructorFormModal = ({ isOpen, onClose, instructorData, mode }: Instruct
 
             <div className="space-y-2">
               <Label htmlFor="specialization">Especialização *</Label>
-              <Select value={formData.specialization} onValueChange={(value) => handleInputChange("specialization", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a especialização" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Robótica e Automação">Robótica e Automação</SelectItem>
-                  <SelectItem value="Informática e Programação">Informática e Programação</SelectItem>
-                  <SelectItem value="Web Design e UX/UI">Web Design e UX/UI</SelectItem>
-                  <SelectItem value="Python e Data Science">Python e Data Science</SelectItem>
-                  <SelectItem value="Banco de Dados">Banco de Dados</SelectItem>
-                  <SelectItem value="Desenvolvimento Mobile">Desenvolvimento Mobile</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                id="specialization"
+                value={formData.specialization}
+                onChange={(e) => handleInputChange("specialization", e.target.value)}
+                placeholder="Ex: Robótica e Automação, Programação Web, etc."
+              />
             </div>
 
             <div className="space-y-2">
@@ -220,7 +201,7 @@ const InstructorFormModal = ({ isOpen, onClose, instructorData, mode }: Instruct
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">Status *</Label>
               <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
                 <SelectTrigger>
                   <SelectValue />

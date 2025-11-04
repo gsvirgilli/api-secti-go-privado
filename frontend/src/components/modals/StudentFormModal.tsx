@@ -73,8 +73,19 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
   }, [studentData, mode]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      // Se mudou o curso, limpar a turma selecionada
+      if (field === "course") {
+        return { ...prev, [field]: value, class: "" };
+      }
+      return { ...prev, [field]: value };
+    });
   };
+
+  // Filtrar turmas pelo curso selecionado
+  const filteredClasses = formData.course && formData.course !== ""
+    ? classes.filter(c => c.course === formData.course)
+    : classes;
 
   const formatCPF = (value: string) => {
     return value
@@ -230,15 +241,19 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
 
             <div className="space-y-2">
               <Label htmlFor="class">Turma (opcional)</Label>
-              <Select value={formData.class || "none"} onValueChange={(value) => handleInputChange("class", value === "none" ? "" : value)}>
+              <Select 
+                value={formData.class || "none"} 
+                onValueChange={(value) => handleInputChange("class", value === "none" ? "" : value)}
+                disabled={!formData.course || formData.course === ""}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione a turma (opcional)" />
+                  <SelectValue placeholder={!formData.course ? "Selecione um curso primeiro" : "Selecione a turma (opcional)"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Nenhuma turma</SelectItem>
-                  {classes.map((classItem) => (
+                  {filteredClasses.map((classItem) => (
                     <SelectItem key={classItem.id} value={classItem.name}>
-                      {classItem.name} - {classItem.course}
+                      {classItem.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -253,9 +268,9 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Ativo">Ativo</SelectItem>
-                  <SelectItem value="Inativo">Inativo</SelectItem>
                   <SelectItem value="Trancado">Trancado</SelectItem>
-                  <SelectItem value="Concluído">Concluído</SelectItem>
+                  <SelectItem value="Concluido">Concluído</SelectItem>
+                  <SelectItem value="Desistente">Desistente</SelectItem>
                 </SelectContent>
               </Select>
             </div>

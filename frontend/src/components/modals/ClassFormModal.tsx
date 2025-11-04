@@ -18,11 +18,12 @@ interface ClassFormModalProps {
 
 const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProps) => {
   const { toast } = useToast();
-  const { addClass, updateClass, courses } = useAppData();
+  const { addClass, updateClass, courses, instructors } = useAppData();
   const [formData, setFormData] = useState({
     name: classData?.name || "",
     course: classData?.course || "",
     instructor: classData?.instructor || "",
+    instructorId: classData?.instructorId || 0, // ID do instrutor selecionado
     capacity: classData?.capacity || 0,
     schedule: classData?.schedule || "",
     duration: classData?.duration || "",
@@ -113,16 +114,28 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
 
             <div className="space-y-2">
               <Label htmlFor="instructor">Instrutor *</Label>
-              <Select value={formData.instructor} onValueChange={(value) => handleInputChange("instructor", value)}>
+              <Select 
+                value={formData.instructorId > 0 ? formData.instructorId.toString() : ""} 
+                onValueChange={(value) => {
+                  const instructorId = parseInt(value);
+                  const instructor = instructors.find(i => i.id === instructorId);
+                  handleInputChange("instructorId", instructorId);
+                  handleInputChange("instructor", instructor?.name || "");
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o instrutor" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Instrutor A">Instrutor A</SelectItem>
-                  <SelectItem value="Instrutor B">Instrutor B</SelectItem>
-                  <SelectItem value="Instrutor C">Instrutor C</SelectItem>
-                  <SelectItem value="Instrutor D">Instrutor D</SelectItem>
-                  <SelectItem value="Instrutor E">Instrutor E</SelectItem>
+                  {instructors.length === 0 ? (
+                    <SelectItem value="0" disabled>Nenhum instrutor cadastrado</SelectItem>
+                  ) : (
+                    instructors.map((instructor) => (
+                      <SelectItem key={instructor.id} value={instructor.id.toString()}>
+                        {instructor.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -158,6 +171,7 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
                   <SelectItem value="Planejada">Planejada</SelectItem>
                   <SelectItem value="Ativo">Ativo</SelectItem>
                   <SelectItem value="Concluída">Concluída</SelectItem>
+                  <SelectItem value="Cancelada">Cancelada</SelectItem>
                 </SelectContent>
               </Select>
             </div>

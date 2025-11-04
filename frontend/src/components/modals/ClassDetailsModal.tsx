@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import StudentDetailsModal from "./StudentDetailsModal";
 import ClassFormModal from "./ClassFormModal";
+import { useAppData } from "@/hooks/useAppData";
 
 interface ClassDetailsModalProps {
   isOpen: boolean;
@@ -38,6 +39,8 @@ const ClassDetailsModal = ({ isOpen, onClose, classData }: ClassDetailsModalProp
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
 
+  const { deleteClass } = useAppData();
+
   if (!classData) return null;
 
   const handleEditClass = () => {
@@ -67,23 +70,34 @@ const ClassDetailsModal = ({ isOpen, onClose, classData }: ClassDetailsModalProp
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
-    toast({
-      title: "TURMA EXCLUÍDA",
-      description: "Voltar para Turmas",
-      className: "bg-red-100 text-red-800 border-red-200",
-    });
-    setIsDeleteModalOpen(false);
-    onClose();
+  const confirmDelete = async () => {
+    try {
+      await deleteClass(classData.id);
+      toast({
+        title: "TURMA EXCLUÍDA",
+        description: "A turma foi excluída com sucesso",
+        className: "bg-red-100 text-red-800 border-red-200",
+      });
+      setIsDeleteModalOpen(false);
+      onClose();
+    } catch (err: any) {
+      console.error('Erro ao excluir turma (UI):', err);
+      toast({
+        title: "Erro ao excluir",
+        description: err.message || 'Não foi possível excluir a turma',
+        variant: 'destructive'
+      });
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl bg-card border-none">
         <DialogHeader>
-          <DialogTitle className="text-2xl text-center text-foreground mb-4">
+          <DialogTitle className="text-2xl text-center text-foreground mb-2">
             {classData.name}
           </DialogTitle>
+          <DialogDescription>Detalhes e alunos matriculados na turma {classData.name}.</DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

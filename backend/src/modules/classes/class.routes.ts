@@ -432,4 +432,18 @@ router.patch('/:id/status', isAuthenticated, auditMiddleware({
   }
 }), ClassController.updateStatus);
 
+/**
+ * @route POST /api/classes/:id/instructors/:instructorId
+ * @description Associa um instrutor a uma turma
+ * @access Private
+ */
+router.post('/:id/instructors/:instructorId', isAuthenticated, ClassController.addInstructor);
+
+/**
+ * @route DELETE /api/classes/:id/instructors/:instructorId
+ * @description Remove um instrutor de uma turma
+ * @access Private
+ */
+router.delete('/:id/instructors/:instructorId', isAuthenticated, ClassController.removeInstructor);
+
 export default router;

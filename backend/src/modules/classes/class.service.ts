@@ -2,6 +2,7 @@ import Class from './class.model.js';
 import Curso from '../courses/course.model.js';
 import Enrollment from '../enrollments/enrollment.model.js';
 import Student from '../students/student.model.js';
+import Instructor from '../instructors/instructor.model.js';
 import { Op } from 'sequelize';
 import NotificationService from '../notifications/notification.service.js';
 import { 
@@ -129,6 +130,12 @@ class ClassService {
           model: Student,
           as: 'alunos',
           attributes: ['id', 'matricula', 'nome', 'email', 'status']
+        },
+        {
+          model: Instructor,
+          as: 'instrutores',
+          attributes: ['id', 'nome', 'email', 'especialidade'],
+          through: { attributes: [] } // Não retornar campos da tabela de junção
         }
       ],
       order: [['createdAt', 'DESC']],
@@ -158,6 +165,12 @@ class ClassService {
           model: Student,
           as: 'alunos',
           attributes: ['id', 'matricula', 'nome', 'email', 'status', 'telefone']
+        },
+        {
+          model: Instructor,
+          as: 'instrutores',
+          attributes: ['id', 'nome', 'email', 'especialidade'],
+          through: { attributes: [] }
         }
       ]
     });
@@ -236,6 +249,14 @@ class ClassService {
 
     if (!turma) {
       throw new Error('Turma não encontrada');
+    }
+
+    // Verificar se existem matrículas ou alunos vinculados à turma
+    const enrollmentCount = await Enrollment.count({ where: { id_turma: id } });
+    const studentCount = await Student.count({ where: { turma_id: id } });
+
+    if (enrollmentCount > 0 || studentCount > 0) {
+      throw new Error('Não é possível deletar turma com alunos/matrículas vinculadas. Remova as matrículas ou mova os alunos antes de excluir.');
     }
 
     await turma.destroy();
@@ -443,6 +464,36 @@ class ClassService {
     }
 
     return { valid: true };
+  }
+
+  /**
+   * Associa um instrutor a uma turma
+   */
+  async addInstructor(classId: number, instructorId: number) {
+    const turma = await this.findById(classId);
+    const instructor = await Instructor.findByPk(instructorId);
+
+    if (!instructor) {
+      throw new Error('Instrutor não encontrado');
+    }
+
+    // @ts-ignore - Sequelize association method
+    await turma.addInstrutor(instructor);
+
+    // Retornar turma atualizada com instrutores
+    return await this.findById(classId);
+  }
+
+  /**
+   * Remove um instrutor de uma turma
+   */
+  async removeInstructor(classId: number, instructorId: number) {
+    const turma = await this.findById(classId);
+
+    // @ts-ignore - Sequelize association method
+    await turma.removeInstrutor(instructorId);
+
+    return true;
   }
 }
 

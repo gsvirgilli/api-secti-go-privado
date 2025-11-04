@@ -11,7 +11,7 @@ export const useAppData = () => {
   const studentStats = {
     total: context.students.length,
     active: context.students.filter(s => s.status === "Ativo").length,
-    inactive: context.students.filter(s => s.status === "Inativo").length,
+    inactive: context.students.filter(s => s.status !== "Ativo").length, // Trancados + Desistentes + Concluídos
     pending: context.students.filter(s => s.status === "Pendente").length,
     activityRate: context.students.length > 0
       ? Math.round((context.students.filter(s => s.status === "Ativo").length / context.students.length) * 100)
@@ -20,8 +20,21 @@ export const useAppData = () => {
 
   const classStats = {
     total: context.classes.length,
-    active: context.classes.filter(c => c.status === "Ativo").length,
-    planned: context.classes.filter(c => c.status === "Planejada").length,
+    // "Ativo" representa turmas em andamento
+    active: context.classes.filter(c => {
+      if (c.status !== "Ativo") return false;
+      // Considerar "ativo" se já começou
+      const today = new Date();
+      const startDate = new Date(c.startDate.split('/').reverse().join('-'));
+      return startDate <= today;
+    }).length,
+    // "Planejada" = turmas ativas mas que ainda não começaram
+    planned: context.classes.filter(c => {
+      if (c.status !== "Ativo") return false;
+      const today = new Date();
+      const startDate = new Date(c.startDate.split('/').reverse().join('-'));
+      return startDate > today;
+    }).length,
     completed: context.classes.filter(c => c.status === "Concluída").length,
     cancelled: context.classes.filter(c => c.status === "Cancelada").length,
   };
@@ -42,7 +55,7 @@ export const useAppData = () => {
   const charts = {
     studentsByStatus: [
       { name: 'Ativos', value: studentStats.active, fill: '#10b981' },
-      { name: 'Inativos', value: studentStats.inactive, fill: '#ef4444' },
+      { name: 'Não Ativos', value: studentStats.inactive, fill: '#ef4444' },
       { name: 'Pendentes', value: studentStats.pending, fill: '#f59e0b' },
     ],
     classesByStatus: [

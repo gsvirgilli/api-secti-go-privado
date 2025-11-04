@@ -167,16 +167,19 @@ class ClassController {
       
       return res.status(200).json(result);
     } catch (error) {
-      if (error instanceof Error && error.message === 'Turma não encontrada') {
-        return res.status(404).json({
-          error: 'Turma não encontrada'
-        });
+      if (error instanceof Error) {
+        if (error.message === 'Turma não encontrada') {
+          return res.status(404).json({ error: 'Turma não encontrada' });
+        }
+
+        // Mensagem específica de negócio (vínculos) -> 400 Bad Request
+        if (error.message.includes('Não é possível deletar turma')) {
+          return res.status(400).json({ error: error.message });
+        }
       }
 
       console.error('Erro ao deletar turma:', error);
-      return res.status(500).json({
-        error: 'Erro ao deletar turma'
-      });
+      return res.status(500).json({ error: 'Erro ao deletar turma' });
     }
   }
 
@@ -258,6 +261,63 @@ class ClassController {
       console.error('Erro ao atualizar status da turma:', error);
       return res.status(500).json({
         error: 'Erro ao atualizar status da turma'
+      });
+    }
+  }
+
+  /**
+   * Associa um instrutor a uma turma
+   * POST /api/classes/:id/instructors/:instructorId
+   */
+  async addInstructor(req: Request, res: Response) {
+    try {
+      const { id, instructorId } = req.params;
+      
+      const result = await ClassService.addInstructor(Number(id), Number(instructorId));
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Instrutor associado com sucesso',
+        data: result
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        return res.status(400).json({
+          error: error.message
+        });
+      }
+
+      console.error('Erro ao associar instrutor:', error);
+      return res.status(500).json({
+        error: 'Erro ao associar instrutor'
+      });
+    }
+  }
+
+  /**
+   * Remove um instrutor de uma turma
+   * DELETE /api/classes/:id/instructors/:instructorId
+   */
+  async removeInstructor(req: Request, res: Response) {
+    try {
+      const { id, instructorId } = req.params;
+      
+      await ClassService.removeInstructor(Number(id), Number(instructorId));
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Instrutor removido com sucesso'
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        return res.status(400).json({
+          error: error.message
+        });
+      }
+
+      console.error('Erro ao remover instrutor:', error);
+      return res.status(500).json({
+        error: 'Erro ao remover instrutor'
       });
     }
   }
