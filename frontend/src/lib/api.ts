@@ -53,6 +53,16 @@ export const AuthAPI = {
   
   me: () => 
     api.get("/auth/me"),
+  
+  // Recuperação de senha
+  forgotPassword: (data: { email: string }) => 
+    api.post("/auth/forgot-password", data),
+  
+  validateResetToken: (token: string) => 
+    api.get(`/auth/reset-password/${token}`),
+  
+  resetPassword: (data: { token: string; newPassword: string }) => 
+    api.post("/auth/reset-password", data),
 };
 
 // ======================================
@@ -90,6 +100,9 @@ export const StudentsAPI = {
   
   findById: (id: number) => 
     api.get(`/students/${id}`),
+  
+  create: (data: any) => 
+    api.post("/students", data),
   
   update: (id: number, data: any) => 
     api.put(`/students/${id}`, data),

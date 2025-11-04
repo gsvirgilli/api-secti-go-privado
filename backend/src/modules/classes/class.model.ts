@@ -126,10 +126,6 @@ Class.init({
   ]
 });
 
-// Associações
-Class.belongsTo(Curso, {
-  foreignKey: 'id_curso',
-  as: 'curso'
-});
+// Associações serão configuradas em src/models/associations.ts
 
 export default Class;

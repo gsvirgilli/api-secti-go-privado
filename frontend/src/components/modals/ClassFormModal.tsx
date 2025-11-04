@@ -37,7 +37,7 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name || !formData.course || !formData.instructor) {
@@ -49,20 +49,29 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
       return;
     }
 
-    if (mode === "create") {
-      addClass(formData);
-    } else if (classData) {
-      updateClass(classData.id, formData);
+    try {
+      if (mode === "create") {
+        await addClass(formData);
+      } else if (classData) {
+        await updateClass(classData.id, formData);
+      }
+
+      const action = mode === "create" ? "CRIADA" : "ATUALIZADA";
+      toast({
+        title: `TURMA ${action}`,
+        description: `A turma ${formData.name} foi ${action.toLowerCase()} com sucesso`,
+        className: "bg-green-100 text-green-800 border-green-200",
+      });
+
+      onClose();
+    } catch (error: any) {
+      console.error('Erro ao salvar turma:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: error.message || "Não foi possível salvar a turma",
+        variant: "destructive",
+      });
     }
-
-    const action = mode === "create" ? "CRIADA" : "ATUALIZADA";
-    toast({
-      title: `TURMA ${action}`,
-      description: `A turma ${formData.name} foi ${action.toLowerCase()} com sucesso`,
-      className: "bg-green-100 text-green-800 border-green-200",
-    });
-
-    onClose();
   };
 
   return (

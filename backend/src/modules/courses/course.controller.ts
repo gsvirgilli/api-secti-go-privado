@@ -23,6 +23,15 @@ class CourseController {
         filters.carga_horaria_max = Number(req.query.carga_horaria_max);
       }
 
+      // Adicionar suporte a paginação
+      if (req.query.page) {
+        filters.page = Number(req.query.page);
+      }
+
+      if (req.query.limit) {
+        filters.limit = Number(req.query.limit);
+      }
+
       const courses = await CourseService.findAll(filters);
 
       res.json({

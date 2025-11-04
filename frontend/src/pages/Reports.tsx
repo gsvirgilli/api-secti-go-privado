@@ -49,13 +49,22 @@ const Reports = () => {
     { month: "Jun", enrollments: 28, completions: 22 },
   ];
 
-  const performanceData = charts.gradeDistribution.map((item, index) => {
+  // Mock data para distribuição de notas (será substituído por dados reais futuramente)
+  const gradeDistributionData = [
+    { value: 5 },
+    { value: 10 },
+    { value: 25 },
+    { value: 35 },
+    { value: 25 }
+  ];
+
+  const performanceData = gradeDistributionData.map((item, index) => {
     const gradeRanges = ["Baixo (0-2)", "Baixo (2-4)", "Regular (4-6)", "Bom (6-8)", "Excelente (8-10)"];
     const colors = ["#ef4444", "#f59e0b", "#eab308", "#3b82f6", "#10b981"];
     return {
-      name: gradeRanges[index] || item.name,
+      name: gradeRanges[index],
       value: item.value,
-      color: colors[index] || "#6b7280"
+      color: colors[index]
     };
   });
 

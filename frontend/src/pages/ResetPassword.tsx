@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { AuthAPI } from "@/lib/api";
 
 const ResetPassword = () => {
   const [email, setEmail] = useState("");
@@ -37,18 +38,21 @@ const ResetPassword = () => {
     setIsLoading(true);
     
     try {
-      // Simulate API call to send reset email
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      const response = await AuthAPI.forgotPassword({ email });
+      const data = response.data;
+
       setEmailSent(true);
       toast({
         title: "E-mail enviado!",
-        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+        description: data.message || "Verifique sua caixa de entrada para redefinir sua senha.",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Erro ao solicitar recuperação de senha:', error);
+      const errorMessage = error.response?.data?.message || "Erro ao enviar e-mail. Tente novamente.";
+      setError(errorMessage);
       toast({
         title: "Erro",
-        description: "Erro ao enviar e-mail. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import StudentService from './student.service.js';
-import { updateStudentSchema, listStudentFiltersSchema } from './student.validator.js';
+import { createStudentSchema, updateStudentSchema, listStudentFiltersSchema } from './student.validator.js';
 import { ZodError } from 'zod';
 
 /**
@@ -105,6 +105,47 @@ class StudentController {
       console.error('Erro ao buscar aluno por matrícula:', error);
       return res.status(500).json({
         error: 'Erro ao buscar aluno por matrícula'
+      });
+    }
+  }
+
+  /**
+   * Cria um novo aluno
+   * POST /api/students
+   */
+  async create(req: Request, res: Response) {
+    try {
+      const data = createStudentSchema.parse(req.body);
+      
+      const student = await StudentService.create(data);
+      
+      return res.status(201).json({
+        success: true,
+        data: student,
+        message: 'Aluno criado com sucesso'
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: 'Erro de validação',
+          details: error.issues
+        });
+      }
+
+      if (error instanceof Error) {
+        if (error.message === 'CPF já cadastrado' || error.message === 'Email já cadastrado') {
+          return res.status(409).json({
+            success: false,
+            error: error.message
+          });
+        }
+      }
+
+      console.error('Erro ao criar aluno:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao criar aluno'
       });
     }
   }

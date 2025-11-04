@@ -74,24 +74,28 @@ interface AppContextType {
   classes: Class[];
   instructors: Instructor[];
   loading: boolean;
+  error: string | null;
   
   // Student actions
-  addStudent: (student: Omit<Student, 'id'>) => void;
-  updateStudent: (id: number, student: Partial<Student>) => void;
-  deleteStudent: (id: number) => void;
+  addStudent: (student: Omit<Student, 'id'>) => Promise<Student>;
+  updateStudent: (id: number, student: Partial<Student>) => Promise<void>;
+  deleteStudent: (id: number) => Promise<void>;
   getStudentById: (id: number) => Student | undefined;
+  refreshStudents: () => Promise<void>;
   
   // Course actions
-  addCourse: (course: Omit<Course, 'id'>) => void;
-  updateCourse: (id: number, course: Partial<Course>) => void;
-  deleteCourse: (id: number) => void;
+  addCourse: (course: Omit<Course, 'id'>) => Promise<Course>;
+  updateCourse: (id: number, course: Partial<Course>) => Promise<void>;
+  deleteCourse: (id: number) => Promise<void>;
   getCourseById: (id: number) => Course | undefined;
+  refreshCourses: () => Promise<void>;
   
   // Class actions
-  addClass: (classData: Omit<Class, 'id'>) => void;
-  updateClass: (id: number, classData: Partial<Class>) => void;
-  deleteClass: (id: number) => void;
+  addClass: (classData: Omit<Class, 'id'>) => Promise<Class>;
+  updateClass: (id: number, classData: Partial<Class>) => Promise<void>;
+  deleteClass: (id: number) => Promise<void>;
   getClassById: (id: number) => Class | undefined;
+  refreshClasses: () => Promise<void>;
   
   // Instructor actions
   addInstructor: (instructor: Omit<Instructor, 'id'>) => void;
@@ -435,12 +439,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Carregar dados da API ao montar o componente
   useEffect(() => {
     async function loadData() {
       // Não carregar dados se estiver em páginas públicas
-      const publicPaths = ['/login', '/register', '/reset-password'];
+      const publicPaths = ['/login', '/register', '/reset-password', '/new-password'];
       const isPublicPath = publicPaths.some(path => window.location.pathname.includes(path));
       
       if (isPublicPath) {
@@ -448,27 +453,217 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      // Verificar se há token antes de tentar carregar dados
+      const token = localStorage.getItem("@sukatech:token");
+      if (!token) {
+        console.log('Sem token, não carregando dados');
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         
-        // Carregar dados em paralelo
+        console.log('🔄 Carregando dados iniciais...');
+        
+        // Função para carregar todos os cursos (backend limita a 10 por página)
+        const loadAllCourses = async () => {
+          const seenIds = new Set();
+          let uniqueCourses: any[] = [];
+          let currentPage = 1;
+          let hasMore = true;
+          
+          while (hasMore && currentPage <= 10) {
+            const response = await CoursesAPI.list({ page: currentPage, limit: 100 });
+            const pageData = response.data?.data?.data || [];
+            const pagination = response.data?.data?.pagination;
+            
+            // Filtrar apenas cursos novos (não duplicados)
+            const newCourses = pageData.filter((course: any) => {
+              if (seenIds.has(course.id)) {
+                return false; // Duplicado
+              }
+              seenIds.add(course.id);
+              return true;
+            });
+            
+            uniqueCourses = [...uniqueCourses, ...newCourses];
+            console.log(`📦 Página ${currentPage}: ${pageData.length} cursos recebidos, ${newCourses.length} novos (total único: ${uniqueCourses.length})`);
+            
+            // Se não teve cursos novos, parar (backend não suporta paginação)
+            if (newCourses.length === 0) {
+              console.log('⚠️ Backend não suporta paginação corretamente, parando na página', currentPage);
+              break;
+            }
+            
+            hasMore = pagination?.hasNextPage || false;
+            currentPage++;
+          }
+          
+          console.log(`✅ Total de cursos únicos carregados: ${uniqueCourses.length}`);
+          return { data: { data: { data: uniqueCourses } } };
+        };
+        
+        // Carregar dados (com limit maior para pegar todos)
         const [studentsRes, coursesRes, classesRes] = await Promise.all([
-          StudentsAPI.list().catch(() => ({ data: initialStudents })),
-          CoursesAPI.list().catch(() => ({ data: initialCourses })),
-          ClassesAPI.list().catch(() => ({ data: initialClasses }))
+          StudentsAPI.list({ limit: 100, page: 1 }).catch(() => ({ data: [] })),
+          loadAllCourses().catch(() => ({ data: { data: { data: [] } } })),
+          ClassesAPI.list({ limit: 100, page: 1 }).catch(() => ({ data: [] }))
         ]);
 
-        setStudents(studentsRes.data || initialStudents);
-        setCourses(coursesRes.data || initialCourses);
-        setClasses(classesRes.data || initialClasses);
+        console.log('📦 CoursesRes recebido:', coursesRes);
+        console.log('📦 CoursesRes.data:', coursesRes.data);
+        console.log('📦 CoursesRes.data.data:', coursesRes.data?.data);
+        console.log('📦 Tipo de coursesRes.data:', typeof coursesRes.data);
+        console.log('📦 É array coursesRes.data?', Array.isArray(coursesRes.data));
+        console.log('📦 É array coursesRes.data.data?', Array.isArray(coursesRes.data?.data));
+        
+        // Garantir que students seja um array e transformar do backend para frontend
+        let backendStudents = [];
+        if (studentsRes.data && typeof studentsRes.data === 'object') {
+          if (Array.isArray(studentsRes.data)) {
+            backendStudents = studentsRes.data;
+          } else if (studentsRes.data.data && Array.isArray(studentsRes.data.data.data)) {
+            backendStudents = studentsRes.data.data.data;
+          } else if (Array.isArray(studentsRes.data.data)) {
+            backendStudents = studentsRes.data.data;
+          }
+        }
+        
+        // Transformar students do backend para formato frontend
+        const frontendStudents: Student[] = backendStudents.map((bs: any) => {
+          const formatDate = (date: string | null) => {
+            if (!date) return '';
+            const d = new Date(date);
+            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+          };
+          
+          return {
+            id: bs.id,
+            name: bs.nome || '',
+            cpf: bs.cpf || '',
+            email: bs.email || '',
+            phone: bs.telefone || '',
+            birthDate: formatDate(bs.data_nascimento),
+            address: bs.endereco || '',
+            enrollmentDate: formatDate(bs.createdAt),
+            status: bs.status || 'Ativo',
+            course: bs.curso?.nome || '',
+            class: bs.turma?.nome || '',
+            progress: 0,
+            attendance: 0,
+            grades: 0
+          };
+        });
+        
+        console.log('✅ Students no loadData:', frontendStudents);
+        setStudents(frontendStudents);
+        
+        // Transform backend courses to frontend format
+        // Backend retorna { success, data: { data: [...], pagination: {...} }, message }
+        let backendCourses = [];
+        if (coursesRes.data && typeof coursesRes.data === 'object') {
+          if (Array.isArray(coursesRes.data)) {
+            // Se data já é um array direto
+            backendCourses = coursesRes.data;
+            console.log('📦 Pegou coursesRes.data direto (é array)');
+          } else if (coursesRes.data.data && Array.isArray(coursesRes.data.data.data)) {
+            // Se tem paginação: data.data.data
+            backendCourses = coursesRes.data.data.data;
+            console.log('📦 Pegou coursesRes.data.data.data (todas as páginas carregadas)');
+          } else if (Array.isArray(coursesRes.data.data)) {
+            // Se data.data é array direto
+            backendCourses = coursesRes.data.data;
+            console.log('📦 Pegou coursesRes.data.data (é array)');
+          } else {
+            console.log('📦 ⚠️ Nenhuma das condições funcionou!');
+            console.log('📦 coursesRes.data:', coursesRes.data);
+          }
+        }
+        console.log('📦 Backend courses no loadData:', backendCourses);
+        console.log('📦 É array?', Array.isArray(backendCourses));
+        
+        const frontendCourses: Course[] = backendCourses.map((bc: any) => {
+          // Contar alunos de todas as turmas deste curso
+          let totalStudents = 0;
+          if (bc.turmas && Array.isArray(bc.turmas)) {
+            totalStudents = bc.turmas.reduce((sum: number, turma: any) => {
+              return sum + (turma.alunos ? turma.alunos.length : 0);
+            }, 0);
+          }
+          
+          return {
+            id: bc.id,
+            title: bc.nome,
+            description: bc.descricao || '',
+            duration: `${bc.carga_horaria}h`,
+            students: totalStudents,
+            level: 'Intermediário',
+            status: bc.ativo !== false ? 'Ativo' : 'Inativo',
+            color: 'bg-blue-500'
+          };
+        });
+        
+        console.log('✅ Frontend courses no loadData:', frontendCourses);
+        console.log('📋 Títulos dos cursos:', frontendCourses.map(c => c.title));
+        setCourses(frontendCourses);
+        
+        // Garantir que classes seja um array e transformar do backend para frontend
+        let backendClasses = [];
+        if (classesRes.data && typeof classesRes.data === 'object') {
+          if (Array.isArray(classesRes.data)) {
+            backendClasses = classesRes.data;
+          } else if (classesRes.data.data && Array.isArray(classesRes.data.data.data)) {
+            backendClasses = classesRes.data.data.data;
+          } else if (Array.isArray(classesRes.data.data)) {
+            backendClasses = classesRes.data.data;
+          }
+        }
+        
+        // Transformar classes do backend para formato frontend
+        const frontendClasses: Class[] = backendClasses.map((bc: any) => {
+          const formatDate = (date: string | null) => {
+            if (!date) return '';
+            const d = new Date(date);
+            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+          };
+          
+          // Transformar alunos da turma
+          const students = (bc.alunos || []).map((aluno: any) => ({
+            id: aluno.id,
+            name: aluno.nome,
+            matricula: aluno.matricula,
+            email: aluno.email,
+            status: aluno.status
+          }));
+          
+          return {
+            id: bc.id,
+            name: bc.nome || '',
+            course: bc.curso?.nome || bc.id_curso?.toString() || '',
+            instructor: 'A definir',
+            capacity: bc.vagas || 0,
+            enrolled: students.length,
+            schedule: bc.turno || '',
+            duration: '6 meses',
+            status: bc.status || 'Planejada',
+            startDate: formatDate(bc.data_inicio),
+            endDate: formatDate(bc.data_fim),
+            students: students
+          };
+        });
+        
+        console.log('✅ Classes no loadData:', frontendClasses);
+        setClasses(frontendClasses);
+        
         setInstructors(initialInstructors); // Por enquanto, usar mock para instrutores
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
-        // Em caso de erro, usar dados mockados
-        setStudents(initialStudents);
-        setCourses(initialCourses);
-        setClasses(initialClasses);
-        setInstructors(initialInstructors);
+        // Em caso de erro, usar arrays vazios ao invés de dados mockados
+        setStudents([]);
+        setCourses([]);
+        setClasses([]);
+        setInstructors([]);
       } finally {
         setLoading(false);
       }
@@ -477,163 +672,455 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     loadData();
   }, []);
 
+  // Refresh functions
+  const refreshStudents = async () => {
+    try {
+      const response = await StudentsAPI.list({ limit: 100, page: 1 });
+      
+      // Extrair e transformar students
+      let backendStudents = [];
+      if (response.data && typeof response.data === 'object') {
+        if (Array.isArray(response.data)) {
+          backendStudents = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data.data)) {
+          backendStudents = response.data.data.data;
+        } else if (Array.isArray(response.data.data)) {
+          backendStudents = response.data.data;
+        }
+      }
+      
+      const frontendStudents: Student[] = backendStudents.map((bs: any) => {
+        const formatDate = (date: string | null) => {
+          if (!date) return '';
+          const d = new Date(date);
+          return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        };
+        
+        return {
+          id: bs.id,
+          name: bs.nome || '',
+          cpf: bs.cpf || '',
+          email: bs.email || '',
+          phone: bs.telefone || '',
+          birthDate: formatDate(bs.data_nascimento),
+          address: bs.endereco || '',
+          enrollmentDate: formatDate(bs.createdAt),
+          status: bs.status || 'Ativo',
+          course: bs.turma?.curso?.nome || '',
+          class: bs.turma?.nome || '',
+          progress: 0,
+          attendance: 0,
+          grades: 0
+        };
+      });
+      
+      setStudents(frontendStudents);
+      setError(null);
+    } catch (err: any) {
+      console.error('Erro ao carregar alunos:', err);
+      setError(err.response?.data?.message || 'Erro ao carregar alunos');
+    }
+  };
+
   // Student actions
-  const addStudent = (studentData: Omit<Student, 'id'>) => {
-    const newId = Math.max(...students.map(s => s.id), 0) + 1;
-    const newStudent = { ...studentData, id: newId };
-    setStudents(prev => [...prev, newStudent]);
-    
-    // Update class enrollment count
-    if (studentData.class) {
-      setClasses(prev => prev.map(cls => {
-        if (cls.name === studentData.class) {
-          return {
-            ...cls,
-            enrolled: cls.enrolled + 1,
-            students: [...cls.students, { id: newId, name: studentData.name, status: studentData.status }]
-          };
-        }
-        return cls;
-      }));
-    }
-    
-    // Update course student count
-    if (studentData.course) {
-      setCourses(prev => prev.map(course => {
-        if (course.title === studentData.course) {
-          return { ...course, students: course.students + 1 };
-        }
-        return course;
-      }));
+  const addStudent = async (studentData: Omit<Student, 'id'>): Promise<Student> => {
+    try {
+      setError(null);
+      
+      console.log('➕ Criando aluno:', studentData);
+      
+      // Buscar id_curso baseado no nome do curso selecionado
+      let id_curso = null;
+      if (studentData.course) {
+        const selectedCourse = courses.find(c => c.title === studentData.course);
+        id_curso = selectedCourse ? selectedCourse.id : null;
+      }
+      
+      // Buscar id_turma baseado no nome da turma selecionada
+      let id_turma = null;
+      if (studentData.class) {
+        const selectedClass = classes.find(c => c.name === studentData.class);
+        id_turma = selectedClass ? selectedClass.id : null;
+      }
+      
+      // Transform frontend format to backend format
+      const backendData = {
+        nome: studentData.name,
+        cpf: studentData.cpf.replace(/\D/g, ''), // Remove formatação
+        email: studentData.email,
+        telefone: studentData.phone || null,
+        data_nascimento: studentData.birthDate || null, // Backend aceita DD/MM/YYYY e MM/DD/YYYY
+        endereco: studentData.address || null,
+        id_curso: id_curso,
+        id_turma: id_turma,
+        status: 'ativo'
+      };
+      
+      console.log('➕ Dados para backend:', backendData);
+      
+      const response = await StudentsAPI.create(backendData);
+      console.log('➕ Resposta do backend:', response);
+      
+      const backendStudent = response.data.data; // Backend returns { success, data, message }
+      console.log('➕ Backend student:', backendStudent);
+      
+      // Transform backend format to frontend format
+      const formatDate = (date: string | null) => {
+        if (!date) return '';
+        const d = new Date(date);
+        return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+      };
+      
+      const newStudent: Student = {
+        id: backendStudent.id,
+        name: backendStudent.nome,
+        cpf: backendStudent.cpf,
+        email: backendStudent.email,
+        phone: backendStudent.telefone || '',
+        birthDate: formatDate(backendStudent.data_nascimento),
+        address: backendStudent.endereco || '',
+        enrollmentDate: formatDate(backendStudent.createdAt),
+        status: backendStudent.status || 'Ativo',
+        course: backendStudent.curso?.nome || '',
+        class: backendStudent.turma?.nome || '',
+        progress: 0,
+        attendance: 0,
+        grades: 0
+      };
+      
+      console.log('➕ Novo aluno transformado:', newStudent);
+      
+      setStudents(prev => {
+        const updated = [...prev, newStudent];
+        console.log('➕ Alunos após adicionar:', updated);
+        return updated;
+      });
+      
+      // Refresh related data
+      await refreshClasses();
+      await refreshCourses();
+      
+      return newStudent;
+    } catch (err: any) {
+      console.error('Erro ao criar aluno:', err);
+      console.error('Detalhes do erro:', err.response?.data);
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Erro ao criar aluno';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
-  const updateStudent = (id: number, studentData: Partial<Student>) => {
-    const oldStudent = students.find(s => s.id === id);
-    
-    setStudents(prev => prev.map(student => 
-      student.id === id ? { ...student, ...studentData } : student
-    ));
-
-    // Update class students if name or status changed
-    if (oldStudent && (studentData.name || studentData.status)) {
-      setClasses(prev => prev.map(cls => ({
-        ...cls,
-        students: cls.students.map(student => 
-          student.id === id 
-            ? { 
-                ...student, 
-                name: studentData.name || student.name,
-                status: studentData.status || student.status
-              }
-            : student
-        )
-      })));
+  const updateStudent = async (id: number, studentData: Partial<Student>): Promise<void> => {
+    try {
+      setError(null);
+      
+      console.log('✏️ Atualizando aluno:', id, studentData);
+      
+      // Transform frontend format to backend format
+      const backendData: Record<string, unknown> = {};
+      if (studentData.name) backendData.nome = studentData.name;
+      if (studentData.email) backendData.email = studentData.email;
+      if (studentData.phone) backendData.telefone = studentData.phone;
+      
+      console.log('✏️ Dados para backend:', backendData);
+      
+      await StudentsAPI.update(id, backendData);
+      
+      // Update local state with frontend format
+      setStudents(prev => prev.map(student => 
+        student.id === id ? { ...student, ...studentData } : student
+      ));
+      
+      // Refresh related data
+      await refreshClasses();
+      
+    } catch (err: unknown) {
+      console.error('Erro ao atualizar aluno:', err);
+      const error = err as { response?: { data?: { error?: string; message?: string } } };
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Erro ao atualizar aluno';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
-  const deleteStudent = (id: number) => {
-    const student = students.find(s => s.id === id);
-    
-    setStudents(prev => prev.filter(s => s.id !== id));
-    
-    // Update class enrollment
-    if (student?.class) {
-      setClasses(prev => prev.map(cls => {
-        if (cls.name === student.class) {
-          return {
-            ...cls,
-            enrolled: Math.max(0, cls.enrolled - 1),
-            students: cls.students.filter(s => s.id !== id)
-          };
-        }
-        return cls;
-      }));
-    }
-    
-    // Update course student count
-    if (student?.course) {
-      setCourses(prev => prev.map(course => {
-        if (course.title === student.course) {
-          return { ...course, students: Math.max(0, course.students - 1) };
-        }
-        return course;
-      }));
+  const deleteStudent = async (id: number): Promise<void> => {
+    try {
+      setError(null);
+      await StudentsAPI.delete(id);
+      
+      setStudents(prev => prev.filter(s => s.id !== id));
+      
+      // Refresh related data
+      await refreshClasses();
+      await refreshCourses();
+      
+    } catch (err: any) {
+      console.error('Erro ao deletar aluno:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao deletar aluno';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
   const getStudentById = (id: number) => students.find(s => s.id === id);
 
-  // Course actions
-  const addCourse = (courseData: Omit<Course, 'id'>) => {
-    const newId = Math.max(...courses.map(c => c.id), 0) + 1;
-    setCourses(prev => [...prev, { ...courseData, id: newId }]);
-  };
-
-  const updateCourse = (id: number, courseData: Partial<Course>) => {
-    const oldCourse = courses.find(c => c.id === id);
-    
-    setCourses(prev => prev.map(course => 
-      course.id === id ? { ...course, ...courseData } : course
-    ));
-
-    // Update students and classes if course title changed
-    if (oldCourse && courseData.title && courseData.title !== oldCourse.title) {
-      setStudents(prev => prev.map(student => 
-        student.course === oldCourse.title 
-          ? { ...student, course: courseData.title! }
-          : student
-      ));
+  const refreshCourses = async () => {
+    try {
+      const response = await CoursesAPI.list({ limit: 100 });
+      console.log('🔍 Response completa:', response);
+      console.log('🔍 response.data:', response.data);
       
-      setClasses(prev => prev.map(cls => 
-        cls.course === oldCourse.title 
-          ? { ...cls, course: courseData.title! }
-          : cls
-      ));
+      // Backend retorna { success, data: { data: [...], pagination: {...} }, message }
+      let backendCourses = [];
+      if (response.data && typeof response.data === 'object') {
+        if (Array.isArray(response.data)) {
+          backendCourses = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data.data)) {
+          // Com paginação: data.data.data
+          backendCourses = response.data.data.data;
+        } else if (Array.isArray(response.data.data)) {
+          backendCourses = response.data.data;
+        }
+      }
+      console.log('🔍 Backend courses:', backendCourses);
+      console.log('🔍 É array?', Array.isArray(backendCourses));
+      
+      // Transform backend format to frontend format
+      const frontendCourses: Course[] = backendCourses.map((bc: any) => {
+        // Contar alunos de todas as turmas deste curso
+        let totalStudents = 0;
+        if (bc.turmas && Array.isArray(bc.turmas)) {
+          totalStudents = bc.turmas.reduce((sum: number, turma: any) => {
+            return sum + (turma.alunos ? turma.alunos.length : 0);
+          }, 0);
+        }
+        
+        return {
+          id: bc.id,
+          title: bc.nome,
+          description: bc.descricao || '',
+          duration: `${bc.carga_horaria}h`,
+          students: totalStudents,
+          level: 'Intermediário',
+          status: bc.ativo !== false ? 'Ativo' : 'Inativo',
+          color: 'bg-blue-500'
+        };
+      });
+      
+      console.log('🔍 Frontend courses transformados:', frontendCourses);
+      setCourses(frontendCourses);
+      setError(null);
+    } catch (err: any) {
+      console.error('Erro ao carregar cursos:', err);
+      setError(err.response?.data?.message || 'Erro ao carregar cursos');
     }
   };
 
-  const deleteCourse = (id: number) => {
-    setCourses(prev => prev.filter(c => c.id !== id));
+  // Course actions
+  const addCourse = async (courseData: Omit<Course, 'id'>): Promise<Course> => {
+    try {
+      setError(null);
+      
+      console.log('➕ Criando curso:', courseData);
+      
+      // Transform frontend format to backend format
+      const backendData = {
+        nome: courseData.title,
+        carga_horaria: parseInt(courseData.duration.replace(/\D/g, '')) || 0,
+        descricao: courseData.description || undefined,
+        ativo: courseData.status === "Ativo"
+      };
+      
+      console.log('➕ Dados para backend:', backendData);
+      
+      const response = await CoursesAPI.create(backendData);
+      console.log('➕ Resposta do backend:', response);
+      console.log('➕ response.data:', response.data);
+      
+      const backendCourse = response.data.data; // Backend returns { success, data, message }
+      console.log('➕ Backend course:', backendCourse);
+      
+      // Transform backend format to frontend format
+      const newCourse: Course = {
+        id: backendCourse.id,
+        title: backendCourse.nome,
+        description: backendCourse.descricao || '',
+        duration: `${backendCourse.carga_horaria}h`,
+        students: 0,
+        level: 'Intermediário',
+        status: 'Ativo',
+        color: 'bg-blue-500'
+      };
+      
+      console.log('➕ Novo curso transformado:', newCourse);
+      setCourses(prev => {
+        const updated = [...prev, newCourse];
+        console.log('➕ Cursos após adicionar:', updated);
+        return updated;
+      });
+      
+      return newCourse;
+    } catch (err: any) {
+      console.error('Erro ao criar curso:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao criar curso';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
+  const updateCourse = async (id: number, courseData: Partial<Course>): Promise<void> => {
+    try {
+      setError(null);
+      
+      console.log('🔧 Atualizando curso:', id, courseData);
+      
+      // Transform frontend format to backend format
+      const backendData: any = {};
+      if (courseData.title) backendData.nome = courseData.title;
+      if (courseData.duration) backendData.carga_horaria = parseInt(courseData.duration.replace(/\D/g, '')) || 0;
+      if (courseData.description !== undefined) backendData.descricao = courseData.description || undefined;
+      if (courseData.status) backendData.ativo = courseData.status === "Ativo";
+      
+      console.log('🔧 Dados backend:', backendData);
+      
+      const response = await CoursesAPI.update(id, backendData);
+      console.log('🔧 Resposta do update:', response);
+      
+      // Ao invés de atualizar manualmente, recarregar do backend para garantir consistência
+      await refreshCourses();
+      
+      // Refresh related data
+      await refreshClasses();
+      await refreshStudents();
+      
+    } catch (err: any) {
+      console.error('❌ Erro ao atualizar curso:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao atualizar curso';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
+  const deleteCourse = async (id: number): Promise<void> => {
+    try {
+      setError(null);
+      await CoursesAPI.delete(id);
+      
+      setCourses(prev => prev.filter(c => c.id !== id));
+      
+      // Refresh related data
+      await refreshClasses();
+      
+    } catch (err: any) {
+      console.error('Erro ao deletar curso:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao deletar curso';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
   };
 
   const getCourseById = (id: number) => courses.find(c => c.id === id);
 
-  // Class actions
-  const addClass = (classData: Omit<Class, 'id'>) => {
-    const newId = Math.max(...classes.map(c => c.id), 0) + 1;
-    setClasses(prev => [...prev, { ...classData, id: newId }]);
-  };
-
-  const updateClass = (id: number, classData: Partial<Class>) => {
-    const oldClass = classes.find(c => c.id === id);
-    
-    setClasses(prev => prev.map(cls => 
-      cls.id === id ? { ...cls, ...classData } : cls
-    ));
-
-    // Update students if class name changed
-    if (oldClass && classData.name && classData.name !== oldClass.name) {
-      setStudents(prev => prev.map(student => 
-        student.class === oldClass.name 
-          ? { ...student, class: classData.name! }
-          : student
-      ));
+  const refreshClasses = async () => {
+    try {
+      const response = await ClassesAPI.list({ limit: 100 });
+      
+      // Extrair e transformar classes
+      let backendClasses = [];
+      if (response.data && typeof response.data === 'object') {
+        if (Array.isArray(response.data)) {
+          backendClasses = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data.data)) {
+          backendClasses = response.data.data.data;
+        } else if (Array.isArray(response.data.data)) {
+          backendClasses = response.data.data;
+        }
+      }
+      
+      const frontendClasses: Class[] = backendClasses.map((bc: any) => {
+        const formatDate = (date: string | null) => {
+          if (!date) return '';
+          const d = new Date(date);
+          return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        };
+        
+        return {
+          id: bc.id,
+          name: bc.nome || '',
+          course: bc.curso?.nome || bc.id_curso?.toString() || '',
+          instructor: 'A definir',
+          capacity: bc.vagas || 0,
+          enrolled: 0,
+          schedule: bc.turno || '',
+          duration: '6 meses',
+          status: bc.status || 'Planejada',
+          startDate: formatDate(bc.data_inicio),
+          endDate: formatDate(bc.data_fim),
+          students: []
+        };
+      });
+      
+      setClasses(frontendClasses);
+      setError(null);
+    } catch (err: any) {
+      console.error('Erro ao carregar turmas:', err);
+      setError(err.response?.data?.message || 'Erro ao carregar turmas');
     }
   };
 
-  const deleteClass = (id: number) => {
-    const classToDelete = classes.find(c => c.id === id);
-    
-    setClasses(prev => prev.filter(c => c.id !== id));
-    
-    // Update students who were in this class
-    if (classToDelete) {
-      setStudents(prev => prev.map(student => 
-        student.class === classToDelete.name 
-          ? { ...student, class: "", status: "Inativo" }
-          : student
+  // Class actions
+  const addClass = async (classData: Omit<Class, 'id'>): Promise<Class> => {
+    try {
+      setError(null);
+      const response = await ClassesAPI.create(classData);
+      const newClass = response.data;
+      
+      setClasses(prev => [...prev, newClass]);
+      
+      return newClass;
+    } catch (err: any) {
+      console.error('Erro ao criar turma:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao criar turma';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
+  const updateClass = async (id: number, classData: Partial<Class>): Promise<void> => {
+    try {
+      setError(null);
+      await ClassesAPI.update(id, classData);
+      
+      setClasses(prev => prev.map(cls => 
+        cls.id === id ? { ...cls, ...classData } : cls
       ));
+      
+      // Refresh related data
+      await refreshStudents();
+      
+    } catch (err: any) {
+      console.error('Erro ao atualizar turma:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao atualizar turma';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
+  const deleteClass = async (id: number): Promise<void> => {
+    try {
+      setError(null);
+      await ClassesAPI.delete(id);
+      
+      setClasses(prev => prev.filter(c => c.id !== id));
+      
+      // Refresh students data
+      await refreshStudents();
+      
+    } catch (err: any) {
+      console.error('Erro ao deletar turma:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao deletar turma';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
@@ -673,18 +1160,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     classes,
     instructors,
     loading,
+    error,
     addStudent,
     updateStudent,
     deleteStudent,
     getStudentById,
+    refreshStudents,
     addCourse,
     updateCourse,
     deleteCourse,
     getCourseById,
+    refreshCourses,
     addClass,
     updateClass,
     deleteClass,
     getClassById,
+    refreshClasses,
     addInstructor,
     updateInstructor,
     deleteInstructor,

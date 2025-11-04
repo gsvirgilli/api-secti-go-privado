@@ -70,32 +70,52 @@ const CourseFormModal = ({ isOpen, onClose, courseData, mode }: CourseFormModalP
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.description || !formData.duration) {
+    if (!formData.title || !formData.duration) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios",
+        description: "Preencha o nome e a carga horária",
         variant: "destructive"
       });
       return;
     }
 
-    if (mode === "create") {
-      addCourse(formData);
-    } else if (courseData) {
-      updateCourse(courseData.id, formData);
+    try {
+      // AppContext agora faz a transformação internamente, então enviar dados no formato frontend
+      const courseDataForContext = {
+        title: formData.title,
+        duration: formData.duration,
+        description: formData.description,
+        status: formData.status,
+        students: courseData?.students || 0,
+        level: courseData?.level || 'Intermediário',
+        color: courseData?.color || 'bg-blue-500'
+      };
+
+      if (mode === "create") {
+        await addCourse(courseDataForContext);
+      } else if (courseData) {
+        await updateCourse(courseData.id, courseDataForContext);
+      }
+
+      const action = mode === "create" ? "CRIADO" : "ATUALIZADO";
+      toast({
+        title: `CURSO ${action}`,
+        description: `O curso ${formData.title} foi ${action.toLowerCase()} com sucesso`,
+        className: "bg-green-100 text-green-800 border-green-200",
+      });
+
+      onClose();
+    } catch (error: any) {
+      console.error('Erro ao salvar curso:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: error.message || "Não foi possível salvar o curso",
+        variant: "destructive",
+      });
     }
-
-    const action = mode === "create" ? "CRIADO" : "ATUALIZADO";
-    toast({
-      title: `CURSO ${action}`,
-      description: `O curso ${formData.title} foi ${action.toLowerCase()} com sucesso`,
-      className: "bg-green-100 text-green-800 border-green-200",
-    });
-
-    onClose();
   };
 
   return (
@@ -165,25 +185,6 @@ const CourseFormModal = ({ isOpen, onClose, courseData, mode }: CourseFormModalP
                   <SelectItem value="Ativo">Ativo</SelectItem>
                   <SelectItem value="Inativo">Inativo</SelectItem>
                   <SelectItem value="Em Desenvolvimento">Em Desenvolvimento</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="color">Cor de Identificação</Label>
-              <Select value={formData.color} onValueChange={(value) => handleInputChange("color", value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {colorOptions.map((color) => (
-                    <SelectItem key={color.value} value={color.value}>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded-full ${color.class}`}></div>
-                        {color.label}
-                      </div>
-                    </SelectItem>
-                  ))}
                 </SelectContent>
               </Select>
             </div>

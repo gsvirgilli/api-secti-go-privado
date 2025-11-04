@@ -76,7 +76,6 @@ Course.init({
   timestamps: true,
 });
 
-// Associação com turmas (será configurada quando o módulo de classes for importado)
-// Course.hasMany(Class, { foreignKey: 'id_curso', as: 'turmas' });
+// Associações serão configuradas em src/models/associations.ts
 
 export default Course;

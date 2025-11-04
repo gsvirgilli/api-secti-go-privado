@@ -1,5 +1,4 @@
 import { useAppContext } from '@/contexts/AppContext';
-import type { Instructor, Class, Course } from '@/contexts/AppContext';
 
 export const useAppData = () => {
   const context = useAppContext();
@@ -8,58 +7,12 @@ export const useAppData = () => {
     throw new Error('useAppData must be used within an AppProvider');
   }
 
-  // ---------- CRUD de Instrutores ----------
-  const createInstructor = (newInstructor: Instructor) => {
-    context.setInstructors([...context.instructors, newInstructor]);
-  };
-
-  const updateInstructor = (updatedInstructor: Instructor) => {
-    context.setInstructors(
-      context.instructors.map(i =>
-        i.id === updatedInstructor.id ? updatedInstructor : i
-      )
-    );
-  };
-
-  const deleteInstructor = (id: string) => {
-    context.setInstructors(context.instructors.filter(i => i.id !== id));
-  };
-
-  // ---------- CRUD de Turmas ----------
-  const createClass = (newClass: Class) => {
-    context.setClasses([...context.classes, newClass]);
-  };
-
-  const updateClass = (updatedClass: Class) => {
-    context.setClasses(
-      context.classes.map(c => c.id === updatedClass.id ? updatedClass : c)
-    );
-  };
-
-  const deleteClass = (id: string) => {
-    context.setClasses(context.classes.filter(c => c.id !== id));
-  };
-
-  // ---------- CRUD de Cursos ----------
-  const createCourse = (newCourse: Course) => {
-    context.setCourses([...context.courses, newCourse]);
-  };
-
-  const updateCourse = (updatedCourse: Course) => {
-    context.setCourses(
-      context.courses.map(c => c.id === updatedCourse.id ? updatedCourse : c)
-    );
-  };
-
-  const deleteCourse = (id: string) => {
-    context.setCourses(context.courses.filter(c => c.id !== id));
-  };
-
-  // ---------- Estatísticas ----------
+  // ---------- Estatísticas Calculadas ----------
   const studentStats = {
     total: context.students.length,
     active: context.students.filter(s => s.status === "Ativo").length,
     inactive: context.students.filter(s => s.status === "Inativo").length,
+    pending: context.students.filter(s => s.status === "Pendente").length,
     activityRate: context.students.length > 0
       ? Math.round((context.students.filter(s => s.status === "Ativo").length / context.students.length) * 100)
       : 0
@@ -69,35 +22,54 @@ export const useAppData = () => {
     total: context.classes.length,
     active: context.classes.filter(c => c.status === "Ativo").length,
     planned: context.classes.filter(c => c.status === "Planejada").length,
-    completed: context.classes.filter(c => c.status === "Concluída").length
+    completed: context.classes.filter(c => c.status === "Concluída").length,
+    cancelled: context.classes.filter(c => c.status === "Cancelada").length,
   };
 
   const courseStats = {
     total: context.courses.length,
-    active: context.courses.filter(c => c.status === "Ativo").length
+    active: context.courses.filter(c => c.status === "Ativo").length,
+    inactive: context.courses.filter(c => c.status === "Inativo").length,
+  };
+
+  const instructorStats = {
+    total: context.instructors.length,
+    active: context.instructors.filter(i => i.status === "Ativo").length,
+    inactive: context.instructors.filter(i => i.status === "Inativo").length,
+  };
+
+  // ---------- Dados para Charts ----------
+  const charts = {
+    studentsByStatus: [
+      { name: 'Ativos', value: studentStats.active, fill: '#10b981' },
+      { name: 'Inativos', value: studentStats.inactive, fill: '#ef4444' },
+      { name: 'Pendentes', value: studentStats.pending, fill: '#f59e0b' },
+    ],
+    classesByStatus: [
+      { name: 'Ativas', value: classStats.active, fill: '#3b82f6' },
+      { name: 'Planejadas', value: classStats.planned, fill: '#8b5cf6' },
+      { name: 'Concluídas', value: classStats.completed, fill: '#10b981' },
+      { name: 'Canceladas', value: classStats.cancelled, fill: '#ef4444' },
+    ],
+    coursesByStatus: [
+      { name: 'Ativos', value: courseStats.active, fill: '#10b981' },
+      { name: 'Inativos', value: courseStats.inactive, fill: '#6b7280' },
+    ],
   };
 
   // ---------- Retorno do hook ----------
   return {
+    // Context completo (todas as funções e dados)
     ...context,
-    instructors: context.instructors,
-    classes: context.classes,
-    courses: context.courses,
-    students: context.students,
-    createInstructor,
-    updateInstructor,
-    deleteInstructor,
-    createClass,
-    updateClass,
-    deleteClass,
-    createCourse,
-    updateCourse,
-    deleteCourse,
+    // Estatísticas agregadas
     stats: {
       students: studentStats,
       classes: classStats,
-      courses: courseStats
-    }
+      courses: courseStats,
+      instructors: instructorStats,
+    },
+    // Dados para gráficos
+    charts,
   };
 };
 

@@ -119,11 +119,18 @@ class ClassService {
     // Buscar turmas com paginação
     const turmas = await Class.findAll({
       where,
-      include: [{
-        model: Curso,
-        as: 'curso',
-        attributes: ['id', 'nome', 'carga_horaria']
-      }],
+      include: [
+        {
+          model: Curso,
+          as: 'curso',
+          attributes: ['id', 'nome', 'carga_horaria']
+        },
+        {
+          model: Student,
+          as: 'alunos',
+          attributes: ['id', 'matricula', 'nome', 'email', 'status']
+        }
+      ],
       order: [['createdAt', 'DESC']],
       limit,
       offset: calculateOffset(page, limit)
@@ -141,11 +148,18 @@ class ClassService {
    */
   async findById(id: number) {
     const turma = await Class.findByPk(id, {
-      include: [{
-        model: Curso,
-        as: 'curso',
-        attributes: ['id', 'nome', 'carga_horaria', 'descricao']
-      }]
+      include: [
+        {
+          model: Curso,
+          as: 'curso',
+          attributes: ['id', 'nome', 'carga_horaria', 'descricao']
+        },
+        {
+          model: Student,
+          as: 'alunos',
+          attributes: ['id', 'matricula', 'nome', 'email', 'status', 'telefone']
+        }
+      ]
     });
 
     if (!turma) {

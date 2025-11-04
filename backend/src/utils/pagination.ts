@@ -52,7 +52,7 @@ export const createPagination = (
  * Valores padrão de paginação
  */
 export const DEFAULT_PAGE = 1;
-export const DEFAULT_LIMIT = 10;
+export const DEFAULT_LIMIT = 50;
 export const MAX_LIMIT = 100;
 
 /**
