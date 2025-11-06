@@ -1,9 +1,11 @@
 import { sequelize } from './src/config/database.js';
-import './src/modules/auth/user.model.ts';
-import './src/modules/courses/course.model.ts';
-import './src/modules/classes/class.model.ts';
-import './src/modules/Candidates/candidate.model.ts';
-import './src/modules/students/student.model.ts';
+import './src/modules/users/user.model.js';
+import './src/modules/courses/course.model.js';
+import './src/modules/classes/class.model.js';
+import './src/modules/Candidates/candidate.model.js';
+import './src/modules/students/student.model.js';
+import './src/modules/instructors/instructor.model.js';
+import './src/modules/instructor_classes/instructor_class.model.js';
 
 async function syncDatabase() {
   try {
@@ -20,6 +22,8 @@ async function syncDatabase() {
     console.log('  - turmas');
     console.log('  - candidatos');
     console.log('  - alunos');
+    console.log('  - instrutores');
+    console.log('  - instrutor_turma (relacionamento)');
     
     process.exit(0);
   } catch (error) {
