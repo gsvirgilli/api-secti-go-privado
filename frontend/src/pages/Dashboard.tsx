@@ -53,7 +53,7 @@ const ChartSkeleton = () => (
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { students, courses, classes } = useAppData();
+  const { students, courses, classes, stats } = useAppData();
   const [isLoading, setIsLoading] = useState(false);
   const [widgets, setWidgets] = useState([
     { id: 'stats', type: 'stats', visible: true, order: 0 },
@@ -80,7 +80,7 @@ const Dashboard = () => {
 
   // Calcular estatísticas reais
   const activeStudents = students.filter(s => s.status === "Ativo").length;
-  const activeInstructors = 4;
+  const activeInstructors = stats.instructors.active; // Usando dados reais da API
   const activeCourses = courses.filter(c => c.status === "Ativo").length;
   const activeClasses = classes.filter(c => c.status === "Ativo").length;
   const totalEnrolled = classes.reduce((sum, cls) => sum + cls.enrolled, 0);
