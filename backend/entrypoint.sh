@@ -5,6 +5,10 @@
 echo "Waiting for database to be ready..."
 sleep 5
 
+# Sincroniza o banco de dados (cria/atualiza tabelas)
+echo "Syncing database tables..."
+npx tsx sync-db.ts
+
 # Executa as migrations do Sequelize
 echo "Running database migrations..."
 npx sequelize-cli db:migrate

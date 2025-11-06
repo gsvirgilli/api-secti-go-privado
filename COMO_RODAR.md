@@ -41,6 +41,9 @@ docker-compose up -d
 - Cria e inicia o container do MySQL (banco de dados)
 - Cria e inicia o container do Backend (API Node.js)
 - Aguarda o banco ficar pronto antes de iniciar o backend
+- **✨ Cria automaticamente todas as tabelas no banco** (via sync-db.ts no entrypoint)
+
+**Aguarde ~15 segundos** para o backend terminar de criar as tabelas e iniciar.
 
 **Verificar se os containers estão rodando:**
 
@@ -52,17 +55,16 @@ Você deve ver dois containers:
 - `app_backend` (porta 3333)
 - `sukatech_mysql` (porta 3307)
 
-### 3️⃣ Sincronizar o Banco de Dados (Criar Tabelas)
-
-**⚠️ IMPORTANTE:** Execute este comando para criar todas as tabelas necessárias:
+**Verificar logs do backend (opcional):**
 
 ```bash
-docker exec app_backend npx tsx sync-db.ts
+docker logs -f app_backend
 ```
 
-**Saída esperada:**
+Você deve ver:
 ```
-🔄 Sincronizando banco de dados...
+Waiting for database to be ready...
+Syncing database tables...
 ✅ Banco de dados sincronizado com sucesso!
 📋 Tabelas criadas/atualizadas:
   - usuarios
@@ -72,9 +74,10 @@ docker exec app_backend npx tsx sync-db.ts
   - alunos
   - instrutores
   - instrutor_turma (relacionamento)
+🚀 Servidor rodando na porta 3333
 ```
 
-### 4️⃣ Criar Usuário Administrador
+### 3️⃣ Criar Usuário Administrador
 
 ```bash
 curl -X POST http://localhost:3333/api/auth/register \
@@ -91,7 +94,7 @@ curl -X POST http://localhost:3333/api/auth/register \
 - **Email:** `admin@secti.com`
 - **Senha:** `admin123`
 
-### 5️⃣ Testar a API
+### 4️⃣ Testar a API
 
 **Fazer login e obter token:**
 
@@ -135,7 +138,7 @@ curl http://localhost:3333/api/students?limit=10&page=1 \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-### 6️⃣ Rodar o Frontend (Opcional)
+### 5️⃣ Rodar o Frontend (Opcional)
 
 ```bash
 cd frontend
@@ -190,7 +193,14 @@ docker exec -it sukatech_mysql mysql -usukatech_user -psukatech_password sukatec
 
 ### Erro: "Table doesn't exist"
 
-**Solução:** Execute o comando de sincronização do banco:
+**Causa:** O entrypoint não executou o sync-db corretamente (primeira vez ou após limpar volumes).
+
+**Solução 1 - Reiniciar o container (recomendado):**
+```bash
+docker-compose restart api
+```
+
+**Solução 2 - Executar manualmente:**
 ```bash
 docker exec app_backend npx tsx sync-db.ts
 ```
