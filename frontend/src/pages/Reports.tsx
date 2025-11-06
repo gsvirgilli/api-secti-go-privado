@@ -30,7 +30,8 @@ const Reports = () => {
   });
   
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
-
+ 
+  
   // Tipo auxiliar para linhas de relatório
   type Row = Record<string, string | number | null | undefined>;
 
