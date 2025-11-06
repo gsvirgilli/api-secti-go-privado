@@ -227,6 +227,63 @@ export const EnrollmentsAPI = {
 };
 
 // ======================================
+// 📊 RELATÓRIOS
+// ======================================
+export const ReportsAPI = {
+  // Estatísticas do dashboard
+  dashboard: (params?: {
+    data_inicio?: string;
+    data_fim?: string;
+    id_curso?: number;
+    id_turma?: number;
+  }) => api.get("/reports/dashboard", { params }),
+
+  // PDFs
+  studentsPDF: (params?: { id_turma?: number }) =>
+    api.get("/reports/students/pdf", {
+      params,
+      responseType: "blob",
+    }),
+
+  classesPDF: (params?: { id_curso?: number; status?: string }) =>
+    api.get("/reports/classes/pdf", {
+      params,
+      responseType: "blob",
+    }),
+
+  attendancePDF: (params?: { id_turma?: number; data_inicio?: string; data_fim?: string }) =>
+    api.get("/reports/attendance/pdf", {
+      params,
+      responseType: "blob",
+    }),
+
+  coursesPDF: (params?: { ativo?: boolean }) =>
+    api.get("/reports/courses/pdf", {
+      params,
+      responseType: "blob",
+    }),
+
+  // Excel
+  studentsExcel: (params?: { id_turma?: number }) =>
+    api.get("/reports/students/excel", {
+      params,
+      responseType: "blob",
+    }),
+
+  classesExcel: (params?: { id_curso?: number; status?: string }) =>
+    api.get("/reports/classes/excel", {
+      params,
+      responseType: "blob",
+    }),
+
+  attendanceExcel: (params?: { id_turma?: number; data_inicio?: string; data_fim?: string }) =>
+    api.get("/reports/attendance/excel", {
+      params,
+      responseType: "blob",
+    }),
+};
+
+// ======================================
 // 🏥 HEALTH CHECK
 // ======================================
 export const HealthAPI = {

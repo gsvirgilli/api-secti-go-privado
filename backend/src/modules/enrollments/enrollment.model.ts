@@ -69,4 +69,15 @@ Enrollment.belongsTo(Class, {
   as: 'turma'
 });
 
+// Associações inversas
+Student.hasMany(Enrollment, {
+  foreignKey: 'id_aluno',
+  as: 'matriculas'
+});
+
+Class.hasMany(Enrollment, {
+  foreignKey: 'id_turma',
+  as: 'matriculas'
+});
+
 export default Enrollment;

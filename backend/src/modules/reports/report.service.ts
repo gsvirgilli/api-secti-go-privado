@@ -194,7 +194,7 @@ class ReportService {
         },
         {
           model: Instructor,
-          as: 'instrutor',
+          as: 'instrutores',
         },
         {
           model: Enrollment,
@@ -282,8 +282,9 @@ class ReportService {
             }`
           );
 
-          if (turma.instrutor) {
-            doc.text(`   Instrutor: ${turma.instrutor.nome}`);
+          if (turma.instrutores && turma.instrutores.length > 0) {
+            const instrutoresNomes = turma.instrutores.map((i: any) => i.nome).join(', ');
+            doc.text(`   Instrutores: ${instrutoresNomes}`);
           }
 
           doc.text(`   Alunos Matriculados: ${turma.matriculas?.length || 0}`);
@@ -673,7 +674,7 @@ class ReportService {
       where,
       include: [
         { model: Course, as: 'curso' },
-        { model: Instructor, as: 'instrutor' },
+        { model: Instructor, as: 'instrutores' },
         { model: Enrollment, as: 'matriculas' },
       ],
       order: [['nome', 'ASC']],
@@ -707,6 +708,10 @@ class ReportService {
 
     // Adicionar dados
     classes.forEach((turma: any) => {
+      const instrutoresNomes = turma.instrutores && turma.instrutores.length > 0
+        ? turma.instrutores.map((i: any) => i.nome).join(', ')
+        : 'Não atribuído';
+      
       worksheet.addRow({
         id: turma.id,
         nome: turma.nome,
@@ -715,7 +720,7 @@ class ReportService {
         status: turma.status,
         data_inicio: turma.data_inicio || 'N/A',
         data_fim: turma.data_fim || 'N/A',
-        instrutor: turma.instrutor?.nome || 'Não atribuído',
+        instrutor: instrutoresNomes,
         vagas_totais: turma.vagas_totais,
         vagas_disponiveis: turma.vagas_disponiveis,
         alunos: turma.matriculas?.length || 0,

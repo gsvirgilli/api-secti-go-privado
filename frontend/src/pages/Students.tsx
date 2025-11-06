@@ -25,9 +25,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, AreaChart, Area } from "recharts";
 import StudentDetailsModal from "@/components/modals/StudentDetailsModal";
 import StudentFormModal from "@/components/modals/StudentFormModal";
+import { ExportButtons } from "@/components/ExportButtons";
 import { useAppData } from "@/hooks/useAppData";
 import type { Student } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
+import { ReportsAPI } from "@/lib/api";
 
 const Students = () => {
   const { students, stats, charts, updateStudent, deleteStudent } = useAppData();
@@ -295,7 +297,7 @@ const Students = () => {
     <div className="space-y-6" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
       {/* Header */}
       <div className="p-6 rounded-lg bg-white border">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2 text-foreground">
               <Users className="h-8 w-8 text-primary" />
@@ -303,13 +305,27 @@ const Students = () => {
             </h1>
             <p className="text-muted-foreground mt-1">Gerencie os alunos cadastrados no sistema</p>
           </div>
-          <Button 
-            onClick={() => setIsFormModalOpen(true)}
-            className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            <Plus className="h-4 w-4" />
-            {isMobile ? "Novo" : "Cadastrar Aluno"}
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <ExportButtons
+              onExportPDF={async () => {
+                const response = await ReportsAPI.studentsPDF();
+                return response.data;
+              }}
+              onExportExcel={async () => {
+                const response = await ReportsAPI.studentsExcel();
+                return response.data;
+              }}
+              filename="relatorio-alunos"
+              size="sm"
+            />
+            <Button 
+              onClick={() => setIsFormModalOpen(true)}
+              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <Plus className="h-4 w-4" />
+              {isMobile ? "Novo" : "Cadastrar Aluno"}
+            </Button>
+          </div>
         </div>
       </div>
 

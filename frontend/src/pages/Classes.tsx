@@ -12,8 +12,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ClassDetailsModal from "@/components/modals/ClassDetailsModal";
 import ClassFormModal from "@/components/modals/ClassFormModal";
+import { ExportButtons } from "@/components/ExportButtons";
 import { useAppData } from "@/hooks/useAppData";
 import { useToast } from "@/hooks/use-toast";
+import { ReportsAPI } from "@/lib/api";
 import type { Class } from "@/contexts/AppContext";
 
 type SortField = "name" | "course" | "instructor" | "status" | "startDate" | "enrolled";
@@ -277,7 +279,7 @@ const Classes = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="p-6 rounded-lg bg-white border">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2 text-foreground">
               <Grid className="h-8 w-8 text-primary" />
@@ -285,21 +287,19 @@ const Classes = () => {
             </h1>
             <p className="text-muted-foreground mt-1">Gerencie as turmas e suas matrículas</p>
           </div>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline"
-              onClick={() => {
-                // Simular exportação
-                toast({
-                  title: "Exportação iniciada",
-                  description: "Os dados das turmas estão sendo exportados",
-                });
+          <div className="flex gap-2 flex-wrap">
+            <ExportButtons
+              onExportPDF={async () => {
+                const response = await ReportsAPI.classesPDF();
+                return response.data;
               }}
-              className="gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Exportar
-            </Button>
+              onExportExcel={async () => {
+                const response = await ReportsAPI.classesExcel();
+                return response.data;
+              }}
+              filename="relatorio-turmas"
+              size="sm"
+            />
             <Button 
               onClick={() => setIsFormModalOpen(true)}
               className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"

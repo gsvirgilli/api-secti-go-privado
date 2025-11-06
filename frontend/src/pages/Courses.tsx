@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import CourseFormModal from "@/components/modals/CourseFormModal";
+import { ExportButtons } from "@/components/ExportButtons";
 import { useAppData } from "@/hooks/useAppData";
 import { useToast } from "@/hooks/use-toast";
+import { ReportsAPI } from "@/lib/api";
 import type { Course } from "@/contexts/AppContext";
 
 const Courses = () => {
@@ -97,7 +99,7 @@ const Courses = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="p-6 rounded-lg bg-white border">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2 text-foreground">
               <GraduationCap className="h-8 w-8 text-primary" />
@@ -105,13 +107,29 @@ const Courses = () => {
             </h1>
             <p className="text-muted-foreground mt-1">Gerencie os cursos oferecidos pela instituição</p>
           </div>
-          <Button 
-            onClick={() => setIsFormModalOpen(true)}
-            className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            <Plus className="h-4 w-4" />
-            Cadastrar Curso
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <ExportButtons
+              onExportPDF={async () => {
+                const response = await ReportsAPI.coursesPDF();
+                return response.data;
+              }}
+              onExportExcel={async () => {
+                // Cursos só tem PDF no backend por enquanto, podemos usar o mesmo
+                const response = await ReportsAPI.coursesPDF();
+                return response.data;
+              }}
+              filename="relatorio-cursos"
+              showExcel={false}
+              size="sm"
+            />
+            <Button 
+              onClick={() => setIsFormModalOpen(true)}
+              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <Plus className="h-4 w-4" />
+              Cadastrar Curso
+            </Button>
+          </div>
         </div>
       </div>
 

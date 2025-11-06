@@ -6,6 +6,7 @@ import '../modules/Candidates/candidate.model.js';
 import '../modules/students/student.model.js';
 import '../modules/instructors/instructor.model.js';
 import '../modules/instructor_classes/instructor_class.model.js';
+import '../modules/enrollments/enrollment.model.js';
 
 async function syncDatabase() {
   try {
@@ -24,6 +25,7 @@ async function syncDatabase() {
     console.log('  - alunos');
     console.log('  - instrutores');
     console.log('  - instrutor_turma (relacionamento)');
+    console.log('  - matriculas');
     
     process.exit(0);
   } catch (error) {
