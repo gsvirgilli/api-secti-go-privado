@@ -1,4 +1,7 @@
 import { useState } from "react";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { DataBot } from "@/components/ui/DataBot";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Download, TrendingUp, Users, Calendar, Filter, BarChart3, PieChart, LineChart } from "lucide-react";
@@ -27,6 +30,9 @@ const Reports = () => {
   });
   
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
+
+  // Tipo auxiliar para linhas de relatório
+  type Row = Record<string, string | number | null | undefined>;
 
   // Process real data for charts
   const studentsPerCourse = courses.map(course => {
@@ -94,6 +100,20 @@ const Reports = () => {
     { course: 'Web Design', retention: 90, totalStudents: 22, avgGrade: 8.8, completionRate: 86 },
   ];
 
+  // Distribuição de idade dos alunos (mock data - será substituído por dados reais futuramente)
+  const ageDistribution = [
+    { name: '18-25 anos', value: 35, color: '#3b82f6', percentage: 40 },
+    { name: '26-35 anos', value: 30, color: '#10b981', percentage: 34 },
+    { name: '36-45 anos', value: 15, color: '#f59e0b', percentage: 17 },
+    { name: '46+ anos', value: 8, color: '#ef4444', percentage: 9 },
+  ];
+
+  // Combinar charts do hook com dados locais
+  const allCharts = {
+    ...charts,
+    ageDistribution
+  };
+
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
@@ -106,6 +126,55 @@ const Reports = () => {
     }
   };
 
+  // Função auxiliar para gerar CSV
+  const generateCSV = (data: Row[], filename: string) => {
+    if (data.length === 0) return;
+    
+    const headers = Object.keys(data[0]).join(',');
+    const rows = data.map(row => Object.values(row).join(',')).join('\n');
+    const csv = `${headers}\n${rows}`;
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Função auxiliar para gerar Excel (XLSX)
+  const generateExcel = (data: Row[], filename: string) => {
+    if (data.length === 0) return;
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Relatorio");
+    XLSX.writeFile(workbook, filename);
+  };
+
+  // Função auxiliar para gerar PDF
+  const generatePDF = (data: Row[], filename: string) => {
+    const doc = new jsPDF({ orientation: 'landscape' });
+    if (data.length === 0) {
+      doc.text('Relatório sem dados', 14, 20);
+      doc.save(filename);
+      return;
+    }
+    const headers = Object.keys(data[0]);
+    const body = data.map(row => headers.map(h => String(row[h] ?? '')));
+    autoTable(doc, {
+      head: [headers],
+      body,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [59, 130, 246] },
+      startY: 14,
+      margin: { left: 10, right: 10 },
+    });
+    doc.save(filename);
+  };
+
   const handleGenerateCustomReport = (format: string) => {
     if (selectedReports.length === 0) {
       toast({
@@ -116,22 +185,154 @@ const Reports = () => {
       return;
     }
 
+    // Gerar dados do relatório baseado nas seleções
+  let reportData: Row[] = [];
+  // Ajustar extensão correta por formato
+  const ext = format === 'excel' ? 'xlsx' : format === 'pdf' ? 'pdf' : 'csv';
+  const filename = `relatorio-personalizado-${new Date().toISOString().split('T')[0]}.${ext}`;
+
+    if (selectedReports.includes('students')) {
+      reportData = students.map(s => ({
+        Nome: s.name,
+        CPF: s.cpf,
+        Email: s.email,
+        Curso: s.course,
+        Turma: s.class,
+        Status: s.status,
+        'Data Matrícula': s.enrollmentDate
+      }));
+    } else if (selectedReports.includes('classes')) {
+      reportData = classes.map(c => ({
+        Nome: c.name,
+        Curso: c.course,
+        Instrutor: c.instructor,
+        Capacidade: c.capacity,
+        Matriculados: c.enrolled,
+        Status: c.status,
+        'Data Início': c.startDate
+      }));
+    } else if (selectedReports.includes('courses')) {
+      reportData = courses.map(c => ({
+        Curso: c.title,
+        Duração: c.duration,
+        Alunos: c.students,
+        Nível: c.level,
+        Status: c.status
+      }));
+    } else {
+      // Relatório geral
+      reportData = students.map(s => ({
+        Tipo: 'Aluno',
+        Nome: s.name,
+        Curso: s.course,
+        Status: s.status
+      }));
+    }
+
+    if (format === 'csv') {
+      generateCSV(reportData, filename);
+    } else if (format === 'excel') {
+      generateExcel(reportData, filename);
+    } else if (format === 'pdf') {
+      generatePDF(reportData, filename);
+    }
+
     toast({
       title: "RELATÓRIO GERADO",
       description: `Relatório personalizado em ${format.toUpperCase()} gerado com sucesso`,
       className: "bg-green-100 text-green-800 border-green-200",
     });
-
-    // Simulate download
-    const link = document.createElement('a');
-    link.href = '#';
-    link.download = `relatorio-personalizado-${new Date().toISOString().split('T')[0]}.${format}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const handleQuickReport = (reportType: string, format: string) => {
+    let reportData: Row[] = [];
+    const ext = format === 'excel' ? 'xlsx' : format === 'pdf' ? 'pdf' : 'csv';
+    const filename = `relatorio-${reportType}-${new Date().toISOString().split('T')[0]}.${ext}`;
+
+    switch (reportType) {
+      case 'alunos-ativos':
+        reportData = students
+          .filter(s => s.status === "Ativo")
+          .map(s => ({
+            Nome: s.name,
+            CPF: s.cpf,
+            Email: s.email,
+            Telefone: s.phone,
+            Curso: s.course,
+            Turma: s.class,
+            'Data Matrícula': s.enrollmentDate,
+            'Progresso (%)': s.progress,
+            'Frequência (%)': s.attendance
+          }));
+        break;
+
+      case 'turmas-ativas':
+        reportData = classes
+          .filter(c => c.status === "Ativo")
+          .map(c => ({
+            Turma: c.name,
+            Curso: c.course,
+            Instrutor: c.instructor,
+            Horário: c.schedule,
+            Capacidade: c.capacity,
+            Matriculados: c.enrolled,
+            'Vagas Disponíveis': c.capacity - c.enrolled,
+            'Data Início': c.startDate,
+            'Data Término': c.endDate
+          }));
+        break;
+
+      case 'desempenho-geral':
+        reportData = students.map(s => ({
+          Nome: s.name,
+          Curso: s.course,
+          Turma: s.class,
+          Status: s.status,
+          'Progresso (%)': s.progress,
+          'Frequência (%)': s.attendance,
+          'Nota Média': s.grades
+        }));
+        break;
+
+      case 'frequencia':
+        reportData = students.map(s => ({
+          Nome: s.name,
+          Curso: s.course,
+          Turma: s.class,
+          'Frequência (%)': s.attendance,
+          Status: s.status
+        }));
+        break;
+
+      case 'matriculas':
+        reportData = students.map(s => ({
+          Nome: s.name,
+          CPF: s.cpf,
+          Email: s.email,
+          Curso: s.course,
+          Turma: s.class,
+          'Data Matrícula': s.enrollmentDate,
+          Status: s.status
+        }));
+        break;
+
+      default:
+        reportData = students.map(s => ({
+          Nome: s.name,
+          Email: s.email,
+          Curso: s.course,
+          Status: s.status
+        }));
+    }
+
+    if (format === 'csv') {
+      generateCSV(reportData, filename);
+    } else if (format === 'excel') {
+      generateExcel(reportData, filename);
+    } else if (format === 'pdf') {
+      generatePDF(reportData, filename);
+    }
+
     toast({
       title: "RELATÓRIO GERADO",
       description: `Relatório de ${reportType} em ${format.toUpperCase()} gerado com sucesso`,
@@ -619,7 +820,7 @@ const Reports = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
                       <Pie
-                        data={charts.ageDistribution}
+                        data={allCharts.ageDistribution}
                         cx="50%"
                         cy="50%"
                         innerRadius={60}
@@ -627,7 +828,7 @@ const Reports = () => {
                         paddingAngle={2}
                         dataKey="value"
                       >
-                        {charts.ageDistribution.map((entry, index) => (
+                        {allCharts.ageDistribution.map((entry, index) => (
                           <Cell 
                             key={`cell-${index}`} 
                             fill={entry.color}
