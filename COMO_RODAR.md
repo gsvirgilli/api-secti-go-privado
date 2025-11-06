@@ -77,22 +77,21 @@ Syncing database tables...
 🚀 Servidor rodando na porta 3333
 ```
 
-### 3️⃣ Criar Usuário Administrador
+### 3️⃣ Aguardar Criação dos Dados Iniciais
 
-```bash
-curl -X POST http://localhost:3333/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nome": "Admin Sistema",
-    "email": "admin@secti.com",
-    "senha": "admin123",
-    "role": "ADMIN"
-  }'
-```
+O sistema agora **popula automaticamente** o banco com dados de exemplo! Isso inclui:
+- ✅ Usuários admin e instrutores
+- ✅ Cursos (Web, Python, Mobile)
+- ✅ Turmas
+- ✅ Instrutores
+- ✅ Candidatos e Alunos
 
-**Credenciais criadas:**
-- **Email:** `admin@secti.com`
-- **Senha:** `admin123`
+**Credenciais prontas para uso:**
+- **Admin:** `admin@secti.com` / `admin123`
+- **Instrutor:** `maria.silva@secti.com` / `instrutor123`
+- **Instrutor:** `joao.santos@secti.com` / `instrutor123`
+
+> 💡 **Nota:** Os dados são compartilhados via Git! Quando você fizer push, outros desenvolvedores terão os mesmos dados iniciais ao clonar.
 
 ### 4️⃣ Testar a API
 

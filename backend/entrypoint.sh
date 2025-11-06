@@ -7,7 +7,11 @@ sleep 5
 
 # Sincroniza o banco de dados (cria/atualiza tabelas)
 echo "Syncing database tables..."
-npx tsx sync-db.ts
+npx tsx src/database/sync-db.ts
+
+# Popula o banco com dados iniciais (se ainda não existirem)
+echo "Seeding database with initial data..."
+npx tsx src/database/seeds/seed-db.ts
 
 # Executa as migrations do Sequelize
 echo "Running database migrations..."

@@ -593,6 +593,41 @@ CREATE FULLTEXT INDEX idx_aluno_busca ON alunos(nome, email);
 
 ---
 
+## 🌱 Seeds (Dados Iniciais)
+
+### Localização
+```
+src/database/seeds/seed-db.ts
+```
+
+### Executar Seeds
+```bash
+npx tsx src/database/seeds/seed-db.ts
+```
+
+### Dados Criados
+- ✅ **3 Usuários** (1 admin + 2 instrutores)
+- ✅ **3 Cursos** (Web, Python, Mobile)
+- ✅ **3 Turmas** (diferentes turnos)
+- ✅ **2 Instrutores** (vinculados às turmas)
+- ✅ **3 Candidatos** (2 aprovados + 1 pendente)
+- ✅ **2 Alunos** (candidatos aprovados matriculados)
+
+### Credenciais de Teste
+| Tipo | Email | Senha | Descrição |
+|------|-------|-------|-----------|
+| Admin | `admin@secti.com` | `admin123` | Acesso total ao sistema |
+| Instrutor | `maria.silva@secti.com` | `instrutor123` | Instrutora de Web/Mobile |
+| Instrutor | `joao.santos@secti.com` | `instrutor123` | Instrutor de Python |
+
+### Características dos Seeds
+- 🔁 **Idempotente**: Pode ser executado múltiplas vezes sem duplicar dados
+- 🔒 **Seguro**: Usa `findOrCreate` para evitar conflitos
+- 🎯 **Completo**: Cria dados relacionados (turmas → instrutores → alunos)
+- 📝 **Versionado**: Compartilhado via Git para setup rápido
+
+---
+
 **Módulo desenvolvido com ❤️ pela equipe SUKATECH**
 
 > 💡 **Dica**: Sempre execute migrações em ambiente de teste antes da produção e mantenha backups regulares do banco de dados.

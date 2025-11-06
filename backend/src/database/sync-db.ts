@@ -1,11 +1,11 @@
-import { sequelize } from './src/config/database.js';
-import './src/modules/users/user.model.js';
-import './src/modules/courses/course.model.js';
-import './src/modules/classes/class.model.js';
-import './src/modules/Candidates/candidate.model.js';
-import './src/modules/students/student.model.js';
-import './src/modules/instructors/instructor.model.js';
-import './src/modules/instructor_classes/instructor_class.model.js';
+import { sequelize } from '../config/database.js';
+import '../modules/users/user.model.js';
+import '../modules/courses/course.model.js';
+import '../modules/classes/class.model.js';
+import '../modules/Candidates/candidate.model.js';
+import '../modules/students/student.model.js';
+import '../modules/instructors/instructor.model.js';
+import '../modules/instructor_classes/instructor_class.model.js';
 
 async function syncDatabase() {
   try {
