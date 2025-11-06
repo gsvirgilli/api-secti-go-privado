@@ -737,7 +737,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             address: bi.endereco || '',
             specialization: bi.especialidade || '',
             experience: bi.experiencia || '',
-            status: bi.status || 'Ativo',
+            status: bi.status ? (bi.status.charAt(0).toUpperCase() + bi.status.slice(1).toLowerCase()) : 'Ativo',
             classes: classes
           };
         });
