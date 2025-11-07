@@ -1,0 +1,8 @@
+# Define o tratamento de quebra de linha padrão para todos os arquivos
+# 'text=auto' -> Git decide se é texto
+# 'eol=lf' -> Força quebra de linha do tipo Linux (LF) para todos os arquivos de texto
+* text=auto eol=lf
+
+# Exceções para arquivos que PRECISAM de quebra de linha do Windows
+*.bat   eol=crlf
+*.cmd   eol=crlf
