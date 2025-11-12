@@ -61,7 +61,7 @@ const Login = () => {
         description: "Login realizado com sucesso",
       });
       
-      navigate("/");
+      navigate("/dashboard");
     } catch (error: any) {
       console.error('Erro ao fazer login:', error);
       

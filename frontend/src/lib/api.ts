@@ -28,14 +28,23 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     // Não redirecionar automaticamente se estiver nas páginas públicas
-    const publicPaths = ['/login', '/register', '/reset-password'];
+    const publicPaths = ['/login', '/register', '/reset-password', '/inscricao', '/processo-seletivo'];
     const isPublicPath = publicPaths.some(path => window.location.pathname.includes(path));
     
-    if (error.response?.status === 401 && !isPublicPath) {
-      // Token inválido ou expirado
+    // Não redirecionar automaticamente para páginas protegidas - deixar a página tratar o erro
+    const protectedPaths = ['/processo-seletivo-admin', '/dashboard', '/alunos', '/turmas', '/cursos', '/instrutores', '/relatorios', '/perfil', '/cadastro'];
+    const isProtectedPath = protectedPaths.some(path => window.location.pathname.includes(path));
+    
+    if (error.response?.status === 401 && !isPublicPath && !isProtectedPath) {
+      // Token inválido ou expirado - apenas limpar e redirecionar se não for página protegida
       localStorage.removeItem("@sukatech:token");
       localStorage.removeItem("@sukatech:user");
       window.location.href = "/login";
+    } else if (error.response?.status === 401 && isProtectedPath) {
+      // Para páginas protegidas, apenas limpar o token mas não redirecionar
+      // A página deve tratar o erro e mostrar mensagem apropriada
+      localStorage.removeItem("@sukatech:token");
+      localStorage.removeItem("@sukatech:user");
     }
     return Promise.reject(error);
   }
@@ -77,6 +86,16 @@ export const CandidatesAPI = {
   
   create: (data: any) => 
     api.post("/candidates", data),
+  
+  // Candidatura pública (sem autenticação)
+  createPublic: (data: any) => {
+    // Criar uma requisição sem token para endpoint público
+    return axios.post(`${api.defaults.baseURL}/candidates/public`, data, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  },
   
   update: (id: number, data: any) => 
     api.put(`/candidates/${id}`, data),
@@ -120,6 +139,16 @@ export const CoursesAPI = {
   
   findById: (id: number) => 
     api.get(`/courses/${id}`),
+  
+  // Listagem pública de cursos (sem autenticação)
+  listPublic: () => {
+    // Criar uma requisição sem token para endpoint público
+    return axios.get(`${api.defaults.baseURL}/courses/public`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  },
   
   create: (data: { nome: string; descricao?: string; carga_horaria?: number; ativo?: boolean }) => 
     api.post("/courses", data),
