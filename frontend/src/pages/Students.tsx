@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { DataBot } from "@/components/ui/DataBot";
 import { 
   Plus, Search, Trophy, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-  Users, TrendingUp, Calendar, AlertTriangle, CheckCircle, XCircle, Clock,
+  Users, TrendingUp, Calendar, CheckCircle, XCircle, Clock,
   ChevronDown, ChevronUp, BarChart3, PieChart, Activity, Target, BookOpen,
-  GraduationCap, Clock4, TrendingDown, UserCheck, UserX, CalendarDays,
+  GraduationCap, UserX, CalendarDays,
   Eye, Edit, Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, AreaChart, Area } from "recharts";
 import StudentDetailsModal from "@/components/modals/StudentDetailsModal";
 import StudentFormModal from "@/components/modals/StudentFormModal";
@@ -38,7 +36,6 @@ const Students = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   
   // Estados de paginação
   const [currentPage, setCurrentPage] = useState(1);
@@ -630,16 +627,6 @@ const Students = () => {
                     </div>
                       </div>
 
-      {/* Botão Flutuante de Alertas */}
-      <div className="fixed bottom-32 right-6 z-50">
-                      <Button
-          className="bg-red-500 hover:bg-red-600 text-white rounded-full w-14 h-14 shadow-lg"
-          onClick={() => setIsAlertModalOpen(true)}
-        >
-          <AlertTriangle className="h-6 w-6" />
-                      </Button>
-                                    </div>
-
       <StudentDetailsModal 
         isOpen={isModalOpen}
         onClose={() => {
@@ -672,54 +659,6 @@ const Students = () => {
         mode={selectedStudent ? "edit" : "create"}
         studentData={selectedStudent}
       />
-
-      {/* Modal de Alertas Inteligentes */}
-      <Dialog open={isAlertModalOpen} onOpenChange={setIsAlertModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-                <AlertTriangle className="h-5 w-5" />
-              Alertas Inteligentes
-            </DialogTitle>
-            <DialogDescription>
-              Notificações importantes sobre o desempenho dos alunos
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
-                  <TrendingDown className="h-4 w-4 text-red-500" />
-                  <div className="flex-1">
-                <p className="text-sm font-medium text-red-700">Baixa atividade detectada</p>
-                <p className="text-xs text-red-600">5 alunos com baixa frequência</p>
-                  </div>
-                </div>
-            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                  <UserCheck className="h-4 w-4 text-green-500" />
-                  <div className="flex-1">
-                <p className="text-sm font-medium text-green-700">Bom desempenho</p>
-                <p className="text-xs text-green-600">15 alunos com notas acima de 8.0</p>
-                  </div>
-                </div>
-            <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                  <Clock4 className="h-4 w-4 text-amber-500" />
-                  <div className="flex-1">
-                <p className="text-sm font-medium text-amber-700">Avaliações pendentes</p>
-                <p className="text-xs text-amber-600">3 turmas com avaliações próximas</p>
-                  </div>
-                </div>
-              </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsAlertModalOpen(false)}
-            >
-              Fechar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <DataBot />
     </div>
   );
 };

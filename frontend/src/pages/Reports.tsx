@@ -2,7 +2,6 @@ import { useState } from "react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { DataBot } from "@/components/ui/DataBot";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Download, TrendingUp, Users, Calendar, Filter, BarChart3, PieChart, LineChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -1146,8 +1145,6 @@ const Reports = () => {
         </TabsContent>
 
       </Tabs>
-
-      <DataBot />
     </div>
   );
 };
