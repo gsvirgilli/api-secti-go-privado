@@ -1,1 +1,0 @@
-bash: test_gerenciamento_vagas.sh: Arquivo ou diretório inexistente
