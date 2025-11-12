@@ -1,7 +1,0 @@
-=========================================
-🧪 TESTES COMPLETOS - TODAS AS BRANCHES
-=========================================
-
-\033[0;34m[CHECK]\033[0m Verificando se a API está online...
-\033[0;31m❌ API não está respondendo. Verifique se o Docker está rodando.\033[0m
-Execute: docker compose up -d
