@@ -105,4 +105,4 @@ backend/create-admin.ts
 
 # Backups de configuração
 backend/.env.backup
-backend/.env.local
+backend/.env.localbackend/uploads/documentos/*
