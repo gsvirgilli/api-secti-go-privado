@@ -9,6 +9,7 @@ import {
   User,
   ClipboardList,
   FileText,
+  ClipboardCheck,
   X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { useLocation, Link } from "react-router-dom";
 
 const menuItems = [
-  { icon: Home, label: "Home", path: "/" },
+  { icon: Home, label: "Home", path: "/dashboard" },
   { icon: Users, label: "Alunos", path: "/alunos" },
   { icon: GraduationCap, label: "Turmas", path: "/turmas" },
   { icon: BookOpen, label: "Cursos", path: "/cursos" },
@@ -52,6 +53,9 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 };
 
 const SidebarContent = ({ location, onClose }: { location: any; onClose: () => void }) => {
+  // O Sidebar só aparece dentro do Layout, que é usado apenas em rotas protegidas
+  // Portanto, o botão "Processo Seletivo" sempre aparecerá quando o Sidebar estiver visível
+  
   return (
     <div className="flex flex-col h-full">
       {/* Mobile Close Button */}
@@ -106,6 +110,22 @@ const SidebarContent = ({ location, onClose }: { location: any; onClose: () => v
               </li>
             );
           })}
+          {/* Processo Seletivo - apenas quando logado */}
+          <li className="animate-fade-in" style={{ animationDelay: `${menuItems.length * 50}ms` }}>
+            <Button
+              asChild
+              variant="ghost"
+              className={cn(
+                "w-full justify-start gap-3 text-primary-foreground/85 hover:text-primary-foreground hover:bg-white/15 transition-all duration-300 h-10 rounded-xl font-medium tracking-wide group shadow-sm hover:shadow-md",
+                location.pathname === "/processo-seletivo-admin" && "bg-white/20 text-primary-foreground shadow-lg border border-white/30 ring-1 ring-white/20"
+              )}
+            >
+              <Link to="/processo-seletivo-admin">
+                <ClipboardCheck className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                <span className="truncate text-sm sm:text-base">Processo Seletivo</span>
+              </Link>
+            </Button>
+          </li>
         </ul>
       </nav>
 

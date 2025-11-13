@@ -106,3 +106,6 @@ backend/create-admin.ts
 # Backups de configuração
 backend/.env.backup
 backend/.env.local
+
+# Uploads
+backend/uploads/

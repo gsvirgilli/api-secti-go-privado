@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
+import { FormConfigProvider } from "@/contexts/FormConfigContext";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
@@ -21,22 +22,31 @@ import NotFound from "./pages/NotFound";
 import Reports from "./pages/Reports";
 import CalendarPage from "./pages/Calendar";
 import APITest from "./pages/APITest";
+import Inscricao from "./pages/Inscricao";
+import Sobre from "./pages/Sobre";
+import ProcessoSeletivo from "./pages/ProcessoSeletivo";
+import HomeRedirect from "./components/HomeRedirect";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AppProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+      <FormConfigProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
           <Routes>
+            <Route path="/" element={<HomeRedirect />} />
+            <Route path="/sobre" element={<Sobre />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/new-password" element={<NewPassword />} />
-            <Route path="/" element={<Layout><Dashboard /></Layout>} />
+            <Route path="/inscricao" element={<Inscricao />} />
+            <Route path="/processo-seletivo" element={<Inscricao />} />
+            <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
             <Route path="/alunos" element={<Layout><Students /></Layout>} />
             <Route path="/turmas" element={<Layout><Classes /></Layout>} />
             <Route path="/cursos" element={<Layout><Courses /></Layout>} />
@@ -45,6 +55,7 @@ const App = () => (
             <Route path="/admin" element={<Layout><Dashboard /></Layout>} />
             <Route path="/perfil" element={<Layout><Profile /></Layout>} />
             <Route path="/cadastro" element={<Layout><Cadastro /></Layout>} />
+            <Route path="/processo-seletivo-admin" element={<Layout><ProcessoSeletivo /></Layout>} />
             <Route path="/notificacoes" element={<Layout><Notifications /></Layout>} />
             <Route path="/calendario" element={<Layout><CalendarPage /></Layout>} />
             <Route path="/api-test" element={<Layout><APITest /></Layout>} />
@@ -52,7 +63,8 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </TooltipProvider>
+        </TooltipProvider>
+      </FormConfigProvider>
     </AppProvider>
   </QueryClientProvider>
 );

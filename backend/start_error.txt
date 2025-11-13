@@ -1,2 +1,0 @@
-Error response from daemon: failed to set up container networking: driver failed programming external connectivity on endpoint app_backend (e3c71f8213a52e94a7b9a1b5831e882be2e1a1607fae06e83829bd9a93d2085c): failed to bind host port for 0.0.0.0:3333:172.19.0.3:3333/tcp: address already in use
-Error: failed to start containers: app_backend

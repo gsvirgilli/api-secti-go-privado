@@ -1,4 +1,0 @@
-NAMES            STATUS
-app_backend      Up 17 seconds (health: starting)
-sukatech_mysql   Up 47 seconds (healthy)
----
