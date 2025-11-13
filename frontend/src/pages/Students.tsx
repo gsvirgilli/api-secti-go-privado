@@ -167,22 +167,18 @@ const Students = () => {
   };
 
   const handleViewDetails = (student: Student) => {
-    console.log('Ver detalhes:', student);
     setSelectedStudent(student);
     setIsModalOpen(true);
   };
 
   const handleEditStudent = (student: Student) => {
-    console.log('Editar aluno:', student);
     setSelectedStudent(student);
     setIsFormModalOpen(true);
   };
 
   const handleDeleteStudent = async (student: Student) => {
-    console.log('Tentando excluir aluno:', student);
     if (confirm(`Tem certeza que deseja excluir o aluno ${student.name}? Esta ação não pode ser desfeita.`)) {
       try {
-        console.log('Confirmado, excluindo aluno:', student.id);
         await deleteStudent(student.id);
         toast({
           title: "Aluno Excluído",
@@ -259,7 +255,6 @@ const Students = () => {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('Clicou em ver detalhes (mobile)');
               handleViewDetails(student);
             }}
             className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
@@ -273,7 +268,6 @@ const Students = () => {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('Clicou em editar (mobile)');
               handleEditStudent(student);
             }}
             className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
@@ -287,7 +281,6 @@ const Students = () => {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('Clicou em excluir (mobile)');
               handleDeleteStudent(student);
             }}
             className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
@@ -460,7 +453,6 @@ const Students = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                console.log('Clicou em ver detalhes');
                                 handleViewDetails(student);
                               }}
                               className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
@@ -474,7 +466,6 @@ const Students = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                console.log('Clicou em editar');
                                 handleEditStudent(student);
                               }}
                               className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
@@ -488,7 +479,6 @@ const Students = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                console.log('Clicou em excluir');
                                 handleDeleteStudent(student);
                               }}
                               className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
@@ -658,18 +648,15 @@ const Students = () => {
       <StudentDetailsModal 
         isOpen={isModalOpen}
         onClose={() => {
-          console.log('Fechando modal de detalhes');
           setIsModalOpen(false);
         }}
         student={selectedStudent}
         onEdit={(student) => {
-          console.log('Editar aluno do modal:', student);
           setSelectedStudent(student);
           setIsModalOpen(false);
           setIsFormModalOpen(true);
         }}
         onDelete={(studentId) => {
-          console.log('Excluir aluno do modal:', studentId);
           const student = students.find(s => s.id === studentId);
           if (student) {
             handleDeleteStudent(student);
@@ -680,7 +667,6 @@ const Students = () => {
       <StudentFormModal
         isOpen={isFormModalOpen}
         onClose={() => {
-          console.log('Fechando modal de formulário');
           setIsFormModalOpen(false);
           setSelectedStudent(null);
         }}

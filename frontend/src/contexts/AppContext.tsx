@@ -458,15 +458,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       // Verificar se há token antes de tentar carregar dados
       const token = localStorage.getItem("@sukatech:token");
       if (!token) {
-        console.log('Sem token, não carregando dados');
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        
-        console.log('🔄 Carregando dados iniciais...');
         
         // Função para carregar todos os cursos (backend limita a 10 por página)
         const loadAllCourses = async () => {
@@ -490,11 +487,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             });
             
             uniqueCourses = [...uniqueCourses, ...newCourses];
-            console.log(`📦 Página ${currentPage}: ${pageData.length} cursos recebidos, ${newCourses.length} novos (total único: ${uniqueCourses.length})`);
             
             // Se não teve cursos novos, parar (backend não suporta paginação)
             if (newCourses.length === 0) {
-              console.log('⚠️ Backend não suporta paginação corretamente, parando na página', currentPage);
               break;
             }
             
@@ -502,7 +497,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             currentPage++;
           }
           
-          console.log(`✅ Total de cursos únicos carregados: ${uniqueCourses.length}`);
           return { data: { data: { data: uniqueCourses } } };
         };
         
@@ -514,13 +508,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           InstructorsAPI.list().catch(() => ({ data: [] }))
         ]);
 
-        console.log('📦 CoursesRes recebido:', coursesRes);
-        console.log('📦 CoursesRes.data:', coursesRes.data);
-        console.log('📦 CoursesRes.data.data:', coursesRes.data?.data);
-        console.log('📦 Tipo de coursesRes.data:', typeof coursesRes.data);
-        console.log('📦 É array coursesRes.data?', Array.isArray(coursesRes.data));
-        console.log('📦 É array coursesRes.data.data?', Array.isArray(coursesRes.data?.data));
-        
         // Garantir que students seja um array e transformar do backend para frontend
         let backendStudents = [];
         if (studentsRes.data && typeof studentsRes.data === 'object') {
@@ -566,7 +553,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           };
         });
         
-        console.log('✅ Students no loadData:', frontendStudents);
         setStudents(frontendStudents);
         
         // Transform backend courses to frontend format
@@ -576,22 +562,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           if (Array.isArray(coursesRes.data)) {
             // Se data já é um array direto
             backendCourses = coursesRes.data;
-            console.log('📦 Pegou coursesRes.data direto (é array)');
           } else if (coursesRes.data.data && Array.isArray(coursesRes.data.data.data)) {
             // Se tem paginação: data.data.data
             backendCourses = coursesRes.data.data.data;
-            console.log('📦 Pegou coursesRes.data.data.data (todas as páginas carregadas)');
           } else if (Array.isArray(coursesRes.data.data)) {
             // Se data.data é array direto
             backendCourses = coursesRes.data.data;
-            console.log('📦 Pegou coursesRes.data.data (é array)');
-          } else {
-            console.log('📦 ⚠️ Nenhuma das condições funcionou!');
-            console.log('📦 coursesRes.data:', coursesRes.data);
           }
         }
-        console.log('📦 Backend courses no loadData:', backendCourses);
-        console.log('📦 É array?', Array.isArray(backendCourses));
         
         const frontendCourses: Course[] = backendCourses.map((bc: any) => {
           // Contar alunos de todas as turmas deste curso
@@ -628,8 +606,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           };
         });
         
-        console.log('✅ Frontend courses no loadData:', frontendCourses);
-        console.log('📋 Títulos dos cursos:', frontendCourses.map(c => c.title));
         setCourses(frontendCourses);
         
         // Garantir que classes seja um array e transformar do backend para frontend
