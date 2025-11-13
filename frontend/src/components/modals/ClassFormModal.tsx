@@ -198,7 +198,7 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
                 </SelectTrigger>
                 <SelectContent>
                   {instructors.length === 0 ? (
-                    <SelectItem value="0" disabled>Nenhum instrutor cadastrado</SelectItem>
+                    <SelectItem key="no-instructor" value="0" disabled>Nenhum instrutor cadastrado</SelectItem>
                   ) : (
                     instructors.map((instructor) => (
                       <SelectItem key={instructor.id} value={instructor.id.toString()}>
@@ -238,10 +238,10 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Planejada">Planejada</SelectItem>
-                  <SelectItem value="Ativo">Ativo</SelectItem>
-                  <SelectItem value="Concluída">Concluída</SelectItem>
-                  <SelectItem value="Cancelada">Cancelada</SelectItem>
+                  <SelectItem key="status-planejada" value="Planejada">Planejada</SelectItem>
+                  <SelectItem key="status-ativo" value="Ativo">Ativo</SelectItem>
+                  <SelectItem key="status-concluida" value="Concluída">Concluída</SelectItem>
+                  <SelectItem key="status-cancelada" value="Cancelada">Cancelada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -296,14 +296,18 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="schedule">Horário</Label>
-            <Textarea
-              id="schedule"
-              value={formData.schedule}
-              onChange={(e) => handleInputChange("schedule", e.target.value)}
-              placeholder="Ex: Segunda a Sexta - 14h às 17h"
-              rows={2}
-            />
+            <Label htmlFor="schedule">Turno *</Label>
+            <Select value={formData.schedule} onValueChange={(value) => handleInputChange("schedule", value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o turno" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem key="turno-manha" value="Matutino">Matutino</SelectItem>
+                <SelectItem key="turno-tarde" value="Vespertino">Vespertino</SelectItem>
+                <SelectItem key="turno-noite" value="Noturno">Noturno</SelectItem>
+                <SelectItem key="turno-integral" value="Integral">Integral</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex gap-4 justify-end">

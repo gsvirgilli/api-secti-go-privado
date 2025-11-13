@@ -3,6 +3,7 @@ import Curso from '../courses/course.model.js';
 import Enrollment from '../enrollments/enrollment.model.js';
 import Student from '../students/student.model.js';
 import Instructor from '../instructors/instructor.model.js';
+import InstructorClass from '../instructor_classes/instructor_class.model.js';
 import { Op } from 'sequelize';
 import NotificationService from '../notifications/notification.service.js';
 import { 
@@ -258,6 +259,9 @@ class ClassService {
     if (enrollmentCount > 0 || studentCount > 0) {
       throw new Error('Não é possível deletar turma com alunos/matrículas vinculadas. Remova as matrículas ou mova os alunos antes de excluir.');
     }
+
+    // Remover associações de instrutores antes de deletar a turma
+    await InstructorClass.destroy({ where: { id_turma: id } });
 
     await turma.destroy();
 

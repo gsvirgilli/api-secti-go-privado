@@ -373,8 +373,53 @@ const Inscricao = () => {
   };
 
   // Navegar para próxima etapa
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (validateStep(currentStep)) {
+      // Se estiver na etapa 1 (Dados Pessoais), validar com o backend antes de avançar
+      if (currentStep === 1) {
+        setIsLoading(true);
+        
+        try {
+          const cleanCPF = formData.cpf.replace(/\D/g, '');
+          const cleanPhone = formData.telefone ? formData.telefone.replace(/\D/g, '') : undefined;
+          
+          // Chamar API de validação
+          await CandidatesAPI.validateUniqueFields({
+            cpf: cleanCPF,
+            email: formData.email.trim().toLowerCase(),
+            telefone: cleanPhone
+          });
+          
+          // Se passou na validação, pode avançar
+          setIsLoading(false);
+        } catch (error: any) {
+          setIsLoading(false);
+          
+          if (error.response?.data?.errors) {
+            // Mostrar todos os erros retornados
+            const errorMessages = error.response.data.errors.join('\n');
+            
+            toast({
+              title: "❌ Dados já cadastrados",
+              description: errorMessages,
+              variant: "destructive",
+              duration: 7000,
+            });
+            
+            return; // Não avançar
+          }
+          
+          // Erro genérico
+          toast({
+            title: "Erro ao validar dados",
+            description: "Não foi possível validar seus dados. Tente novamente.",
+            variant: "destructive",
+          });
+          
+          return; // Não avançar
+        }
+      }
+      
       let nextStep = currentStep + 1;
       
       // Pular etapa 3 (Responsável Legal) se não for menor de idade
@@ -514,8 +559,22 @@ const Inscricao = () => {
         status: 'pendente'
       };
 
+      // Preparar arquivos para envio
+      const files: Record<string, File> = {};
+      if (formData.rg_frente) files.rg_frente = formData.rg_frente;
+      if (formData.rg_verso) files.rg_verso = formData.rg_verso;
+      if (formData.cpf_aluno) files.cpf_aluno = formData.cpf_aluno;
+      if (formData.comprovante_endereco) files.comprovante_endereco = formData.comprovante_endereco;
+      if (formData.identidade_responsavel_frente) files.identidade_responsavel_frente = formData.identidade_responsavel_frente;
+      if (formData.identidade_responsavel_verso) files.identidade_responsavel_verso = formData.identidade_responsavel_verso;
+      if (formData.cpf_responsavel_file) files.cpf_responsavel_doc = formData.cpf_responsavel_file;
+      if (formData.comprovante_escolaridade) files.comprovante_escolaridade = formData.comprovante_escolaridade;
+      if (formData.foto_3x4) files.foto_3x4 = formData.foto_3x4;
+
       console.log('📤 Enviando dados completos:', payload);
-      await CandidatesAPI.createPublic(payload);
+      console.log('📎 Arquivos anexados:', Object.keys(files));
+      
+      await CandidatesAPI.createPublic(payload, files);
 
       setIsSuccess(true);
       toast({
@@ -578,62 +637,30 @@ const Inscricao = () => {
       console.error("Erro ao enviar inscrição:", error);
       console.log("Detalhes do erro:", error.response?.data);
 
+      // Usar a mensagem exata do backend
       let errorMessage = "Erro ao processar inscrição. Tente novamente mais tarde.";
-      let isBlockingError = true;
 
       if (error.response?.data?.error) {
-        const backendError = error.response.data.error;
-        
-        if (backendError.includes("CPF")) {
-          errorMessage = "CPF já cadastrado ou inválido.";
-          isBlockingError = true;
-        } else if (backendError.includes("Email")) {
-          errorMessage = "Email já cadastrado.";
-          isBlockingError = true;
-        } else if (backendError.includes("Curso")) {
-          errorMessage = "Curso não encontrado ou inativo. Por favor, selecione outro curso.";
-          setCurrentStep(4); // Voltar para etapa de seleção de curso
-          isBlockingError = true;
-        } else if (backendError.includes("Turno") || backendError.includes("turmas")) {
-          // PERMITIR ENVIO mesmo com erro de turma
-          errorMessage = "⚠️ Não há turmas abertas para este turno no momento, mas sua inscrição foi registrada e você será avisado quando houver vagas.";
-          isBlockingError = false;
-          
-          toast({
-            title: "⚠️ Inscrição Registrada com Ressalva",
-            description: errorMessage,
-            className: "bg-amber-100 text-amber-800 border-amber-200",
-            duration: 6000,
-          });
-          
-          // NÃO bloquear - permitir que formulário continue aberto
-          // mas mostrar mensagem sugerindo trocar turno
-          setCurrentStep(4);
-          setIsLoading(false);
-          return; // Sair sem bloquear
-        } else if (backendError.includes("SequelizeDatabaseError") || backendError.includes("column") || backendError.includes("does not exist")) {
-          // Erro de coluna faltando - provável que migration não rodou
-          errorMessage = "⚠️ Sistema em atualização. Sua inscrição foi parcialmente registrada. Por favor, entre em contato conosco pelo WhatsApp.";
-          isBlockingError = false;
-          
-          toast({
-            title: "Sistema em Atualização",
-            description: errorMessage,
-            className: "bg-blue-100 text-blue-800 border-blue-200",
-            duration: 8000,
-          });
-          setIsLoading(false);
-          return;
-        } else {
-          errorMessage = backendError;
-        }
+        // Mostrar exatamente a mensagem que o backend enviou
+        errorMessage = error.response.data.error;
+      }
+
+      // Determinar se deve voltar para alguma etapa específica
+      if (errorMessage.includes("curso") && errorMessage.includes("não encontrado")) {
+        setCurrentStep(4); // Voltar para etapa de seleção de curso
+      } else if (errorMessage.includes("CPF")) {
+        setCurrentStep(1); // Voltar para dados pessoais
+      } else if (errorMessage.includes("email") || errorMessage.includes("Email")) {
+        setCurrentStep(1); // Voltar para dados pessoais
+      } else if (errorMessage.includes("telefone")) {
+        setCurrentStep(1); // Voltar para dados pessoais
       }
 
       toast({
-        title: isBlockingError ? "Erro ao enviar inscrição" : "Aviso",
+        title: "❌ Erro ao enviar inscrição",
         description: errorMessage,
-        variant: isBlockingError ? "destructive" : "default",
-        duration: 5000,
+        variant: "destructive",
+        duration: 7000,
       });
     } finally {
       setIsLoading(false);

@@ -4,6 +4,7 @@ import { StudentsAPI, CoursesAPI, ClassesAPI, InstructorsAPI } from '@/lib/api';
 // Types
 export interface Student {
   id: number;
+  matricula: string;
   name: string;
   cpf: string;
   email: string;
@@ -548,6 +549,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           
           return {
             id: bs.id,
+            matricula: bs.matricula || '',
             name: bs.nome || '',
             cpf: bs.cpf || '',
             email: bs.email || '',
@@ -682,6 +684,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           };
           const frontendStatus = bc.status ? (statusMap[bc.status] || 'Planejada') : 'Planejada';
           
+          // Mapear turno do backend para formato amigável
+          const turnoMap: Record<string, string> = {
+            'MANHA': 'Matutino',
+            'TARDE': 'Vespertino',
+            'NOITE': 'Noturno',
+            'INTEGRAL': 'Integral'
+          };
+          const frontendSchedule = bc.turno ? (turnoMap[bc.turno] || bc.turno) : '';
+          
           return {
             id: bc.id,
             name: bc.nome || '',
@@ -690,7 +701,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             instructorId: instructorId,
             capacity: bc.vagas || 0,
             enrolled: students.length,
-            schedule: bc.turno || '',
+            schedule: frontendSchedule,
             duration: '6 meses',
             status: frontendStatus,
             startDate: formatDate(bc.data_inicio),
@@ -759,6 +770,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     loadData();
   }, []);
 
+  // Adicionar listener para detectar quando o token é adicionado/removido
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === '@sukatech:token') {
+        // Token foi adicionado ou removido, recarregar dados
+        window.location.reload();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // Refresh functions
   const refreshStudents = async () => {
     try {
@@ -788,9 +812,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           if (!status) return 'Ativo';
           return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
         };
+
+        // Formatar turno para exibição
+        const formatTurno = (turno: string) => {
+          const turnoMap: Record<string, string> = {
+            'MANHA': 'Matutino',
+            'TARDE': 'Vespertino',
+            'NOITE': 'Noturno',
+            'INTEGRAL': 'Integral'
+          };
+          return turnoMap[turno] || turno;
+        };
+
+        // Montar nome da turma com turno
+        let className = '';
+        if (bs.turma?.nome) {
+          className = bs.turma.nome;
+          if (bs.turma.turno) {
+            className += ` - ${formatTurno(bs.turma.turno)}`;
+          }
+        }
         
         return {
           id: bs.id,
+          matricula: bs.matricula || '',
           name: bs.nome || '',
           cpf: bs.cpf || '',
           email: bs.email || '',
@@ -800,7 +845,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           enrollmentDate: formatDate(bs.createdAt),
           status: formatStatus(bs.status),
           course: bs.turma?.curso?.nome || '',
-          class: bs.turma?.nome || '',
+          class: className || 'Sem turma',
           progress: 0,
           attendance: 0,
           grades: 0
@@ -1260,6 +1305,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         };
         const frontendStatus = bc.status ? (statusMap[bc.status] || 'Planejada') : 'Planejada';
 
+        // Mapear turno do backend para formato amigável
+        const turnoMap: Record<string, string> = {
+          'MANHA': 'Matutino',
+          'TARDE': 'Vespertino',
+          'NOITE': 'Noturno',
+          'INTEGRAL': 'Integral'
+        };
+        const frontendSchedule = bc.turno ? (turnoMap[bc.turno] || bc.turno) : '';
+
         return {
           id: bc.id,
           name: bc.nome || '',
@@ -1268,7 +1322,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           instructorId: instructorId,
           capacity: bc.vagas || 0,
           enrolled: students.length,
-          schedule: bc.turno || '',
+          schedule: frontendSchedule,
           duration: '6 meses',
           status: frontendStatus,
           startDate: formatDate(bc.data_inicio),
@@ -1289,7 +1343,52 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addClass = async (classData: Omit<Class, 'id'>): Promise<Class> => {
     try {
       setError(null);
-      const response = await ClassesAPI.create(classData);
+      
+      // Mapear campos do frontend para o backend
+      const backendData: any = {
+        nome: classData.name,
+        vagas: classData.capacity || 0,
+        status: classData.status === 'Ativo' ? 'ATIVA' : 
+                classData.status === 'Concluída' ? 'ENCERRADA' : 
+                classData.status === 'Cancelada' ? 'CANCELADA' : 
+                'ATIVA', // Default para "Planejada" vira ATIVA
+      };
+
+      // Mapear turno baseado no schedule ou usar default
+      const scheduleMap: Record<string, string> = {
+        'Matutino': 'MANHA',
+        'Manhã': 'MANHA',
+        'Vespertino': 'TARDE',
+        'Tarde': 'TARDE',
+        'Noturno': 'NOITE',
+        'Noite': 'NOITE',
+        'Integral': 'INTEGRAL'
+      };
+      backendData.turno = scheduleMap[classData.schedule] || 'MANHA';
+
+      // Buscar ID do curso pelo nome
+      const course = courses.find(c => c.title === classData.course);
+      if (!course) {
+        throw new Error(`Curso "${classData.course}" não encontrado`);
+      }
+      backendData.id_curso = course.id;
+
+      // Converter datas se fornecidas
+      const parseDate = (dateStr?: string) => {
+        if (!dateStr || dateStr.trim() === '') return null;
+        const parts = dateStr.split('/');
+        if (parts.length === 3) {
+          return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        }
+        return null;
+      };
+
+      backendData.data_inicio = parseDate(classData.startDate);
+      backendData.data_fim = parseDate(classData.endDate);
+
+      console.log('📤 Enviando dados para backend:', backendData);
+      
+      const response = await ClassesAPI.create(backendData);
       const newClass = response.data;
       
       // Associate instructor if provided
@@ -1347,6 +1446,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       // Map capacity to vagas
       if (typeof classData.capacity === 'number') backendData.vagas = classData.capacity;
+
+      // Map schedule to turno
+      if (classData.schedule) {
+        const scheduleMap: Record<string, string> = {
+          'Matutino': 'MANHA',
+          'Manhã': 'MANHA',
+          'Vespertino': 'TARDE',
+          'Tarde': 'TARDE',
+          'Noturno': 'NOITE',
+          'Noite': 'NOITE',
+          'Integral': 'INTEGRAL'
+        };
+        backendData.turno = scheduleMap[classData.schedule] || 'MANHA';
+      }
 
       // Only call update if we have backend-updatable fields
       if (Object.keys(backendData).length > 0) {

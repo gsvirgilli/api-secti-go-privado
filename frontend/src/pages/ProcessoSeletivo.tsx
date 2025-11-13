@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { CandidatesAPI, CoursesAPI } from "@/lib/api";
+import { CandidatesAPI, CoursesAPI, ClassesAPI, StudentsAPI } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useFormConfig } from "@/contexts/FormConfigContext";
@@ -76,6 +76,17 @@ interface Candidate {
   nome_responsavel?: string;
   cpf_responsavel?: string;
   
+  // Documentos
+  rg_frente_url?: string;
+  rg_verso_url?: string;
+  cpf_aluno_url?: string;
+  comprovante_endereco_url?: string;
+  identidade_responsavel_frente_url?: string;
+  identidade_responsavel_verso_url?: string;
+  cpf_responsavel_url?: string;
+  comprovante_escolaridade_url?: string;
+  foto_3x4_url?: string;
+  
   createdAt: string;
   updatedAt?: string;
   curso?: {
@@ -109,6 +120,12 @@ const ProcessoSeletivo = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedCandidate, setEditedCandidate] = useState<Candidate | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Estados para informações de turma e vagas
+  const [turmaInfo, setTurmaInfo] = useState<{
+    opcao1?: { curso: string; turma: string; vagas: number; total: number } | null;
+    opcao2?: { curso: string; turma: string; vagas: number; total: number } | null;
+  }>({});
   
   // Estados para configuração do formulário
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
@@ -252,6 +269,8 @@ const ProcessoSeletivo = () => {
         return <XCircle className="h-4 w-4 text-red-500" />;
       case 'pendente':
         return <Clock className="h-4 w-4 text-amber-500" />;
+      case 'lista_espera':
+        return <Clock className="h-4 w-4 text-orange-500" />;
       default:
         return <Clock className="h-4 w-4 text-gray-500" />;
     }
@@ -266,6 +285,8 @@ const ProcessoSeletivo = () => {
         return <Badge className="bg-red-100 text-red-700">Reprovado</Badge>;
       case 'pendente':
         return <Badge className="bg-amber-100 text-amber-700">Pendente</Badge>;
+      case 'lista_espera':
+        return <Badge className="bg-orange-100 text-orange-700">Lista de Espera</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -304,11 +325,106 @@ const ProcessoSeletivo = () => {
   };
 
   // Ver detalhes do candidato
-  const handleViewDetails = (candidate: Candidate) => {
+  const handleViewDetails = async (candidate: Candidate) => {
     setSelectedCandidate(candidate);
     setEditedCandidate(candidate);
     setIsEditing(false);
     setIsModalOpen(true);
+    
+    // Buscar informações das turmas
+    await loadTurmaInfo(candidate);
+  };
+
+  // Buscar informações da turma e vagas disponíveis
+  const loadTurmaInfo = async (candidate: Candidate) => {
+    try {
+      console.log('🔍 Buscando informações da turma para candidato:', candidate);
+      
+      const turnoMap: Record<string, string> = {
+        'MATUTINO': 'MANHA',
+        'VESPERTINO': 'TARDE',
+        'NOTURNO': 'NOITE',
+        'MANHA': 'MANHA',
+        'TARDE': 'TARDE',
+        'NOITE': 'NOITE'
+      };
+
+      const info: any = {};
+
+      // Buscar turma da 1ª opção
+      if (candidate.curso_id && candidate.turno) {
+        const turno1 = turnoMap[candidate.turno.toUpperCase()] || candidate.turno;
+        console.log('📚 Buscando turma 1 - Curso:', candidate.curso_id, 'Turno:', turno1);
+        
+        const response1 = await ClassesAPI.findByCourseAndShift(candidate.curso_id, turno1);
+        console.log('📦 Response turma 1:', response1.data);
+        
+        // A estrutura é: { data: [...turmas], pagination: {...} }
+        const turmas1 = response1.data?.data || [];
+        
+        if (turmas1.length > 0) {
+          const turma = turmas1[0];
+          console.log('✅ Turma 1 encontrada:', turma);
+          
+          // Contar alunos matriculados
+          const studentsResponse = await StudentsAPI.list({ turma_id: turma.id });
+          console.log('👥 Alunos na turma 1:', studentsResponse.data);
+          
+          const alunosData = studentsResponse.data?.data || [];
+          const alunosCount = alunosData.length;
+          
+          info.opcao1 = {
+            curso: turma.curso?.nome || candidate.curso?.nome || 'Curso não identificado',
+            turma: turma.nome,
+            vagas: turma.vagas - alunosCount,
+            total: turma.vagas
+          };
+          console.log('✅ Info opcao1:', info.opcao1);
+        } else {
+          console.log('⚠️ Turma 1 não encontrada');
+        }
+      }
+
+      // Buscar turma da 2ª opção
+      if (candidate.curso_id2 && candidate.turno2) {
+        const turno2 = turnoMap[candidate.turno2.toUpperCase()] || candidate.turno2;
+        console.log('📚 Buscando turma 2 - Curso:', candidate.curso_id2, 'Turno:', turno2);
+        
+        const response2 = await ClassesAPI.findByCourseAndShift(candidate.curso_id2, turno2);
+        console.log('📦 Response turma 2:', response2.data);
+        
+        // A estrutura é: { data: [...turmas], pagination: {...} }
+        const turmas2 = response2.data?.data || [];
+        
+        if (turmas2.length > 0) {
+          const turma = turmas2[0];
+          console.log('✅ Turma 2 encontrada:', turma);
+          
+          // Contar alunos matriculados
+          const studentsResponse = await StudentsAPI.list({ turma_id: turma.id });
+          console.log('👥 Alunos na turma 2:', studentsResponse.data);
+          
+          const alunosData = studentsResponse.data?.data || [];
+          const alunosCount = alunosData.length;
+          
+          info.opcao2 = {
+            curso: turma.curso?.nome || 'Curso não identificado',
+            turma: turma.nome,
+            vagas: turma.vagas - alunosCount,
+            total: turma.vagas
+          };
+          console.log('✅ Info opcao2:', info.opcao2);
+        } else {
+          console.log('⚠️ Turma 2 não encontrada');
+        }
+      }
+
+      console.log('🎯 Informações finais das turmas:', info);
+      setTurmaInfo(info);
+    } catch (error) {
+      console.error('❌ Erro ao buscar informações da turma:', error);
+      setTurmaInfo({});
+    }
   };
 
   // Iniciar edição
@@ -380,6 +496,53 @@ const ProcessoSeletivo = () => {
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o status.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Aprovar candidato com escolha de curso
+  const handleApproveWithCourse = async (candidateId: number, opcaoCurso: 1 | 2) => {
+    try {
+      await CandidatesAPI.approve(candidateId, opcaoCurso);
+      
+      toast({
+        title: "Candidato aprovado!",
+        description: `Aprovado para ${opcaoCurso === 1 ? '1ª opção' : '2ª opção'} de curso.`,
+        className: "bg-emerald-100 text-emerald-800",
+      });
+
+      // Atualizar lista de candidatos
+      await loadCandidates();
+      
+      // Buscar dados atualizados do candidato
+      const updatedCandidateResponse = await CandidatesAPI.findById(candidateId);
+      const updatedCandidate = updatedCandidateResponse.data;
+      
+      // Atualizar candidato selecionado com novos dados
+      setSelectedCandidate(updatedCandidate);
+      setEditedCandidate(updatedCandidate);
+      
+      // Recarregar informações das turmas (vagas atualizadas)
+      await loadTurmaInfo(updatedCandidate);
+      
+      toast({
+        title: "Vagas atualizadas!",
+        description: "As informações de vagas foram atualizadas.",
+        className: "bg-blue-100 text-blue-800",
+      });
+      
+    } catch (error: any) {
+      console.error("Erro ao aprovar candidato:", error);
+      
+      let errorMessage = "Não foi possível aprovar o candidato.";
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
+      toast({
+        title: "Erro",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -1090,6 +1253,100 @@ const ProcessoSeletivo = () => {
                 </CardContent>
               </Card>
 
+              {/* Botões de Aprovação - Escolha de Curso */}
+              {!isEditing && selectedCandidate && selectedCandidate.status !== 'aprovado' && (
+                <Card className="border-emerald-200 bg-emerald-50/50">
+                  <CardHeader className="bg-emerald-100/50">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-emerald-600" />
+                      Aprovar Candidato
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Escolha para qual curso deseja aprovar este candidato:
+                    </p>
+                    <div className="space-y-3">
+                      {/* 1ª Opção */}
+                      <div className="p-4 border-2 border-emerald-200 rounded-lg bg-white hover:border-emerald-400 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="font-semibold text-emerald-900">
+                              1ª Opção: {turmaInfo.opcao1?.curso || selectedCandidate?.curso?.nome || 
+                                (selectedCandidate?.curso_id ? `Curso ID: ${selectedCandidate.curso_id}` : '-')}
+                            </p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Turno: {selectedCandidate?.turno || '-'}
+                            </p>
+                            {turmaInfo.opcao1 && (
+                              <div className="mt-2 space-y-1">
+                                <p className="text-sm font-medium text-blue-700">
+                                  📚 Turma: {turmaInfo.opcao1.turma}
+                                </p>
+                                <p className={`text-sm font-bold ${
+                                  turmaInfo.opcao1.vagas > 0 ? 'text-emerald-600' : 'text-red-600'
+                                }`}>
+                                  {turmaInfo.opcao1.vagas > 0 ? '✅' : '❌'} Vagas disponíveis: {turmaInfo.opcao1.vagas} de {turmaInfo.opcao1.total}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            onClick={() => handleApproveWithCourse(selectedCandidate.id, 1)}
+                            className="bg-emerald-600 hover:bg-emerald-700 ml-4"
+                            size="sm"
+                            disabled={turmaInfo.opcao1 && turmaInfo.opcao1.vagas <= 0}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Aprovar 1ª Opção
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* 2ª Opção (se existir) */}
+                      {selectedCandidate?.curso_id2 && (
+                        <div className="p-4 border-2 border-emerald-200 rounded-lg bg-white hover:border-emerald-400 transition-colors">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <p className="font-semibold text-emerald-900">
+                                2ª Opção: {turmaInfo.opcao2?.curso || `Curso ID ${selectedCandidate.curso_id2}`}
+                              </p>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Turno: {selectedCandidate.turno2 || '-'}
+                              </p>
+                              {turmaInfo.opcao2 && (
+                                <div className="mt-2 space-y-1">
+                                  <p className="text-sm font-medium text-blue-700">
+                                    📚 Turma: {turmaInfo.opcao2.turma}
+                                  </p>
+                                  <p className={`text-sm font-bold ${
+                                    turmaInfo.opcao2.vagas > 0 ? 'text-emerald-600' : 'text-red-600'
+                                  }`}>
+                                    {turmaInfo.opcao2.vagas > 0 ? '✅' : '❌'} Vagas disponíveis: {turmaInfo.opcao2.vagas} de {turmaInfo.opcao2.total}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                            <Button
+                              onClick={() => handleApproveWithCourse(selectedCandidate.id, 2)}
+                              className="bg-emerald-600 hover:bg-emerald-700 ml-4"
+                              size="sm"
+                              disabled={turmaInfo.opcao2 && turmaInfo.opcao2.vagas <= 0}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Aprovar 2ª Opção
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-4 italic">
+                      * O botão fica desabilitado automaticamente se não houver vagas disponíveis.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Questionário Social */}
               {(selectedCandidate?.raca_cor || selectedCandidate?.renda_mensal) && (
                 <Card className="border-primary/20">
@@ -1177,6 +1434,124 @@ const ProcessoSeletivo = () => {
                 </Card>
               )}
 
+              {/* Documentos Anexados */}
+              {(selectedCandidate?.rg_frente_url || selectedCandidate?.rg_verso_url || selectedCandidate?.cpf_aluno_url || 
+                selectedCandidate?.comprovante_endereco_url || selectedCandidate?.foto_3x4_url || 
+                selectedCandidate?.comprovante_escolaridade_url || selectedCandidate?.identidade_responsavel_frente_url ||
+                selectedCandidate?.identidade_responsavel_verso_url || selectedCandidate?.cpf_responsavel_url) && (
+                <Card className="border-purple-200">
+                  <CardHeader className="bg-purple-50">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Documentos Anexados
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {selectedCandidate.rg_frente_url && (
+                        <a 
+                          href={`http://localhost:3333${selectedCandidate.rg_frente_url}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                        >
+                          <Download className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-medium">RG Frente</span>
+                        </a>
+                      )}
+                      {selectedCandidate.rg_verso_url && (
+                        <a 
+                          href={`http://localhost:3333${selectedCandidate.rg_verso_url}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                        >
+                          <Download className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-medium">RG Verso</span>
+                        </a>
+                      )}
+                      {selectedCandidate.cpf_aluno_url && (
+                        <a 
+                          href={`http://localhost:3333${selectedCandidate.cpf_aluno_url}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                        >
+                          <Download className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-medium">CPF</span>
+                        </a>
+                      )}
+                      {selectedCandidate.comprovante_endereco_url && (
+                        <a 
+                          href={`http://localhost:3333${selectedCandidate.comprovante_endereco_url}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                        >
+                          <Download className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-medium">Comprovante de Endereço</span>
+                        </a>
+                      )}
+                      {selectedCandidate.foto_3x4_url && (
+                        <a 
+                          href={`http://localhost:3333${selectedCandidate.foto_3x4_url}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                        >
+                          <Download className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-medium">Foto 3x4</span>
+                        </a>
+                      )}
+                      {selectedCandidate.comprovante_escolaridade_url && (
+                        <a 
+                          href={`http://localhost:3333${selectedCandidate.comprovante_escolaridade_url}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                        >
+                          <Download className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-medium">Comprovante Escolaridade</span>
+                        </a>
+                      )}
+                      {selectedCandidate.identidade_responsavel_frente_url && (
+                        <a 
+                          href={`http://localhost:3333${selectedCandidate.identidade_responsavel_frente_url}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                        >
+                          <Download className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-medium">RG Responsável (Frente)</span>
+                        </a>
+                      )}
+                      {selectedCandidate.identidade_responsavel_verso_url && (
+                        <a 
+                          href={`http://localhost:3333${selectedCandidate.identidade_responsavel_verso_url}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                        >
+                          <Download className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-medium">RG Responsável (Verso)</span>
+                        </a>
+                      )}
+                      {selectedCandidate.cpf_responsavel_url && (
+                        <a 
+                          href={`http://localhost:3333${selectedCandidate.cpf_responsavel_url}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                        >
+                          <Download className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-medium">CPF Responsável</span>
+                        </a>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Status e Data */}
               <Card className="border-primary/20">
                 <CardHeader className="bg-primary/5">
@@ -1202,6 +1577,12 @@ const ProcessoSeletivo = () => {
                               <div className="flex items-center gap-2">
                                 <Clock className="h-4 w-4 text-amber-600" />
                                 Pendente
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="lista_espera">
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-orange-600" />
+                                Lista de Espera
                               </div>
                             </SelectItem>
                             <SelectItem value="aprovado">

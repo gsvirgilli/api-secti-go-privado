@@ -11,6 +11,7 @@ interface StudentDetailsModalProps {
   onClose: () => void;
   student: {
     id: number;
+    matricula: string;
     name: string;
     cpf: string;
     email: string;
@@ -93,6 +94,10 @@ const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: Stu
             <div>
               <h3 className="text-lg font-semibold text-foreground mb-3">Informações pessoais</h3>
               <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Matrícula:</span>
+                  <span className="font-medium font-mono">{student.matricula || '-'}</span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">CPF:</span>
                   <span className="font-medium">{student.cpf}</span>

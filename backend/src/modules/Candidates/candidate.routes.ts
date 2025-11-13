@@ -11,6 +11,7 @@ import {
 } from './candidate.validator.js';
 import { auditMiddleware } from '../../middlewares/audit.middleware.js';
 import Candidate from './candidate.model.js';
+import { upload, documentFields } from '../../config/multer.js';
 
 const router = Router();
 
@@ -76,9 +77,37 @@ const router = Router();
  */
 router.post(
   '/public',
-  validateRequest(publicCandidateSchema),
+  upload.fields(documentFields),
   CandidateController.createPublic
 );
+
+/**
+ * @swagger
+ * /api/candidates/validate:
+ *   post:
+ *     summary: Valida se CPF, email e telefone estão disponíveis
+ *     tags: [Candidates]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               cpf:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               telefone:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Campos válidos
+ *       409:
+ *         description: Um ou mais campos já estão em uso
+ */
+router.post('/validate', CandidateController.validateUniqueFields);
 
 // ===== ROTAS PROTEGIDAS (exigem autenticação) =====
 

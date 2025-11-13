@@ -225,11 +225,6 @@ class CandidateService {
       throw new Error('Candidato não encontrado');
     }
 
-    // Não permitir alterar status aprovado para outro
-    if (candidate.status === 'aprovado' && data.status && data.status !== 'aprovado') {
-      throw new Error('Não é possível alterar status de candidato aprovado');
-    }
-
     // Verificar se turma desejada existe (se fornecida)
     if (data.turma_id) {
       const turma = await Class.findByPk(data.turma_id);
@@ -267,8 +262,10 @@ class CandidateService {
 
   /**
    * Aprova candidato e converte em aluno
+   * @param id - ID do candidato
+   * @param opcaoCurso - Qual curso aprovar: 1 (primeira opção) ou 2 (segunda opção). Se não informado, tenta a primeira com vaga.
    */
-  async approve(id: number) {
+  async approve(id: number, opcaoCurso?: 1 | 2) {
     const candidate = await Candidate.findByPk(id);
 
     if (!candidate) {
@@ -279,12 +276,62 @@ class CandidateService {
       throw new Error('Candidato já foi aprovado');
     }
 
-    // Verificar se candidato tem turma
-    if (!candidate.turma_id) {
-      throw new Error('Candidato precisa ter uma turma desejada para ser aprovado');
+    // Determinar qual curso/turno usar
+    let cursoId: number;
+    let turno: string;
+    
+    if (opcaoCurso === 2 && candidate.curso_id2 && candidate.turno2) {
+      cursoId = candidate.curso_id2;
+      turno = candidate.turno2;
+    } else {
+      if (!candidate.curso_id || !candidate.turno) {
+        throw new Error('Candidato não possui curso ou turno definido');
+      }
+      cursoId = candidate.curso_id;
+      turno = candidate.turno;
     }
 
+    // Buscar automaticamente a turma baseado no curso e turno escolhidos
+    const turnoMap: Record<string, string> = {
+      'MATUTINO': 'MANHA',
+      'VESPERTINO': 'TARDE',
+      'NOTURNO': 'NOITE'
+    };
+    
+    const turnoParaBusca = turnoMap[turno] || turno;
+    
+    const turmaDisponivel = await Class.findOne({
+      where: {
+        id_curso: cursoId,
+        turno: turnoParaBusca
+      }
+    });
+    
+    if (!turmaDisponivel) {
+      throw new Error('Não foi possível encontrar uma turma disponível para este curso e turno');
+    }
+
+    // Verificar se ainda há vagas na turma
+    const Student = (await import('../students/student.model.js')).default;
+    const alunosNaTurma = await Student.count({ where: { turma_id: turmaDisponivel.id } });
+    const vagasDisponiveis = turmaDisponivel.vagas - alunosNaTurma;
+
+    if (vagasDisponiveis <= 0) {
+      throw new Error('Não há mais vagas disponíveis nesta turma. O candidato deve permanecer em lista de espera.');
+    }
+
+    const turmaId = turmaDisponivel.id;
+    
+    // Atualizar o candidato com a turma
+    await candidate.update({ turma_id: turmaId });
+
     try {
+      // Verificar se já existe aluno com este CPF (candidato já aprovado antes)
+      const existingStudent = await Student.findOne({ where: { cpf: candidate.cpf } });
+      if (existingStudent) {
+        throw new Error('Este candidato já foi aprovado anteriormente e já possui cadastro como aluno');
+      }
+
       // Gerar matrícula
       const matricula = await this.generateMatricula();
 
@@ -317,7 +364,7 @@ class CandidateService {
         cpf: candidate.cpf,
         nome: candidate.nome,
         email: candidate.email,
-        turma_id: candidate.turma_id,
+        turma_id: turmaId,
         status: 'ativo'
       } as any);
 
@@ -401,31 +448,73 @@ class CandidateService {
    * Cria uma candidatura pública (sem autenticação)
    * Valida CPF único, email único, curso existe e turno disponível
    */
-  async createPublic(data: any) {
+  async createPublic(data: any, files?: any) {
     // 1. Validar CPF
     if (!this.validateCPF(data.cpf)) {
-      throw new Error('CPF inválido');
+      throw new Error('CPF inválido. Verifique se digitou corretamente.');
     }
 
-    // 2. Verificar se CPF já está cadastrado
-    const existingCandidate = await Candidate.findOne({
-      where: { cpf: data.cpf.replace(/\D/g, '') }
+    // Limpar CPF e telefone para comparação
+    const cleanCPF = data.cpf.replace(/\D/g, '');
+    const cleanTelefone = data.telefone ? data.telefone.replace(/\D/g, '') : null;
+
+    // 2. Verificar se CPF já está cadastrado como CANDIDATO
+    const existingCandidateByCPF = await Candidate.findOne({
+      where: { cpf: cleanCPF }
     });
 
-    if (existingCandidate) {
-      throw new Error('CPF já cadastrado');
+    if (existingCandidateByCPF) {
+      throw new Error('Este CPF já possui uma inscrição no sistema. Cada pessoa pode fazer apenas uma inscrição.');
     }
 
-    // 3. Verificar se email já está cadastrado
-    const existingEmail = await Candidate.findOne({
+    // 3. Verificar se CPF já está cadastrado como ALUNO (já foi aprovado)
+    const existingStudent = await Student.findOne({
+      where: { cpf: cleanCPF }
+    });
+
+    if (existingStudent) {
+      throw new Error('Este CPF já está cadastrado como aluno. Você já foi aprovado em um processo seletivo anterior.');
+    }
+
+    // 4. Verificar se EMAIL já está cadastrado como CANDIDATO
+    const existingCandidateByEmail = await Candidate.findOne({
       where: { email: data.email }
     });
 
-    if (existingEmail) {
-      throw new Error('Email já cadastrado');
+    if (existingCandidateByEmail) {
+      throw new Error('Este email já está cadastrado em outra inscrição. Use um email diferente.');
     }
 
-    // 4. Verificar se o curso existe
+    // 5. Verificar se EMAIL já está cadastrado como ALUNO
+    const existingStudentByEmail = await Student.findOne({
+      where: { email: data.email }
+    });
+
+    if (existingStudentByEmail) {
+      throw new Error('Este email já está cadastrado como aluno no sistema.');
+    }
+
+    // 6. Verificar se EMAIL já está cadastrado como USUÁRIO
+    const existingUserByEmail = await User.findOne({
+      where: { email: data.email }
+    });
+
+    if (existingUserByEmail) {
+      throw new Error('Este email já está cadastrado no sistema. Use um email diferente.');
+    }
+
+    // 7. Verificar se TELEFONE já está cadastrado (se fornecido)
+    if (cleanTelefone) {
+      const existingCandidateByPhone = await Candidate.findOne({
+        where: { telefone: cleanTelefone }
+      });
+
+      if (existingCandidateByPhone) {
+        throw new Error('Este telefone já está cadastrado em outra inscrição. Use um telefone diferente.');
+      }
+    }
+
+    // 8. Verificar se o curso existe
     const Course = (await import('../courses/course.model.js')).default;
     const course = await Course.findByPk(data.curso_id);
 
@@ -433,26 +522,103 @@ class CandidateService {
       throw new Error('Curso não encontrado');
     }
 
-    // 5. Verificar se existe turma disponível para o curso e turno escolhidos
-    const availableClass = await Class.findOne({
+    // 5. Verificar disponibilidade de vagas nas turmas escolhidas
+    // Converter formato de turno (MATUTINO -> MANHA, VESPERTINO -> TARDE, NOTURNO -> NOITE)
+    const turnoMap: Record<string, string> = {
+      'MATUTINO': 'MANHA',
+      'VESPERTINO': 'TARDE',
+      'NOTURNO': 'NOITE'
+    };
+    
+    const turnoParaBusca = turnoMap[data.turno] || data.turno;
+    
+    // Buscar 1ª opção de turma
+    const turma1 = await Class.findOne({
       where: {
         id_curso: data.curso_id,
-        turno: data.turno
+        turno: turnoParaBusca
       }
     });
 
-    if (!availableClass) {
-      throw new Error('Turno não disponível para este curso');
+    if (!turma1) {
+      throw new Error('Não há turmas disponíveis no turno selecionado para o curso escolhido');
     }
 
-    // 6. Criar candidatura com status PENDENTE
+    // Buscar 2ª opção de turma (se fornecida)
+    let turma2 = null;
+    if (data.curso_id2 && data.turno2) {
+      const turnoParaBusca2 = turnoMap[data.turno2] || data.turno2;
+      turma2 = await Class.findOne({
+        where: {
+          id_curso: data.curso_id2,
+          turno: turnoParaBusca2
+        }
+      });
+    }
+
+    // Contar quantos alunos já estão matriculados em cada turma
+    const Student = (await import('../students/student.model.js')).default;
+    const alunosNaTurma1 = await Student.count({ where: { turma_id: turma1.id } });
+    const vagasDisponiveis1 = turma1.vagas - alunosNaTurma1;
+
+    let vagasDisponiveis2 = 0;
+    if (turma2) {
+      const alunosNaTurma2 = await Student.count({ where: { turma_id: turma2.id } });
+      vagasDisponiveis2 = turma2.vagas - alunosNaTurma2;
+    }
+
+    // Determinar status inicial baseado nas vagas
+    let statusInicial: 'pendente' | 'lista_espera' = 'lista_espera';
+    
+    // Se pelo menos uma das turmas tem vaga, status é PENDENTE
+    if (vagasDisponiveis1 > 0 || vagasDisponiveis2 > 0) {
+      statusInicial = 'pendente';
+    }
+
+    // 6. Processar arquivos (se houver)
+    const documentUrls: any = {};
+    if (files) {
+      // Mapear nomes de campos para campos do banco
+      const fieldMapping: Record<string, string> = {
+        'rg_frente': 'rg_frente_url',
+        'rg_verso': 'rg_verso_url',
+        'cpf_aluno': 'cpf_aluno_url',
+        'comprovante_endereco': 'comprovante_endereco_url',
+        'identidade_responsavel_frente': 'identidade_responsavel_frente_url',
+        'identidade_responsavel_verso': 'identidade_responsavel_verso_url',
+        'cpf_responsavel_doc': 'cpf_responsavel_url',
+        'comprovante_escolaridade': 'comprovante_escolaridade_url',
+        'foto_3x4': 'foto_3x4_url'
+      };
+
+      Object.keys(files).forEach((fieldName) => {
+        const file = files[fieldName][0]; // Multer retorna array
+        const dbFieldName = fieldMapping[fieldName];
+        if (dbFieldName && file) {
+          // Salvar caminho relativo do arquivo
+          documentUrls[dbFieldName] = `/uploads/documents/${file.filename}`;
+        }
+      });
+    }
+
+    // 7. Criar candidatura com status PENDENTE
     const candidate = await Candidate.create({
+      // Dados pessoais obrigatórios
       nome: data.nome,
       cpf: data.cpf.replace(/\D/g, ''),
       email: data.email.toLowerCase(),
       telefone: data.telefone?.replace(/\D/g, ''),
       data_nascimento: data.data_nascimento,
-      // Campos de endereço (se o model suportar)
+      
+      // Dados pessoais adicionais
+      rg: data.rg,
+      sexo: data.sexo,
+      deficiencia: data.deficiencia,
+      telefone2: data.telefone2?.replace(/\D/g, ''),
+      idade: data.idade,
+      nome_mae: data.nome_mae,
+      
+      // Campos de endereço
       cep: data.cep?.replace(/\D/g, ''),
       rua: data.rua,
       numero: data.numero,
@@ -460,10 +626,36 @@ class CandidateService {
       bairro: data.bairro,
       cidade: data.cidade,
       estado: data.estado?.toUpperCase(),
+      
       // Curso e turno desejados
       curso_id: data.curso_id,
       turno: data.turno,
-      status: 'pendente'
+      
+      // Curso - segunda opção
+      curso_id2: data.curso_id2,
+      turno2: data.turno2,
+      local_curso: data.local_curso,
+      
+      // Questionário Social
+      raca_cor: data.raca_cor,
+      renda_mensal: data.renda_mensal,
+      pessoas_renda: data.pessoas_renda,
+      tipo_residencia: data.tipo_residencia,
+      itens_casa: data.itens_casa, // Já vem como string separada por vírgula
+      
+      // Programa Goianas
+      goianas_ciencia: data.goianas_ciencia,
+      
+      // Responsável Legal
+      menor_idade: data.menor_idade || false,
+      nome_responsavel: data.nome_responsavel,
+      cpf_responsavel: data.cpf_responsavel?.replace(/\D/g, ''),
+      
+      // Documentos (URLs dos arquivos)
+      ...documentUrls,
+      
+      // Status inicial (baseado na disponibilidade de vagas)
+      status: statusInicial
     });
 
     return {
@@ -476,7 +668,125 @@ class CandidateService {
         nome: course.nome
       },
       turno: data.turno,
+      vagas_disponiveis_opcao1: vagasDisponiveis1,
+      vagas_disponiveis_opcao2: vagasDisponiveis2,
+      mensagem: statusInicial === 'lista_espera' 
+        ? 'Inscrição realizada! Você foi colocado na lista de espera pois não há vagas disponíveis no momento.' 
+        : 'Inscrição realizada com sucesso! Aguarde a análise da sua candidatura.',
       createdAt: candidate.createdAt
+    };
+  }
+
+  /**
+   * Valida se CPF, email e telefone já estão em uso
+   * Usado para validação prévia no formulário (antes de enviar todos os dados)
+   */
+  async validateUniqueFields(data: { cpf?: string; email?: string; telefone?: string }) {
+    const errors: string[] = [];
+
+    // Validar CPF
+    if (data.cpf) {
+      const cleanCPF = data.cpf.replace(/\D/g, '');
+      
+      console.log('🔍 Validando CPF:', cleanCPF);
+      
+      // Verificar se tem 11 dígitos
+      if (cleanCPF.length !== 11) {
+        errors.push('CPF deve ter 11 dígitos.');
+      } else {
+        // SEMPRE verificar no banco, independente da validação matemática
+        // Verificar se já existe em candidatos
+        const existingCandidateByCPF = await Candidate.findOne({
+          where: { cpf: cleanCPF }
+        });
+        
+        console.log('🔍 CPF em candidatos:', existingCandidateByCPF ? 'ENCONTRADO' : 'não encontrado');
+        
+        if (existingCandidateByCPF) {
+          errors.push('Este CPF já possui uma inscrição no sistema. Cada pessoa pode fazer apenas uma inscrição.');
+        }
+        
+        // Verificar se já existe em alunos
+        const existingStudent = await Student.findOne({
+          where: { cpf: cleanCPF }
+        });
+        
+        console.log('🔍 CPF em alunos:', existingStudent ? 'ENCONTRADO' : 'não encontrado');
+        
+        if (existingStudent) {
+          errors.push('Este CPF já está cadastrado como aluno. Você já foi aprovado em um processo seletivo anterior.');
+        }
+        
+        // Validar formato (mas não bloquear se inválido, apenas avisar)
+        if (!this.validateCPF(cleanCPF) && !existingCandidateByCPF && !existingStudent) {
+          errors.push('CPF inválido. Verifique se digitou corretamente.');
+        }
+      }
+    }
+
+    // Validar Email
+    if (data.email) {
+      const email = data.email.trim().toLowerCase();
+      
+      console.log('🔍 Validando Email:', email);
+      
+      // Verificar se já existe em candidatos
+      const existingCandidateByEmail = await Candidate.findOne({
+        where: { email }
+      });
+      
+      console.log('🔍 Email em candidatos:', existingCandidateByEmail ? 'ENCONTRADO' : 'não encontrado');
+      
+      if (existingCandidateByEmail) {
+        errors.push('Este email já está cadastrado em outra inscrição. Use um email diferente.');
+      }
+      
+      // Verificar se já existe em alunos
+      const existingStudentByEmail = await Student.findOne({
+        where: { email }
+      });
+      
+      console.log('🔍 Email em alunos:', existingStudentByEmail ? 'ENCONTRADO' : 'não encontrado');
+      
+      if (existingStudentByEmail) {
+        errors.push('Este email já está cadastrado como aluno no sistema.');
+      }
+      
+      // Verificar se já existe em usuários
+      const existingUserByEmail = await User.findOne({
+        where: { email }
+      });
+      
+      console.log('🔍 Email em usuarios:', existingUserByEmail ? 'ENCONTRADO' : 'não encontrado');
+      
+      if (existingUserByEmail) {
+        errors.push('Este email já está cadastrado no sistema. Use um email diferente.');
+      }
+    }
+
+    // Validar Telefone
+    if (data.telefone) {
+      const cleanTelefone = data.telefone.replace(/\D/g, '');
+      
+      console.log('🔍 Validando Telefone:', cleanTelefone);
+      
+      const existingCandidateByPhone = await Candidate.findOne({
+        where: { telefone: cleanTelefone }
+      });
+      
+      console.log('🔍 Telefone em candidatos:', existingCandidateByPhone ? 'ENCONTRADO' : 'não encontrado');
+      
+      if (existingCandidateByPhone) {
+        errors.push('Este telefone já está cadastrado em outra inscrição. Use um telefone diferente.');
+      }
+    }
+
+    console.log('🔍 Resultado final - Erros encontrados:', errors.length);
+    console.log('🔍 Erros:', errors);
+
+    return {
+      valid: errors.length === 0,
+      errors
     };
   }
 }

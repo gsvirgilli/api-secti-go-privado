@@ -220,6 +220,13 @@ const Students = () => {
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              {student.matricula && (
+                <Badge variant="outline" className="text-xs font-mono">
+                  {student.matricula}
+                </Badge>
+              )}
+            </div>
             <h3 className="font-semibold text-lg text-foreground">{student.name}</h3>
             <p className="text-sm text-muted-foreground">{student.cpf}</p>
           </div>
@@ -413,16 +420,23 @@ const Students = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Matrícula</TableHead>
                       <TableHead>Nome</TableHead>
                       <TableHead>CPF</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Curso</TableHead>
+                      <TableHead>Turma</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {currentStudents.map((student) => (
                       <TableRow key={student.id} className="hover:bg-muted/50 transition-colors">
+                        <TableCell>
+                          <Badge variant="outline" className="font-mono text-xs">
+                            {student.matricula || '-'}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="font-medium">{student.name}</TableCell>
                         <TableCell>{student.cpf}</TableCell>
                         <TableCell>
@@ -437,6 +451,7 @@ const Students = () => {
                           </div>
                         </TableCell>
                         <TableCell>{student.course}</TableCell>
+                        <TableCell>{student.class}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center gap-2 justify-end">
                           <Button 

@@ -34,11 +34,20 @@ interface SidebarProps {
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const location = useLocation();
 
+  const handleLogout = () => {
+    // Limpar dados de autenticação
+    localStorage.removeItem("@sukatech:token");
+    localStorage.removeItem("@sukatech:user");
+    
+    // Redirecionar para a página inicial
+    window.location.href = "/";
+  };
+
   return (
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-64 h-full bg-primary text-primary-foreground flex-col fixed left-0 top-0 z-30 overflow-hidden">
-        <SidebarContent location={location} onClose={() => {}} />
+        <SidebarContent location={location} onClose={() => {}} handleLogout={handleLogout} />
       </aside>
 
       {/* Mobile Sidebar */}
@@ -46,13 +55,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         "fixed left-0 top-0 z-50 w-64 h-full bg-primary text-primary-foreground flex-col lg:hidden transition-transform duration-300 ease-in-out overflow-hidden",
         isOpen ? "translate-x-0 animate-slide-in-right" : "-translate-x-full"
       )}>
-        <SidebarContent location={location} onClose={onClose} />
+        <SidebarContent location={location} onClose={onClose} handleLogout={handleLogout} />
       </aside>
     </>
   );
 };
 
-const SidebarContent = ({ location, onClose }: { location: any; onClose: () => void }) => {
+const SidebarContent = ({ location, onClose, handleLogout }: { location: any; onClose: () => void; handleLogout: () => void }) => {
   // O Sidebar só aparece dentro do Layout, que é usado apenas em rotas protegidas
   // Portanto, o botão "Processo Seletivo" sempre aparecerá quando o Sidebar estiver visível
   
@@ -143,14 +152,12 @@ const SidebarContent = ({ location, onClose }: { location: any; onClose: () => v
             </Link>
           </Button>
           <Button
-            asChild
             variant="ghost"
+            onClick={handleLogout}
             className="w-full justify-start gap-3 text-primary-foreground/85 hover:text-primary-foreground hover:bg-white/15 transition-all duration-300 h-10 rounded-xl font-medium tracking-wide shadow-sm hover:shadow-md"
           >
-            <Link to="/login">
-              <LogOut className="h-4 w-4 flex-shrink-0" />
-              <span className="text-sm truncate">Sair</span>
-            </Link>
+            <LogOut className="h-4 w-4 flex-shrink-0" />
+            <span className="text-sm truncate">Sair</span>
           </Button>
         </div>
       </div>

@@ -88,8 +88,33 @@ export const CandidatesAPI = {
     api.post("/candidates", data),
   
   // Candidatura pública (sem autenticação)
-  createPublic: (data: any) => {
-    // Criar uma requisição sem token para endpoint público
+  createPublic: (data: any, files?: any) => {
+    // Se houver arquivos, usar FormData
+    if (files && Object.keys(files).length > 0) {
+      const formData = new FormData();
+      
+      // Adicionar todos os campos de dados
+      Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined && data[key] !== '') {
+          formData.append(key, data[key]);
+        }
+      });
+      
+      // Adicionar todos os arquivos
+      Object.keys(files).forEach(key => {
+        if (files[key]) {
+          formData.append(key, files[key]);
+        }
+      });
+      
+      return axios.post(`${api.defaults.baseURL}/candidates/public`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+    }
+    
+    // Se não houver arquivos, enviar JSON
     return axios.post(`${api.defaults.baseURL}/candidates/public`, data, {
       headers: {
         "Content-Type": "application/json",
@@ -103,11 +128,19 @@ export const CandidatesAPI = {
   delete: (id: number) => 
     api.delete(`/candidates/${id}`),
   
-  approve: (id: number) => 
-    api.post(`/candidates/${id}/approve`),
+  approve: (id: number, opcaoCurso?: 1 | 2) => 
+    api.post(`/candidates/${id}/approve`, { opcaoCurso }),
   
   reject: (id: number, motivo: string) => 
     api.post(`/candidates/${id}/reject`, { motivo }),
+  
+  // Validar campos únicos antes de enviar formulário
+  validateUniqueFields: (data: { cpf?: string; email?: string; telefone?: string }) =>
+    axios.post(`${api.defaults.baseURL}/candidates/validate`, data, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }),
 };
 
 // ======================================
@@ -169,6 +202,10 @@ export const ClassesAPI = {
   
   findById: (id: number) => 
     api.get(`/classes/${id}`),
+  
+  // Buscar turma por curso e turno
+  findByCourseAndShift: (curso_id: number, turno: string) =>
+    api.get("/classes", { params: { id_curso: curso_id, turno } }),
   
   create: (data: any) => 
     api.post("/classes", data),

@@ -68,7 +68,12 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
   };
 
   const handleLogout = () => {
-    navigate("/login");
+    // Limpar dados de autenticação
+    localStorage.removeItem("@sukatech:token");
+    localStorage.removeItem("@sukatech:user");
+    
+    // Redirecionar para a página inicial (que mostrará a página Sobre)
+    window.location.href = "/";
   };
 
   return (

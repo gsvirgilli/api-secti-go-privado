@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swagger.js';
 import router from './routes/index.js';
@@ -8,6 +9,9 @@ import { errorHandler } from './middlewares/errorHandler.js';
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Servir arquivos estáticos da pasta uploads
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
