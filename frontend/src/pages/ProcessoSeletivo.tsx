@@ -19,9 +19,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -78,17 +76,6 @@ interface Candidate {
   nome_responsavel?: string;
   cpf_responsavel?: string;
   
-  // Documentos anexados
-  rg_frente?: string;
-  rg_verso?: string;
-  cpf_aluno?: string;
-  comprovante_endereco?: string;
-  identidade_responsavel_frente?: string;
-  identidade_responsavel_verso?: string;
-  cpf_responsavel_file?: string;
-  comprovante_escolaridade?: string;
-  foto_3x4?: string;
-  
   createdAt: string;
   updatedAt?: string;
   curso?: {
@@ -103,8 +90,6 @@ interface Course {
   descricao?: string;
   carga_horaria?: number;
   nivel?: string;
-  horarios?: string[];
-  locais?: string[];
   status?: 'ATIVO' | 'INATIVO' | 'EM_DESENVOLVIMENTO';
 }
 
@@ -137,21 +122,9 @@ const ProcessoSeletivo = () => {
     nome: "",
     descricao: "",
     carga_horaria: "",
-    nivel: "INTERMEDIARIO" as "INICIANTE" | "INTERMEDIARIO" | "AVANCADO",
-    horarios: [] as string[],
-    locais: [] as string[]
+    nivel: "INTERMEDIARIO" as "INICIANTE" | "INTERMEDIARIO" | "AVANCADO"
   });
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
-  
-  // Estados para editar curso
-  const [isEditCourseDialogOpen, setIsEditCourseDialogOpen] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
-  const [isUpdatingCourse, setIsUpdatingCourse] = useState(false);
-  
-  // Estados para deletar curso
-  const [isDeleteCourseDialogOpen, setIsDeleteCourseDialogOpen] = useState(false);
-  const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
-  const [isDeletingCourse, setIsDeletingCourse] = useState(false);
   
   // Estados de paginação
   const [currentPage, setCurrentPage] = useState(1);
@@ -500,8 +473,6 @@ const ProcessoSeletivo = () => {
         descricao: newCourse.descricao,
         carga_horaria: parseInt(newCourse.carga_horaria),
         nivel: newCourse.nivel,
-        horarios: newCourse.horarios,
-        locais: newCourse.locais,
         status: 'ATIVO' // Criar como ativo por padrão
       });
 
@@ -518,9 +489,7 @@ const ProcessoSeletivo = () => {
         nome: "",
         descricao: "",
         carga_horaria: "",
-        nivel: "INTERMEDIARIO",
-        horarios: [],
-        locais: []
+        nivel: "INTERMEDIARIO"
       });
       setIsAddCourseDialogOpen(false);
 
@@ -536,89 +505,6 @@ const ProcessoSeletivo = () => {
       });
     } finally {
       setIsCreatingCourse(false);
-    }
-  };
-
-  // Abrir dialog de edição de curso
-  const handleEditCourse = (course: Course) => {
-    setEditingCourse(course);
-    setIsEditCourseDialogOpen(true);
-  };
-
-  // Atualizar curso
-  const handleUpdateCourse = async () => {
-    if (!editingCourse || !editingCourse.nome || !editingCourse.carga_horaria) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha o nome e a carga horária do curso.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsUpdatingCourse(true);
-    try {
-      await CoursesAPI.update(editingCourse.id, {
-        nome: editingCourse.nome,
-        descricao: editingCourse.descricao,
-        carga_horaria: editingCourse.carga_horaria,
-        nivel: editingCourse.nivel,
-        horarios: editingCourse.horarios,
-        locais: editingCourse.locais,
-        status: editingCourse.status
-      });
-
-      toast({
-        title: "Curso atualizado",
-        description: `O curso "${editingCourse.nome}" foi atualizado com sucesso.`,
-        className: "bg-emerald-100 text-emerald-800",
-      });
-
-      setIsEditCourseDialogOpen(false);
-      setEditingCourse(null);
-      loadCourses();
-    } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar curso",
-        description: error.response?.data?.message || "Ocorreu um erro ao atualizar o curso.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdatingCourse(false);
-    }
-  };
-
-  // Abrir dialog de confirmação de exclusão
-  const handleDeleteCourse = (course: Course) => {
-    setDeletingCourse(course);
-    setIsDeleteCourseDialogOpen(true);
-  };
-
-  // Confirmar exclusão de curso
-  const handleConfirmDeleteCourse = async () => {
-    if (!deletingCourse) return;
-
-    setIsDeletingCourse(true);
-    try {
-      await CoursesAPI.delete(deletingCourse.id);
-
-      toast({
-        title: "Curso excluído",
-        description: `O curso "${deletingCourse.nome}" foi excluído com sucesso.`,
-        className: "bg-emerald-100 text-emerald-800",
-      });
-
-      setIsDeleteCourseDialogOpen(false);
-      setDeletingCourse(null);
-      loadCourses();
-    } catch (error: any) {
-      toast({
-        title: "Erro ao excluir curso",
-        description: error.response?.data?.message || "Ocorreu um erro ao excluir o curso.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeletingCourse(false);
     }
   };
 
@@ -811,37 +697,37 @@ const ProcessoSeletivo = () => {
                         </TableCell>
                         <TableCell>{candidate.turno || '-'}</TableCell>
                         <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 px-3 hover:bg-muted">
-                                {getStatusIcon(candidate.status)}
-                                <span className="ml-2">{getStatusBadge(candidate.status)}</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start">
-                              <DropdownMenuItem 
-                                onClick={() => handleQuickStatusChange(candidate.id, 'pendente')}
-                                className="cursor-pointer"
-                              >
-                                <Clock className="h-4 w-4 text-amber-600 mr-2" />
-                                Pendente
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => handleQuickStatusChange(candidate.id, 'aprovado')}
-                                className="cursor-pointer"
-                              >
-                                <CheckCircle className="h-4 w-4 text-emerald-600 mr-2" />
-                                Aprovado
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => handleQuickStatusChange(candidate.id, 'reprovado')}
-                                className="cursor-pointer"
-                              >
-                                <XCircle className="h-4 w-4 text-red-600 mr-2" />
-                                Reprovado
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <Select
+                            value={candidate.status}
+                            onValueChange={(value) => handleQuickStatusChange(candidate.id, value)}
+                          >
+                            <SelectTrigger className="w-[140px] h-9">
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(candidate.status)}
+                                <SelectValue />
+                          </div>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pendente">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4 text-amber-600" />
+                                  Pendente
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="aprovado">
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                  Aprovado
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="reprovado">
+                                <div className="flex items-center gap-2">
+                                  <XCircle className="h-4 w-4 text-red-600" />
+                                  Reprovado
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
@@ -1291,156 +1177,6 @@ const ProcessoSeletivo = () => {
                 </Card>
               )}
 
-              {/* Documentos Anexados */}
-              {(selectedCandidate?.rg_frente || 
-                selectedCandidate?.rg_verso || 
-                selectedCandidate?.cpf_aluno || 
-                selectedCandidate?.comprovante_endereco ||
-                selectedCandidate?.identidade_responsavel_frente ||
-                selectedCandidate?.identidade_responsavel_verso ||
-                selectedCandidate?.cpf_responsavel_file ||
-                selectedCandidate?.comprovante_escolaridade ||
-                selectedCandidate?.foto_3x4) && (
-                <Card className="border-purple-200">
-                  <CardHeader className="bg-purple-50">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
-                      Documentos Anexados
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedCandidate.rg_frente && (
-                        <div className="border rounded-lg p-3 bg-slate-50">
-                          <p className="text-sm text-muted-foreground mb-1">RG Frente</p>
-                          <a 
-                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${selectedCandidate.rg_frente}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-2 text-sm font-medium"
-                          >
-                            <Download className="h-4 w-4" />
-                            Visualizar/Baixar
-                          </a>
-                        </div>
-                      )}
-                      {selectedCandidate.rg_verso && (
-                        <div className="border rounded-lg p-3 bg-slate-50">
-                          <p className="text-sm text-muted-foreground mb-1">RG Verso</p>
-                          <a 
-                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${selectedCandidate.rg_verso}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-2 text-sm font-medium"
-                          >
-                            <Download className="h-4 w-4" />
-                            Visualizar/Baixar
-                          </a>
-                        </div>
-                      )}
-                      {selectedCandidate.cpf_aluno && (
-                        <div className="border rounded-lg p-3 bg-slate-50">
-                          <p className="text-sm text-muted-foreground mb-1">CPF do Aluno</p>
-                          <a 
-                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${selectedCandidate.cpf_aluno}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-2 text-sm font-medium"
-                          >
-                            <Download className="h-4 w-4" />
-                            Visualizar/Baixar
-                          </a>
-                        </div>
-                      )}
-                      {selectedCandidate.comprovante_endereco && (
-                        <div className="border rounded-lg p-3 bg-slate-50">
-                          <p className="text-sm text-muted-foreground mb-1">Comprovante de Endereço</p>
-                          <a 
-                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${selectedCandidate.comprovante_endereco}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-2 text-sm font-medium"
-                          >
-                            <Download className="h-4 w-4" />
-                            Visualizar/Baixar
-                          </a>
-                        </div>
-                      )}
-                      {selectedCandidate.identidade_responsavel_frente && (
-                        <div className="border rounded-lg p-3 bg-slate-50">
-                          <p className="text-sm text-muted-foreground mb-1">Identidade do Responsável (Frente)</p>
-                          <a 
-                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${selectedCandidate.identidade_responsavel_frente}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-2 text-sm font-medium"
-                          >
-                            <Download className="h-4 w-4" />
-                            Visualizar/Baixar
-                          </a>
-                        </div>
-                      )}
-                      {selectedCandidate.identidade_responsavel_verso && (
-                        <div className="border rounded-lg p-3 bg-slate-50">
-                          <p className="text-sm text-muted-foreground mb-1">Identidade do Responsável (Verso)</p>
-                          <a 
-                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${selectedCandidate.identidade_responsavel_verso}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-2 text-sm font-medium"
-                          >
-                            <Download className="h-4 w-4" />
-                            Visualizar/Baixar
-                          </a>
-                        </div>
-                      )}
-                      {selectedCandidate.cpf_responsavel_file && (
-                        <div className="border rounded-lg p-3 bg-slate-50">
-                          <p className="text-sm text-muted-foreground mb-1">CPF do Responsável</p>
-                          <a 
-                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${selectedCandidate.cpf_responsavel_file}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-2 text-sm font-medium"
-                          >
-                            <Download className="h-4 w-4" />
-                            Visualizar/Baixar
-                          </a>
-                        </div>
-                      )}
-                      {selectedCandidate.comprovante_escolaridade && (
-                        <div className="border rounded-lg p-3 bg-slate-50">
-                          <p className="text-sm text-muted-foreground mb-1">Comprovante de Escolaridade</p>
-                          <a 
-                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${selectedCandidate.comprovante_escolaridade}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-2 text-sm font-medium"
-                          >
-                            <Download className="h-4 w-4" />
-                            Visualizar/Baixar
-                          </a>
-                        </div>
-                      )}
-                      {selectedCandidate.foto_3x4 && (
-                        <div className="border rounded-lg p-3 bg-slate-50">
-                          <p className="text-sm text-muted-foreground mb-1">Foto 3x4</p>
-                          <a 
-                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${selectedCandidate.foto_3x4}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-2 text-sm font-medium"
-                          >
-                            <Download className="h-4 w-4" />
-                            Visualizar/Baixar
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
               {/* Status e Data */}
               <Card className="border-primary/20">
                 <CardHeader className="bg-primary/5">
@@ -1462,9 +1198,24 @@ const ProcessoSeletivo = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="pendente">⏱️ Pendente</SelectItem>
-                            <SelectItem value="aprovado">✅ Aprovado</SelectItem>
-                            <SelectItem value="reprovado">❌ Reprovado</SelectItem>
+                            <SelectItem value="pendente">
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-amber-600" />
+                                Pendente
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="aprovado">
+                              <div className="flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                Aprovado
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="reprovado">
+                              <div className="flex items-center gap-2">
+                                <XCircle className="h-4 w-4 text-red-600" />
+                                Reprovado
+                              </div>
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       ) : (
@@ -1607,32 +1358,13 @@ const ProcessoSeletivo = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditCourse(course)}
-                                title="Editar curso"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteCourse(course)}
-                                title="Excluir curso"
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                              <div className="flex items-center gap-2 pl-2 border-l">
-                                <Switch
-                                  checked={course.status === 'ATIVO'}
-                                  onCheckedChange={() => handleToggleCourseStatus(course.id, course.status || 'INATIVO')}
-                                />
-                                <span className="text-sm font-medium whitespace-nowrap">
-                                  {course.status === 'ATIVO' ? 'Visível' : 'Oculto'}
-                                </span>
-                              </div>
+                              <Switch
+                                checked={course.status === 'ATIVO'}
+                                onCheckedChange={() => handleToggleCourseStatus(course.id, course.status || 'INATIVO')}
+                              />
+                              <span className="text-sm font-medium whitespace-nowrap">
+                                {course.status === 'ATIVO' ? 'Visível' : 'Oculto'}
+                              </span>
                             </div>
                           </div>
                         </CardContent>
@@ -2013,100 +1745,6 @@ const ProcessoSeletivo = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Horários (selecione um ou mais)</Label>
-                <div className="mt-2 space-y-3 border rounded-lg p-3">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="horario-matutino"
-                      checked={newCourse.horarios.includes("Matutino: das 08h30 às 11h30")}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setNewCourse({ ...newCourse, horarios: [...newCourse.horarios, "Matutino: das 08h30 às 11h30"] });
-                        } else {
-                          setNewCourse({ ...newCourse, horarios: newCourse.horarios.filter(h => h !== "Matutino: das 08h30 às 11h30") });
-                        }
-                      }}
-                    />
-                    <label htmlFor="horario-matutino" className="text-sm cursor-pointer">
-                      Matutino: das 08h30 às 11h30
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="horario-vespertino"
-                      checked={newCourse.horarios.includes("Vespertino: das 14h às 17h")}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setNewCourse({ ...newCourse, horarios: [...newCourse.horarios, "Vespertino: das 14h às 17h"] });
-                        } else {
-                          setNewCourse({ ...newCourse, horarios: newCourse.horarios.filter(h => h !== "Vespertino: das 14h às 17h") });
-                        }
-                      }}
-                    />
-                    <label htmlFor="horario-vespertino" className="text-sm cursor-pointer">
-                      Vespertino: das 14h às 17h
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="horario-noturno"
-                      checked={newCourse.horarios.includes("Noturno: das 18h30 às 21h30")}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setNewCourse({ ...newCourse, horarios: [...newCourse.horarios, "Noturno: das 18h30 às 21h30"] });
-                        } else {
-                          setNewCourse({ ...newCourse, horarios: newCourse.horarios.filter(h => h !== "Noturno: das 18h30 às 21h30") });
-                        }
-                      }}
-                    />
-                    <label htmlFor="horario-noturno" className="text-sm cursor-pointer">
-                      Noturno: das 18h30 às 21h30
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <Label>Locais (selecione um ou mais)</Label>
-                <div className="mt-2 space-y-3 border rounded-lg p-3">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="local-goiania"
-                      checked={newCourse.locais.includes("Goiânia")}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setNewCourse({ ...newCourse, locais: [...newCourse.locais, "Goiânia"] });
-                        } else {
-                          setNewCourse({ ...newCourse, locais: newCourse.locais.filter(l => l !== "Goiânia") });
-                        }
-                      }}
-                    />
-                    <label htmlFor="local-goiania" className="text-sm cursor-pointer">
-                      Goiânia - Escola do Futuro
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="local-canedo"
-                      checked={newCourse.locais.includes("Senador Canedo")}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setNewCourse({ ...newCourse, locais: [...newCourse.locais, "Senador Canedo"] });
-                        } else {
-                          setNewCourse({ ...newCourse, locais: newCourse.locais.filter(l => l !== "Senador Canedo") });
-                        }
-                      }}
-                    />
-                    <label htmlFor="local-canedo" className="text-sm cursor-pointer">
-                      Senador Canedo - Ganha Tempo
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
                 <Label htmlFor="curso-carga">
                   Carga Horária (horas) <span className="text-destructive">*</span>
                 </Label>
@@ -2164,268 +1802,6 @@ const ProcessoSeletivo = () => {
                 <>
                   <Plus className="h-4 w-4 mr-2" />
                   Criar Curso
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog para Editar Curso */}
-      <Dialog open={isEditCourseDialogOpen} onOpenChange={setIsEditCourseDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Edit className="h-5 w-5" />
-              Editar Curso
-            </DialogTitle>
-            <DialogDescription>
-              Atualize as informações do curso.
-            </DialogDescription>
-          </DialogHeader>
-
-          {editingCourse && (
-            <div className="space-y-4 py-4">
-              <div>
-                <Label htmlFor="edit-curso-nome">
-                  Nome do Curso <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="edit-curso-nome"
-                  placeholder="Ex: Desenvolvimento Web Full Stack"
-                  value={editingCourse.nome}
-                  onChange={(e) => setEditingCourse({ ...editingCourse, nome: e.target.value })}
-                  className="mt-2"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="edit-curso-descricao">Descrição</Label>
-                <Textarea
-                  id="edit-curso-descricao"
-                  placeholder="Breve descrição do curso..."
-                  value={editingCourse.descricao || ""}
-                  onChange={(e) => setEditingCourse({ ...editingCourse, descricao: e.target.value })}
-                  className="mt-2"
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Horários (selecione um ou mais)</Label>
-                  <div className="mt-2 space-y-3 border rounded-lg p-3">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="edit-horario-matutino"
-                        checked={editingCourse.horarios?.includes("Matutino: das 08h30 às 11h30") || false}
-                        onCheckedChange={(checked) => {
-                          const horarios = editingCourse.horarios || [];
-                          if (checked) {
-                            setEditingCourse({ ...editingCourse, horarios: [...horarios, "Matutino: das 08h30 às 11h30"] });
-                          } else {
-                            setEditingCourse({ ...editingCourse, horarios: horarios.filter(h => h !== "Matutino: das 08h30 às 11h30") });
-                          }
-                        }}
-                      />
-                      <label htmlFor="edit-horario-matutino" className="text-sm cursor-pointer">
-                        Matutino: das 08h30 às 11h30
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="edit-horario-vespertino"
-                        checked={editingCourse.horarios?.includes("Vespertino: das 14h às 17h") || false}
-                        onCheckedChange={(checked) => {
-                          const horarios = editingCourse.horarios || [];
-                          if (checked) {
-                            setEditingCourse({ ...editingCourse, horarios: [...horarios, "Vespertino: das 14h às 17h"] });
-                          } else {
-                            setEditingCourse({ ...editingCourse, horarios: horarios.filter(h => h !== "Vespertino: das 14h às 17h") });
-                          }
-                        }}
-                      />
-                      <label htmlFor="edit-horario-vespertino" className="text-sm cursor-pointer">
-                        Vespertino: das 14h às 17h
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="edit-horario-noturno"
-                        checked={editingCourse.horarios?.includes("Noturno: das 18h30 às 21h30") || false}
-                        onCheckedChange={(checked) => {
-                          const horarios = editingCourse.horarios || [];
-                          if (checked) {
-                            setEditingCourse({ ...editingCourse, horarios: [...horarios, "Noturno: das 18h30 às 21h30"] });
-                          } else {
-                            setEditingCourse({ ...editingCourse, horarios: horarios.filter(h => h !== "Noturno: das 18h30 às 21h30") });
-                          }
-                        }}
-                      />
-                      <label htmlFor="edit-horario-noturno" className="text-sm cursor-pointer">
-                        Noturno: das 18h30 às 21h30
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Locais (selecione um ou mais)</Label>
-                  <div className="mt-2 space-y-3 border rounded-lg p-3">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="edit-local-goiania"
-                        checked={editingCourse.locais?.includes("Goiânia") || false}
-                        onCheckedChange={(checked) => {
-                          const locais = editingCourse.locais || [];
-                          if (checked) {
-                            setEditingCourse({ ...editingCourse, locais: [...locais, "Goiânia"] });
-                          } else {
-                            setEditingCourse({ ...editingCourse, locais: locais.filter(l => l !== "Goiânia") });
-                          }
-                        }}
-                      />
-                      <label htmlFor="edit-local-goiania" className="text-sm cursor-pointer">
-                        Goiânia - Escola do Futuro
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="edit-local-canedo"
-                        checked={editingCourse.locais?.includes("Senador Canedo") || false}
-                        onCheckedChange={(checked) => {
-                          const locais = editingCourse.locais || [];
-                          if (checked) {
-                            setEditingCourse({ ...editingCourse, locais: [...locais, "Senador Canedo"] });
-                          } else {
-                            setEditingCourse({ ...editingCourse, locais: locais.filter(l => l !== "Senador Canedo") });
-                          }
-                        }}
-                      />
-                      <label htmlFor="edit-local-canedo" className="text-sm cursor-pointer">
-                        Senador Canedo - Ganha Tempo
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="edit-curso-carga">
-                    Carga Horária (horas) <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="edit-curso-carga"
-                    type="number"
-                    placeholder="160"
-                    min="1"
-                    max="1000"
-                    value={editingCourse.carga_horaria}
-                    onChange={(e) => setEditingCourse({ ...editingCourse, carga_horaria: parseInt(e.target.value) })}
-                    className="mt-2"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="edit-curso-nivel">Nível</Label>
-                  <Select
-                    value={editingCourse.nivel}
-                    onValueChange={(value: "INICIANTE" | "INTERMEDIARIO" | "AVANCADO") =>
-                      setEditingCourse({ ...editingCourse, nivel: value })
-                    }
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="INICIANTE">Iniciante</SelectItem>
-                      <SelectItem value="INTERMEDIARIO">Intermediário</SelectItem>
-                      <SelectItem value="AVANCADO">Avançado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="flex gap-3 justify-end">
-            <Button
-              variant="outline"
-              onClick={() => setIsEditCourseDialogOpen(false)}
-              disabled={isUpdatingCourse}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleUpdateCourse}
-              disabled={isUpdatingCourse || !editingCourse?.nome || !editingCourse?.carga_horaria}
-            >
-              {isUpdatingCourse ? (
-                <>
-                  <Clock className="h-4 w-4 mr-2 animate-spin" />
-                  Atualizando...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Salvar Alterações
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog para Confirmar Exclusão de Curso */}
-      <Dialog open={isDeleteCourseDialogOpen} onOpenChange={setIsDeleteCourseDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <Trash2 className="h-5 w-5" />
-              Excluir Curso
-            </DialogTitle>
-            <DialogDescription>
-              Esta ação não pode ser desfeita.
-            </DialogDescription>
-          </DialogHeader>
-
-          {deletingCourse && (
-            <div className="py-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Tem certeza que deseja excluir o curso:
-              </p>
-              <p className="font-semibold text-lg mb-2">{deletingCourse.nome}</p>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
-                <p className="text-sm text-amber-800">
-                  ⚠️ <strong>Atenção:</strong> Este curso será permanentemente removido do sistema e não ficará mais disponível no formulário de inscrição.
-                </p>
-              </div>
-            </div>
-          )}
-
-          <div className="flex gap-3 justify-end">
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteCourseDialogOpen(false)}
-              disabled={isDeletingCourse}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDeleteCourse}
-              disabled={isDeletingCourse}
-            >
-              {isDeletingCourse ? (
-                <>
-                  <Clock className="h-4 w-4 mr-2 animate-spin" />
-                  Excluindo...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Sim, Excluir
                 </>
               )}
             </Button>
