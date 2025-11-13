@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { DataBot } from "@/components/ui/DataBot";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Download, TrendingUp, Users, Calendar, Filter, BarChart3, PieChart, LineChart } from "lucide-react";
+import { FileText, Download, TrendingUp, Users, Calendar, Filter, BarChart3, PieChart, LineChart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -15,10 +15,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, LineChart as RechartsLineChart, Line } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 import { useAppData } from "@/hooks/useAppData";
+import { ReportsAPI } from "@/lib/api";
+
+// Interface para dados do dashboard
+interface DashboardData {
+  total_alunos: number;
+  alunos_ativos: number;
+  taxa_atividade: number;
+  cursos_ativos: number;
+  total_turmas: number;
+  turmas_ativas: number;
+  total_matriculas: number;
+  taxa_aprovacao_candidatos: number;
+  alunos_por_curso: Array<{ curso: string; total: number }>;
+  matriculas_mensais: Array<{ mes: string; total: number }>;
+}
 
 const Reports = () => {
   const { toast } = useToast();
   const { stats, charts, students, courses, classes } = useAppData();
+  
+  // Estados para dados do dashboard da API
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
   
   const [filters, setFilters] = useState({
     dateFrom: "",
@@ -30,31 +49,80 @@ const Reports = () => {
   });
   
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
+
+  // Carregar dados do dashboard da API
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        setLoading(true);
+        const params: Record<string, string | number> = {};
+        
+        if (filters.dateFrom) params.data_inicio = filters.dateFrom;
+        if (filters.dateTo) params.data_fim = filters.dateTo;
+        if (filters.course !== "all") params.id_curso = parseInt(filters.course);
+        if (filters.class !== "all") params.id_turma = parseInt(filters.class);
+        
+        const response = await ReportsAPI.dashboard(params);
+        setDashboardData(response.data);
+      } catch (error) {
+        console.error('Erro ao carregar dashboard:', error);
+        toast({
+          title: "Erro ao carregar relatórios",
+          description: "Não foi possível carregar os dados do dashboard. Usando dados locais.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.dateFrom, filters.dateTo, filters.course, filters.class]);
  
   
   // Tipo auxiliar para linhas de relatório
   type Row = Record<string, string | number | null | undefined>;
 
   // Process real data for charts
-  const studentsPerCourse = courses.map(course => {
-    const courseStudents = students.filter(s => s.course === course.title);
-    const activeStudents = courseStudents.filter(s => s.status === "Ativo");
-    return {
-      name: course.title,
-      students: courseStudents.length,
-      active: activeStudents.length,
-      inactive: courseStudents.length - activeStudents.length
-    };
-  });
+  // Usar dados da API se disponíveis
+  const rawStudentsByCourse = dashboardData?.alunos_por_curso as Array<{ curso: string; total: number }> | undefined;
+  
+  const studentsPerCourse = rawStudentsByCourse 
+    ? rawStudentsByCourse.map(item => ({
+        name: item.curso,
+        students: item.total,
+        active: Math.floor(item.total * 0.85), // Mock para active
+        inactive: Math.floor(item.total * 0.15), // Mock para inactive
+      }))
+    : courses.map(course => {
+        const courseStudents = students.filter(s => s.course === course.title);
+        const activeStudents = courseStudents.filter(s => s.status === "Ativo");
+        return {
+          name: course.title,
+          students: courseStudents.length,
+          active: activeStudents.length,
+          inactive: courseStudents.length - activeStudents.length
+        };
+      });
 
-  const monthlyEnrollments = [
-    { month: "Jan", enrollments: 12, completions: 8 },
-    { month: "Fev", enrollments: 18, completions: 10 },
-    { month: "Mar", enrollments: 25, completions: 15 },
-    { month: "Abr", enrollments: 30, completions: 20 },
-    { month: "Mai", enrollments: 22, completions: 18 },
-    { month: "Jun", enrollments: 28, completions: 22 },
+  // Usar dados da API se disponíveis, senão fallback para mock
+  const rawMonthlyData = dashboardData?.matriculas_mensais as Array<{ mes: string; total: number }> | undefined;
+  const monthlyEnrollments = rawMonthlyData || [
+    { mes: "Jan", total: 12 },
+    { mes: "Fev", total: 18 },
+    { mes: "Mar", total: 25 },
+    { mes: "Abr", total: 30 },
+    { mes: "Mai", total: 22 },
+    { mes: "Jun", total: 28 },
   ];
+
+  // Transformar dados da API para o formato do gráfico
+  const enrollmentChartData = monthlyEnrollments.map((item) => ({
+    month: item.mes,
+    enrollments: item.total,
+    completions: Math.floor(item.total * 0.7), // Mock para completions
+  }));
 
   // Mock data para distribuição de notas (será substituído por dados reais futuramente)
   const gradeDistributionData = [
@@ -474,32 +542,76 @@ const Reports = () => {
             <Card>
               <CardContent className="p-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">{stats.students.total}</p>
-                  <p className="text-sm text-muted-foreground">Total de Alunos</p>
+                  {loading ? (
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-primary">
+                        {dashboardData?.total_alunos ?? stats.students.total}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Total de Alunos</p>
+                      {dashboardData && (
+                        <Badge variant="outline" className="mt-1 text-xs">API</Badge>
+                      )}
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-emerald-600">{stats.students.active}</p>
-                  <p className="text-sm text-muted-foreground">Alunos Ativos</p>
+                  {loading ? (
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-emerald-600" />
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-emerald-600">
+                        {dashboardData?.alunos_ativos ?? stats.students.active}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Alunos Ativos</p>
+                      {dashboardData && (
+                        <Badge variant="outline" className="mt-1 text-xs">API</Badge>
+                      )}
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">{stats.students.activityRate}%</p>
-                  <p className="text-sm text-muted-foreground">Taxa de Atividade</p>
+                  {loading ? (
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {dashboardData?.taxa_atividade ?? stats.students.activityRate}%
+                      </p>
+                      <p className="text-sm text-muted-foreground">Taxa de Atividade</p>
+                      {dashboardData && (
+                        <Badge variant="outline" className="mt-1 text-xs">API</Badge>
+                      )}
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-600">{stats.courses.total}</p>
-                  <p className="text-sm text-muted-foreground">Cursos Ativos</p>
+                  {loading ? (
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-purple-600" />
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {dashboardData?.cursos_ativos ?? stats.courses.total}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Cursos Ativos</p>
+                      {dashboardData && (
+                        <Badge variant="outline" className="mt-1 text-xs">API</Badge>
+                      )}
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -513,44 +625,53 @@ const Reports = () => {
                 <CardTitle className="flex items-center gap-2 text-sm font-normal">
                   <BarChart3 className="h-4 w-4" />
                   Alunos por Curso
+                  {dashboardData && (
+                    <Badge variant="outline" className="ml-auto text-xs">API</Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-60">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={studentsPerCourse}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip 
-                        content={({ active, payload, label }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-white p-3 border rounded-lg shadow-lg">
-                                <p className="font-semibold text-sm">{label}</p>
-                                <div className="space-y-1 mt-2">
-                                  <p className="text-xs text-green-600">
-                                    Ativos: {data.active} alunos
-                                  </p>
-                                  <p className="text-xs text-red-600">
-                                    Não Ativos: {data.inactive} alunos
-                                  </p>
-                                  <p className="text-xs text-blue-600">
-                                    Total: {data.students} alunos
-                                  </p>
+                {loading ? (
+                  <div className="h-60 flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="h-60">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={studentsPerCourse}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip 
+                          content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-white p-3 border rounded-lg shadow-lg">
+                                  <p className="font-semibold text-sm">{label}</p>
+                                  <div className="space-y-1 mt-2">
+                                    <p className="text-xs text-green-600">
+                                      Ativos: {data.active} alunos
+                                    </p>
+                                    <p className="text-xs text-red-600">
+                                      Não Ativos: {data.inactive} alunos
+                                    </p>
+                                    <p className="text-xs text-blue-600">
+                                      Total: {data.students} alunos
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Bar dataKey="active" stackId="a" fill="#10b981" name="Ativos" />
-                      <Bar dataKey="inactive" stackId="a" fill="#ef4444" name="Não Ativos" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Bar dataKey="active" stackId="a" fill="#10b981" name="Ativos" />
+                        <Bar dataKey="inactive" stackId="a" fill="#ef4444" name="Não Ativos" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -609,41 +730,50 @@ const Reports = () => {
                 <CardTitle className="flex items-center gap-2 text-sm font-normal">
                   <LineChart className="h-4 w-4" />
                   Matrículas Mensais
+                  {dashboardData && (
+                    <Badge variant="outline" className="ml-auto text-xs">API</Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-60">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsLineChart data={monthlyEnrollments}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip 
-                        content={({ active, payload, label }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-white p-3 border rounded-lg shadow-lg">
-                                <p className="font-semibold text-sm">{label}</p>
-                                <div className="space-y-1 mt-2">
-                                  <p className="text-xs text-blue-600">
-                                    Matrículas: {data.enrollments}
-                                  </p>
-                                  <p className="text-xs text-green-600">
-                                    Conclusões: {data.completions}
-                                  </p>
+                {loading ? (
+                  <div className="h-60 flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="h-60">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsLineChart data={enrollmentChartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip 
+                          content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-white p-3 border rounded-lg shadow-lg">
+                                  <p className="font-semibold text-sm">{label}</p>
+                                  <div className="space-y-1 mt-2">
+                                    <p className="text-xs text-blue-600">
+                                      Matrículas: {data.enrollments}
+                                    </p>
+                                    <p className="text-xs text-green-600">
+                                      Conclusões: {data.completions}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Line type="monotone" dataKey="enrollments" stroke="#3b82f6" strokeWidth={2} name="Matrículas" />
-                      <Line type="monotone" dataKey="completions" stroke="#10b981" strokeWidth={2} name="Conclusões" />
-                    </RechartsLineChart>
-                  </ResponsiveContainer>
-                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Line type="monotone" dataKey="enrollments" stroke="#3b82f6" strokeWidth={2} name="Matrículas" />
+                        <Line type="monotone" dataKey="completions" stroke="#10b981" strokeWidth={2} name="Conclusões" />
+                      </RechartsLineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
