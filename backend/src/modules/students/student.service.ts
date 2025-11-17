@@ -286,6 +286,7 @@ class StudentService {
    * - Aluno DEVE ter candidato_id (veio de aprovação)
    * - Aluno DEVE ter turma_id (está matriculado em turma)
    * - Ao transferir: candidato volta para lista_espera SEM turma (aguardando nova vaga)
+   * - Preserva o turno da turma do aluno no candidato
    */
   async transferToWaitingList(id: number, motivo?: string) {
     const student = await Student.findByPk(id);
@@ -306,16 +307,24 @@ class StudentService {
     }
 
     const Candidate = (await import('../Candidates/candidate.model.js')).default;
+    const Class = (await import('../classes/class.model.js')).default;
+    
     const candidate = await Candidate.findByPk(student.candidato_id);
-
     if (!candidate) {
       throw new Error('Candidatura vinculada não encontrada');
     }
 
+    // Buscar a turma do aluno para obter o turno
+    const studentClass = await Class.findByPk(student.turma_id);
+    if (!studentClass) {
+      throw new Error('Turma do aluno não encontrada');
+    }
+
     // Atualizar candidato para lista de espera
-    // Remove turma_id para que possa ser reavaliado e alocado em nova turma
+    // Preserva o turno da turma atual e remove turma_id para que possa ser reavaliado
     await candidate.update({ 
       status: 'lista_espera',
+      turno: studentClass.turno, // Preserva o turno da turma atual
       turma_id: null  // Candidato fica sem turma específica, aguardando nova vaga
     });
 

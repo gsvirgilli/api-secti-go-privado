@@ -1,6 +1,7 @@
 import Candidate from './candidate.model.js';
 import Student from '../students/student.model.js';
 import Class from '../classes/class.model.js';
+import Course from '../courses/course.model.js';
 import User from '../users/user.model.js';
 import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
@@ -135,6 +136,17 @@ class CandidateService {
         as: 'turma',
         attributes: ['id', 'nome'],
         required: false
+      }, {
+        model: Course,
+        as: 'curso',
+        attributes: ['id', 'nome'],
+        required: false
+      }, {
+        model: Course,
+        as: 'curso2',
+        foreignKey: 'curso_id2',
+        attributes: ['id', 'nome'],
+        required: false
       }],
       order: [['createdAt', 'DESC']],
       limit,
@@ -155,6 +167,15 @@ class CandidateService {
       include: [{
         model: Class,
         as: 'turma',
+        attributes: ['id', 'nome']
+      }, {
+        model: Course,
+        as: 'curso',
+        attributes: ['id', 'nome']
+      }, {
+        model: Course,
+        as: 'curso2',
+        foreignKey: 'curso_id2',
         attributes: ['id', 'nome']
       }]
     });
