@@ -202,8 +202,9 @@ class CandidateController {
    */
   async approve(req: Request, res: Response) {
     try {
-      const { id } = req.params;
-      const { opcaoCurso } = req.body;
+  const { id } = req.params;
+  // req.body may be undefined in some test setups; guard access
+  const opcaoCurso = (req.body && (req.body as any).opcaoCurso) || undefined;
       
       const result = await CandidateService.approve(Number(id), opcaoCurso);
       
