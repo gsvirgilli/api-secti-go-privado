@@ -279,6 +279,45 @@ class StudentService {
   }
 
   /**
+   * Transfere um aluno para lista de espera
+   * Remove o aluno e retorna o candidato para status lista_espera
+   */
+  async transferToWaitingList(id: number, motivo?: string) {
+    const student = await Student.findByPk(id);
+
+    if (!student) {
+      throw new Error('Aluno não encontrado');
+    }
+
+    // Buscar o candidato vinculado
+    if (!student.candidato_id) {
+      throw new Error('Este aluno não possui candidatura vinculada e não pode ser transferido para lista de espera');
+    }
+
+    const Candidate = (await import('../Candidates/candidate.model.js')).default;
+    const candidate = await Candidate.findByPk(student.candidato_id);
+
+    if (!candidate) {
+      throw new Error('Candidatura vinculada não encontrada');
+    }
+
+    // Atualizar candidato para lista de espera
+    await candidate.update({ 
+      status: 'lista_espera',
+      turma_id: null
+    });
+
+    // Remover o aluno
+    await student.destroy();
+
+    return {
+      message: 'Aluno transferido para lista de espera com sucesso',
+      candidate,
+      motivo
+    };
+  }
+
+  /**
    * Deleta um aluno
    */
   async delete(id: number) {

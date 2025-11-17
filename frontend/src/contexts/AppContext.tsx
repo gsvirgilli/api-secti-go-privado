@@ -82,6 +82,7 @@ interface AppContextType {
   addStudent: (student: Omit<Student, 'id'>) => Promise<Student>;
   updateStudent: (id: number, student: Partial<Student>) => Promise<void>;
   deleteStudent: (id: number) => Promise<void>;
+  transferStudentToWaitingList: (id: number, motivo?: string) => Promise<void>;
   getStudentById: (id: number) => Student | undefined;
   refreshStudents: () => Promise<void>;
   
@@ -1008,6 +1009,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const transferStudentToWaitingList = async (id: number, motivo?: string): Promise<void> => {
+    try {
+      setError(null);
+      await StudentsAPI.transferToWaitingList(id, motivo);
+      
+      // Remove aluno da lista
+      setStudents(prev => prev.filter(s => s.id !== id));
+      
+      // Refresh related data
+      await refreshClasses();
+      await refreshCourses();
+      
+    } catch (err: any) {
+      console.error('Erro ao transferir aluno para lista de espera:', err);
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Erro ao transferir aluno para lista de espera';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
   const getStudentById = (id: number) => students.find(s => s.id === id);
 
   const refreshCourses = async () => {
@@ -1675,6 +1696,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     addStudent,
     updateStudent,
     deleteStudent,
+    transferStudentToWaitingList,
     getStudentById,
     refreshStudents,
     addCourse,

@@ -161,6 +161,9 @@ export const StudentsAPI = {
   
   delete: (id: number) => 
     api.delete(`/students/${id}`),
+  
+  transferToWaitingList: (id: number, motivo?: string) => 
+    api.post(`/students/${id}/transfer-to-waiting-list`, { motivo }),
 };
 
 // ======================================

@@ -5,7 +5,7 @@ import {
   Users, TrendingUp, Calendar, AlertTriangle, CheckCircle, XCircle, Clock,
   ChevronDown, ChevronUp, BarChart3, PieChart, Activity, Target, BookOpen,
   GraduationCap, Clock4, TrendingDown, UserCheck, UserX, CalendarDays,
-  Eye, Edit, Trash2
+  Eye, Edit, Trash2, ArrowLeftRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ReportsAPI } from "@/lib/api";
 
 const Students = () => {
-  const { students, stats, charts, updateStudent, deleteStudent } = useAppData();
+  const { students, stats, charts, updateStudent, deleteStudent, transferStudentToWaitingList } = useAppData();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -196,6 +196,32 @@ const Students = () => {
     }
   };
 
+  const handleTransferToWaitingList = async (student: Student) => {
+    const motivo = prompt(
+      `Tem certeza que deseja transferir ${student.name} para a lista de espera?\n\n` +
+      `O aluno será removido da turma atual e voltará para a lista de espera.\n\n` +
+      `Digite o motivo da transferência (opcional):`
+    );
+    
+    if (motivo !== null) { // null = cancelado, string vazia = confirmado sem motivo
+      try {
+        await transferStudentToWaitingList(student.id, motivo || undefined);
+        toast({
+          title: "Aluno Transferido",
+          description: `${student.name} foi transferido para a lista de espera`,
+          className: "bg-blue-100 text-blue-800 border-blue-200",
+        });
+      } catch (error: any) {
+        console.error('Erro ao transferir aluno:', error);
+        toast({
+          title: "Erro ao Transferir",
+          description: error.message || "Não foi possível transferir o aluno",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   // Status visual com ícones animados
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -274,6 +300,19 @@ const Students = () => {
             title="Editar aluno"
           >
             <Edit className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleTransferToWaitingList(student);
+            }}
+            className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+            title="Transferir para lista de espera"
+          >
+            <ArrowLeftRight className="h-4 w-4" />
           </Button>
           <Button 
             variant="ghost" 
@@ -472,6 +511,19 @@ const Students = () => {
                               title="Editar aluno"
                             >
                               <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleTransferToWaitingList(student);
+                              }}
+                              className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                              title="Transferir para lista de espera"
+                            >
+                              <ArrowLeftRight className="h-4 w-4" />
                             </Button>
                             <Button 
                               variant="ghost" 

@@ -209,6 +209,41 @@ class StudentController {
   }
 
   /**
+   * Transfere um aluno para lista de espera
+   * POST /api/students/:id/transfer-to-waiting-list
+   */
+  async transferToWaitingList(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { motivo } = req.body;
+      
+      const result = await StudentService.transferToWaitingList(Number(id), motivo);
+      
+      return res.status(200).json(result);
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === 'Aluno não encontrado') {
+          return res.status(404).json({
+            error: 'Aluno não encontrado'
+          });
+        }
+        
+        if (error.message.includes('não possui candidatura vinculada') || 
+            error.message.includes('Candidatura vinculada não encontrada')) {
+          return res.status(400).json({
+            error: error.message
+          });
+        }
+      }
+
+      console.error('Erro ao transferir aluno para lista de espera:', error);
+      return res.status(500).json({
+        error: 'Erro ao transferir aluno para lista de espera'
+      });
+    }
+  }
+
+  /**
    * Retorna estatísticas de alunos
    * GET /api/students/statistics
    */
