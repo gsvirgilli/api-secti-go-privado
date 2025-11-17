@@ -281,6 +281,11 @@ class StudentService {
   /**
    * Transfere um aluno para lista de espera
    * Remove o aluno e retorna o candidato para status lista_espera
+   * 
+   * Regras:
+   * - Aluno DEVE ter candidato_id (veio de aprovação)
+   * - Aluno DEVE ter turma_id (está matriculado em turma)
+   * - Ao transferir: candidato volta para lista_espera SEM turma (aguardando nova vaga)
    */
   async transferToWaitingList(id: number, motivo?: string) {
     const student = await Student.findByPk(id);
@@ -289,9 +294,15 @@ class StudentService {
       throw new Error('Aluno não encontrado');
     }
 
-    // Buscar o candidato vinculado
+    // Validar que aluno tem candidato vinculado (foi aprovado de candidatura)
     if (!student.candidato_id) {
       throw new Error('Este aluno não possui candidatura vinculada e não pode ser transferido para lista de espera');
+    }
+
+    // Validar que aluno está matriculado em uma turma
+    // Se não tem turma, não deveria estar como aluno
+    if (!student.turma_id) {
+      throw new Error('Este aluno não está vinculado a nenhuma turma. Alunos sem turma devem estar na lista de espera como candidatos');
     }
 
     const Candidate = (await import('../Candidates/candidate.model.js')).default;
@@ -302,12 +313,13 @@ class StudentService {
     }
 
     // Atualizar candidato para lista de espera
+    // Remove turma_id para que possa ser reavaliado e alocado em nova turma
     await candidate.update({ 
       status: 'lista_espera',
-      turma_id: null
+      turma_id: null  // Candidato fica sem turma específica, aguardando nova vaga
     });
 
-    // Remover o aluno
+    // Remover o aluno (libera vaga na turma)
     await student.destroy();
 
     return {
