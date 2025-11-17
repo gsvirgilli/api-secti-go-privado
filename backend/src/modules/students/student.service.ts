@@ -279,6 +279,74 @@ class StudentService {
   }
 
   /**
+   * Transfere um aluno para lista de espera
+   * Remove o aluno e retorna o candidato para status lista_espera
+   * 
+   * Regras:
+   * - Aluno DEVE ter candidato_id (veio de aprovação)
+   * - Aluno DEVE ter turma_id (está matriculado em turma)
+   * - Ao transferir: candidato volta para lista_espera SEM turma (aguardando nova vaga)
+   * - Preserva o turno da turma do aluno no candidato
+   */
+  async transferToWaitingList(id: number, motivo?: string) {
+    const student = await Student.findByPk(id);
+
+    if (!student) {
+      throw new Error('Aluno não encontrado');
+    }
+
+    // Validar que aluno tem candidato vinculado (foi aprovado de candidatura)
+    if (!student.candidato_id) {
+      throw new Error('Este aluno não possui candidatura vinculada e não pode ser transferido para lista de espera');
+    }
+
+    // Validar que aluno está matriculado em uma turma
+    // Se não tem turma, não deveria estar como aluno
+    if (!student.turma_id) {
+      throw new Error('Este aluno não está vinculado a nenhuma turma. Alunos sem turma devem estar na lista de espera como candidatos');
+    }
+
+    const Candidate = (await import('../Candidates/candidate.model.js')).default;
+    const Class = (await import('../classes/class.model.js')).default;
+    
+    const candidate = await Candidate.findByPk(student.candidato_id);
+    if (!candidate) {
+      throw new Error('Candidatura vinculada não encontrada');
+    }
+
+    // Buscar a turma do aluno para obter o turno
+    const studentClass = await Class.findByPk(student.turma_id);
+    if (!studentClass) {
+      throw new Error('Turma do aluno não encontrada');
+    }
+
+    // Mapear turno da turma para o formato do candidato
+    const turnoMapeado = {
+      'MANHA': 'MATUTINO',
+      'TARDE': 'VESPERTINO', 
+      'NOITE': 'NOTURNO',
+      'INTEGRAL': 'MATUTINO' // fallback para integral
+    }[studentClass.turno] || studentClass.turno;
+
+    // Atualizar candidato para lista de espera
+    // Preserva o turno da turma atual e remove turma_id para que possa ser reavaliado
+    await candidate.update({ 
+      status: 'lista_espera',
+      turno: turnoMapeado, // Preserva o turno da turma atual (mapeado)
+      turma_id: null  // Candidato fica sem turma específica, aguardando nova vaga
+    });
+
+    // Remover o aluno (libera vaga na turma)
+    await student.destroy();
+
+    return {
+      message: 'Aluno transferido para lista de espera com sucesso',
+      candidate,
+      motivo
+    };
+  }
+
+  /**
    * Deleta um aluno
    */
   async delete(id: number) {

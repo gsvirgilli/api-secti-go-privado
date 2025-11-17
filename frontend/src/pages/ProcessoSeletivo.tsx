@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { 
-  Search, Users, Clock, CheckCircle, XCircle, Eye, 
+import {
+  Search, Users, Clock, CheckCircle, XCircle, Eye,
   FileText, Calendar, Mail, Phone, MapPin, GraduationCap, BookOpen,
   Edit, Save, X, Download, User, Home, Heart, Building, DollarSign,
   Settings, Plus, Trash2, ToggleLeft, ToggleRight
@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { CandidatesAPI, CoursesAPI } from "@/lib/api";
+import { CandidatesAPI, CoursesAPI, ClassesAPI, StudentsAPI } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useFormConfig } from "@/contexts/FormConfigContext";
@@ -36,7 +36,7 @@ interface Candidate {
   telefone?: string;
   data_nascimento?: string;
   status: string;
-  
+
   // Dados pessoais adicionais
   rg?: string;
   sexo?: string;
@@ -44,7 +44,7 @@ interface Candidate {
   telefone2?: string;
   idade?: number;
   nome_mae?: string;
-  
+
   // Endereço
   cep?: string;
   rua?: string;
@@ -53,29 +53,40 @@ interface Candidate {
   bairro?: string;
   cidade?: string;
   estado?: string;
-  
+
   // Curso
   curso_id?: number;
   turno?: string;
   curso_id2?: number;
   turno2?: string;
   local_curso?: string;
-  
+
   // Questionário Social
   raca_cor?: string;
   renda_mensal?: string;
   pessoas_renda?: string;
   tipo_residencia?: string;
   itens_casa?: string;
-  
+
   // Programa Goianas
   goianas_ciencia?: string;
-  
+
   // Responsável Legal
   menor_idade?: boolean;
   nome_responsavel?: string;
   cpf_responsavel?: string;
-  
+
+  // Documentos
+  rg_frente_url?: string;
+  rg_verso_url?: string;
+  cpf_aluno_url?: string;
+  comprovante_endereco_url?: string;
+  identidade_responsavel_frente_url?: string;
+  identidade_responsavel_verso_url?: string;
+  cpf_responsavel_url?: string;
+  comprovante_escolaridade_url?: string;
+  foto_3x4_url?: string;
+
   createdAt: string;
   updatedAt?: string;
   curso?: {
@@ -97,7 +108,7 @@ const ProcessoSeletivo = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { config, updateConfig } = useFormConfig();
-  
+
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -109,13 +120,19 @@ const ProcessoSeletivo = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedCandidate, setEditedCandidate] = useState<Candidate | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  
+
+  // Estados para informações de turma e vagas
+  const [turmaInfo, setTurmaInfo] = useState<{
+    opcao1?: { curso: string; turma: string; vagas: number; total: number } | null;
+    opcao2?: { curso: string; turma: string; vagas: number; total: number } | null;
+  }>({});
+
   // Estados para configuração do formulário
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
   const [tempConfig, setTempConfig] = useState(config);
-  
+
   // Estados para adicionar curso
   const [isAddCourseDialogOpen, setIsAddCourseDialogOpen] = useState(false);
   const [newCourse, setNewCourse] = useState({
@@ -125,7 +142,7 @@ const ProcessoSeletivo = () => {
     nivel: "INTERMEDIARIO" as "INICIANTE" | "INTERMEDIARIO" | "AVANCADO"
   });
   const [isCreatingCourse, setIsCreatingCourse] = useState(false);
-  
+
   // Estados de paginação
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -147,7 +164,7 @@ const ProcessoSeletivo = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Verificar se há token antes de fazer a requisição
       const token = localStorage.getItem("@sukatech:token");
       if (!token) {
@@ -157,13 +174,13 @@ const ProcessoSeletivo = () => {
         return;
       }
       setIsAuthError(false);
-      
+
       const params: any = {};
       if (statusFilter !== "all") {
         params.status = statusFilter;
       }
       const response = await CandidatesAPI.list(params);
-      
+
       // A API retorna { data: Candidate[], pagination: {...} }
       let candidatesData: any[] = [];
       if (response.data) {
@@ -178,24 +195,24 @@ const ProcessoSeletivo = () => {
           candidatesData = response.data.candidates;
         }
       }
-      
+
       setCandidates(candidatesData || []);
     } catch (error: any) {
       console.error("Erro ao carregar candidatos:", error);
-      
+
       let errorMessage = "Não foi possível carregar os candidatos. Tente novamente mais tarde.";
-      
+
       if (error.response?.status === 401) {
         errorMessage = "Sua sessão expirou. Por favor, faça login novamente.";
         setIsAuthError(true);
         // Não redirecionar automaticamente - deixar o usuário decidir
       } else {
         setIsAuthError(false);
-        errorMessage = error.response?.data?.error || 
-                      error.response?.data?.message || 
-                      errorMessage;
+        errorMessage = error.response?.data?.error ||
+          error.response?.data?.message ||
+          errorMessage;
       }
-      
+
       setError(errorMessage);
       toast({
         title: "Erro",
@@ -211,11 +228,11 @@ const ProcessoSeletivo = () => {
 
   // Filtrar candidatos
   const filteredCandidates = candidates.filter(candidate => {
-    const matchesSearch = 
+    const matchesSearch =
       candidate.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidate.cpf.includes(searchTerm) ||
       candidate.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     return matchesSearch;
   });
 
@@ -252,6 +269,8 @@ const ProcessoSeletivo = () => {
         return <XCircle className="h-4 w-4 text-red-500" />;
       case 'pendente':
         return <Clock className="h-4 w-4 text-amber-500" />;
+      case 'lista_espera':
+        return <Clock className="h-4 w-4 text-orange-500" />;
       default:
         return <Clock className="h-4 w-4 text-gray-500" />;
     }
@@ -266,6 +285,8 @@ const ProcessoSeletivo = () => {
         return <Badge className="bg-red-100 text-red-700">Reprovado</Badge>;
       case 'pendente':
         return <Badge className="bg-amber-100 text-amber-700">Pendente</Badge>;
+      case 'lista_espera':
+        return <Badge className="bg-orange-100 text-orange-700">Lista de Espera</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -304,11 +325,106 @@ const ProcessoSeletivo = () => {
   };
 
   // Ver detalhes do candidato
-  const handleViewDetails = (candidate: Candidate) => {
+  const handleViewDetails = async (candidate: Candidate) => {
     setSelectedCandidate(candidate);
     setEditedCandidate(candidate);
     setIsEditing(false);
     setIsModalOpen(true);
+
+    // Buscar informações das turmas
+    await loadTurmaInfo(candidate);
+  };
+
+  // Buscar informações da turma e vagas disponíveis
+  const loadTurmaInfo = async (candidate: Candidate) => {
+    try {
+      console.log('🔍 Buscando informações da turma para candidato:', candidate);
+
+      const turnoMap: Record<string, string> = {
+        'MATUTINO': 'MANHA',
+        'VESPERTINO': 'TARDE',
+        'NOTURNO': 'NOITE',
+        'MANHA': 'MANHA',
+        'TARDE': 'TARDE',
+        'NOITE': 'NOITE'
+      };
+
+      const info: any = {};
+
+      // Buscar turma da 1ª opção
+      if (candidate.curso_id && candidate.turno) {
+        const turno1 = turnoMap[candidate.turno.toUpperCase()] || candidate.turno;
+        console.log('📚 Buscando turma 1 - Curso:', candidate.curso_id, 'Turno:', turno1);
+
+        const response1 = await ClassesAPI.findByCourseAndShift(candidate.curso_id, turno1);
+        console.log('📦 Response turma 1:', response1.data);
+
+        // A estrutura é: { data: [...turmas], pagination: {...} }
+        const turmas1 = response1.data?.data || [];
+
+        if (turmas1.length > 0) {
+          const turma = turmas1[0];
+          console.log('✅ Turma 1 encontrada:', turma);
+
+          // Contar alunos matriculados
+          const studentsResponse = await StudentsAPI.list({ turma_id: turma.id });
+          console.log('👥 Alunos na turma 1:', studentsResponse.data);
+
+          const alunosData = studentsResponse.data?.data || [];
+          const alunosCount = alunosData.length;
+
+          info.opcao1 = {
+            curso: turma.curso?.nome || candidate.curso?.nome || 'Curso não identificado',
+            turma: turma.nome,
+            vagas: turma.vagas - alunosCount,
+            total: turma.vagas
+          };
+          console.log('✅ Info opcao1:', info.opcao1);
+        } else {
+          console.log('⚠️ Turma 1 não encontrada');
+        }
+      }
+
+      // Buscar turma da 2ª opção
+      if (candidate.curso_id2 && candidate.turno2) {
+        const turno2 = turnoMap[candidate.turno2.toUpperCase()] || candidate.turno2;
+        console.log('📚 Buscando turma 2 - Curso:', candidate.curso_id2, 'Turno:', turno2);
+
+        const response2 = await ClassesAPI.findByCourseAndShift(candidate.curso_id2, turno2);
+        console.log('📦 Response turma 2:', response2.data);
+
+        // A estrutura é: { data: [...turmas], pagination: {...} }
+        const turmas2 = response2.data?.data || [];
+
+        if (turmas2.length > 0) {
+          const turma = turmas2[0];
+          console.log('✅ Turma 2 encontrada:', turma);
+
+          // Contar alunos matriculados
+          const studentsResponse = await StudentsAPI.list({ turma_id: turma.id });
+          console.log('👥 Alunos na turma 2:', studentsResponse.data);
+
+          const alunosData = studentsResponse.data?.data || [];
+          const alunosCount = alunosData.length;
+
+          info.opcao2 = {
+            curso: turma.curso?.nome || 'Curso não identificado',
+            turma: turma.nome,
+            vagas: turma.vagas - alunosCount,
+            total: turma.vagas
+          };
+          console.log('✅ Info opcao2:', info.opcao2);
+        } else {
+          console.log('⚠️ Turma 2 não encontrada');
+        }
+      }
+
+      console.log('🎯 Informações finais das turmas:', info);
+      setTurmaInfo(info);
+    } catch (error) {
+      console.error('❌ Erro ao buscar informações da turma:', error);
+      setTurmaInfo({});
+    }
   };
 
   // Iniciar edição
@@ -329,7 +445,7 @@ const ProcessoSeletivo = () => {
     setIsSaving(true);
     try {
       await CandidatesAPI.update(editedCandidate.id, editedCandidate);
-      
+
       toast({
         title: "Sucesso",
         description: "Dados do candidato atualizados com sucesso!",
@@ -337,10 +453,10 @@ const ProcessoSeletivo = () => {
       });
 
       // Atualizar lista de candidatos
-      setCandidates(prev => 
+      setCandidates(prev =>
         prev.map(c => c.id === editedCandidate.id ? editedCandidate : c)
       );
-      
+
       setSelectedCandidate(editedCandidate);
       setIsEditing(false);
     } catch (error: any) {
@@ -359,7 +475,7 @@ const ProcessoSeletivo = () => {
   const handleQuickStatusChange = async (candidateId: number, newStatus: string) => {
     try {
       await CandidatesAPI.update(candidateId, { status: newStatus });
-      
+
       toast({
         title: "Status atualizado",
         description: `Status alterado para: ${newStatus}`,
@@ -370,7 +486,7 @@ const ProcessoSeletivo = () => {
       setCandidates(prev =>
         prev.map(c => c.id === candidateId ? { ...c, status: newStatus } : c)
       );
-      
+
       // Atualizar candidato selecionado se for o mesmo
       if (selectedCandidate?.id === candidateId) {
         setSelectedCandidate(prev => prev ? { ...prev, status: newStatus } : null);
@@ -385,6 +501,53 @@ const ProcessoSeletivo = () => {
     }
   };
 
+  // Aprovar candidato com escolha de curso
+  const handleApproveWithCourse = async (candidateId: number, opcaoCurso: 1 | 2) => {
+    try {
+      await CandidatesAPI.approve(candidateId, opcaoCurso);
+
+      toast({
+        title: "Candidato aprovado!",
+        description: `Aprovado para ${opcaoCurso === 1 ? '1ª opção' : '2ª opção'} de curso.`,
+        className: "bg-emerald-100 text-emerald-800",
+      });
+
+      // Atualizar lista de candidatos
+      await loadCandidates();
+
+      // Buscar dados atualizados do candidato
+      const updatedCandidateResponse = await CandidatesAPI.findById(candidateId);
+      const updatedCandidate = updatedCandidateResponse.data;
+
+      // Atualizar candidato selecionado com novos dados
+      setSelectedCandidate(updatedCandidate);
+      setEditedCandidate(updatedCandidate);
+
+      // Recarregar informações das turmas (vagas atualizadas)
+      await loadTurmaInfo(updatedCandidate);
+
+      toast({
+        title: "Vagas atualizadas!",
+        description: "As informações de vagas foram atualizadas.",
+        className: "bg-blue-100 text-blue-800",
+      });
+
+    } catch (error: any) {
+      console.error("Erro ao aprovar candidato:", error);
+
+      let errorMessage = "Não foi possível aprovar o candidato.";
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
   // Carregar cursos
   const loadCourses = async () => {
     setIsLoadingCourses(true);
@@ -393,10 +556,10 @@ const ProcessoSeletivo = () => {
       const response = await CoursesAPI.list();
       console.log('📦 Response completa:', response);
       console.log('📦 Response.data:', response.data);
-      
+
       // Extrair cursos considerando estrutura de paginação
       let coursesData = [];
-      
+
       if (response.data?.data?.data) {
         // Estrutura com paginação: { success: true, data: { data: [...], pagination: {...} } }
         coursesData = response.data.data.data;
@@ -409,7 +572,7 @@ const ProcessoSeletivo = () => {
         coursesData = response.data;
         console.log('📚 Cursos (array direto):', coursesData);
       }
-      
+
       setCourses(Array.isArray(coursesData) ? coursesData : []);
       console.log('✅ Cursos definidos no estado:', coursesData.length, 'cursos');
     } catch (error) {
@@ -429,7 +592,7 @@ const ProcessoSeletivo = () => {
     try {
       const newStatus = currentStatus === 'ATIVO' ? 'INATIVO' : 'ATIVO';
       await CoursesAPI.update(courseId, { status: newStatus });
-      
+
       toast({
         title: "Curso atualizado",
         description: `Curso ${newStatus === 'ATIVO' ? 'ativado' : 'desativado'} para inscrições.`,
@@ -549,18 +712,18 @@ const ProcessoSeletivo = () => {
             </div>
             <div className="flex gap-2">
               {isAuthError ? (
-                <Button 
-                  onClick={() => navigate("/login")} 
-                  variant="default" 
+                <Button
+                  onClick={() => navigate("/login")}
+                  variant="default"
                   size="sm"
                   className="bg-primary hover:bg-primary/90"
                 >
                   Ir para Login
                 </Button>
               ) : (
-                <Button 
-                  onClick={loadCandidates} 
-                  variant="outline" 
+                <Button
+                  onClick={loadCandidates}
+                  variant="outline"
                   size="sm"
                 >
                   Tentar novamente
@@ -691,9 +854,9 @@ const ProcessoSeletivo = () => {
                         <TableCell>{candidate.email}</TableCell>
                         <TableCell>{formatPhone(candidate.telefone)}</TableCell>
                         <TableCell>
-                          {candidate.curso?.nome || 
-                           (candidate as any).turma?.nome || 
-                           (candidate.curso_id ? `Curso ID: ${candidate.curso_id}` : '-')}
+                          {candidate.curso?.nome ||
+                            (candidate as any).turma?.nome ||
+                            (candidate.curso_id ? `Curso ID: ${candidate.curso_id}` : '-')}
                         </TableCell>
                         <TableCell>{candidate.turno || '-'}</TableCell>
                         <TableCell>
@@ -702,10 +865,10 @@ const ProcessoSeletivo = () => {
                             onValueChange={(value) => handleQuickStatusChange(candidate.id, value)}
                           >
                             <SelectTrigger className="w-[140px] h-9">
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(candidate.status)}
+                              <div className="flex items-center gap-2">
+                                {getStatusIcon(candidate.status)}
                                 <SelectValue />
-                          </div>
+                              </div>
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="pendente">
@@ -731,15 +894,15 @@ const ProcessoSeletivo = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleViewDetails(candidate)}
-                            className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewDetails(candidate)}
+                              className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
                               title="Ver detalhes completos"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -818,9 +981,9 @@ const ProcessoSeletivo = () => {
                 <DialogTitle className="text-2xl">
                   {isEditing ? 'Editar Candidato' : 'Detalhes do Candidato'}
                 </DialogTitle>
-            <DialogDescription>
+                <DialogDescription>
                   {isEditing ? 'Modifique os campos necessários e salve' : 'Visualização completa dos dados da inscrição'}
-            </DialogDescription>
+                </DialogDescription>
               </div>
               {!isEditing && selectedCandidate && (
                 <Button
@@ -841,11 +1004,11 @@ const ProcessoSeletivo = () => {
                 <CardHeader className="bg-primary/5">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <User className="h-5 w-5" />
-                  Dados Pessoais
+                    Dados Pessoais
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Nome */}
                     <div className="md:col-span-2">
                       <p className="text-sm text-muted-foreground mb-1">Nome Completo</p>
@@ -861,11 +1024,11 @@ const ProcessoSeletivo = () => {
                     </div>
 
                     {/* CPF e RG */}
-                  <div>
+                    <div>
                       <p className="text-sm text-muted-foreground mb-1">CPF</p>
                       <p className="font-medium">{formatCPF(selectedCandidate?.cpf || '')}</p>
-                  </div>
-                  <div>
+                    </div>
+                    <div>
                       <p className="text-sm text-muted-foreground mb-1">RG</p>
                       {isEditing ? (
                         <Input
@@ -876,17 +1039,17 @@ const ProcessoSeletivo = () => {
                       ) : (
                         <p className="font-medium">{selectedCandidate?.rg || '-'}</p>
                       )}
-                  </div>
+                    </div>
 
                     {/* Data Nascimento e Idade */}
-                  <div>
+                    <div>
                       <p className="text-sm text-muted-foreground mb-1">Data de Nascimento</p>
-                    <p className="font-medium flex items-center gap-2">
+                      <p className="font-medium flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         {formatDate(selectedCandidate?.data_nascimento)}
-                    </p>
-                  </div>
-                  <div>
+                      </p>
+                    </div>
+                    <div>
                       <p className="text-sm text-muted-foreground mb-1">Idade</p>
                       <p className="font-medium">{selectedCandidate?.idade || '-'} anos</p>
                     </div>
@@ -902,13 +1065,13 @@ const ProcessoSeletivo = () => {
                           className="h-9"
                         />
                       ) : (
-                    <p className="font-medium flex items-center gap-2">
+                        <p className="font-medium flex items-center gap-2">
                           <Mail className="h-4 w-4" />
                           {selectedCandidate?.email}
-                    </p>
+                        </p>
                       )}
-                  </div>
-                  <div>
+                    </div>
+                    <div>
                       <p className="text-sm text-muted-foreground mb-1">Telefone</p>
                       {isEditing ? (
                         <Input
@@ -917,16 +1080,16 @@ const ProcessoSeletivo = () => {
                           className="h-9"
                         />
                       ) : (
-                    <p className="font-medium flex items-center gap-2">
+                        <p className="font-medium flex items-center gap-2">
                           <Phone className="h-4 w-4" />
                           {formatPhone(selectedCandidate?.telefone)}
-                    </p>
+                        </p>
                       )}
-                  </div>
+                    </div>
 
                     {/* Telefone 2 e Sexo */}
                     {(selectedCandidate?.telefone2 || isEditing) && (
-                  <div>
+                      <div>
                         <p className="text-sm text-muted-foreground mb-1">Telefone 2</p>
                         {isEditing ? (
                           <Input
@@ -937,7 +1100,7 @@ const ProcessoSeletivo = () => {
                         ) : (
                           <p className="font-medium">{formatPhone(selectedCandidate?.telefone2)}</p>
                         )}
-                    </div>
+                      </div>
                     )}
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Sexo</p>
@@ -959,7 +1122,7 @@ const ProcessoSeletivo = () => {
                       ) : (
                         <p className="font-medium">{selectedCandidate?.sexo || '-'}</p>
                       )}
-                  </div>
+                    </div>
 
                     {/* Deficiência */}
                     <div className="md:col-span-2">
@@ -984,7 +1147,7 @@ const ProcessoSeletivo = () => {
                       ) : (
                         <p className="font-medium">{selectedCandidate?.deficiencia || '-'}</p>
                       )}
-                </div>
+                    </div>
 
                     {/* Nome da Mãe */}
                     <div className="md:col-span-2">
@@ -998,7 +1161,7 @@ const ProcessoSeletivo = () => {
                       ) : (
                         <p className="font-medium">{selectedCandidate?.nome_mae || '-'}</p>
                       )}
-              </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1013,11 +1176,11 @@ const ProcessoSeletivo = () => {
                 </CardHeader>
                 <CardContent className="pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+                    <div>
                       <p className="text-sm text-muted-foreground mb-1">CEP</p>
                       <p className="font-medium">{selectedCandidate?.cep || '-'}</p>
-                      </div>
-                      <div>
+                    </div>
+                    <div>
                       <p className="text-sm text-muted-foreground mb-1">Número</p>
                       <p className="font-medium">{selectedCandidate?.numero || '-'}</p>
                     </div>
@@ -1053,22 +1216,59 @@ const ProcessoSeletivo = () => {
                 </CardHeader>
                 <CardContent className="pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+                    <div>
                       <p className="text-sm text-muted-foreground mb-1">1ª Opção de Curso</p>
-                      <p className="font-medium">
-                        {selectedCandidate?.curso?.nome || 
-                         (selectedCandidate?.curso_id ? `Curso ID: ${selectedCandidate.curso_id}` : '-')}
-                      </p>
-                      </div>
+                      {isEditing ? (
+                        <Select
+                          value={editedCandidate?.curso_id?.toString() || ''}
+                          onValueChange={(value) => setEditedCandidate(prev => prev ? { ...prev, curso_id: parseInt(value) } : null)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione um curso" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {courses.map((course) => (
+                              <SelectItem key={course.id} value={course.id.toString()}>
+                                {course.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <p className="font-medium">
+                          {selectedCandidate?.curso?.nome ||
+                            (selectedCandidate?.curso_id ? `Curso ID: ${selectedCandidate.curso_id}` : '-')}
+                        </p>
+                      )}
+                    </div>
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Turno</p>
-                      <p className="font-medium">{selectedCandidate?.turno || '-'}</p>
+                      {isEditing ? (
+                        <Select
+                          value={editedCandidate?.turno || ''}
+                          onValueChange={(value) => setEditedCandidate(prev => prev ? { ...prev, turno: value } : null)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione um turno" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="MATUTINO">Matutino</SelectItem>
+                            <SelectItem value="VESPERTINO">Vespertino</SelectItem>
+                            <SelectItem value="NOTURNO">Noturno</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <p className="font-medium">{selectedCandidate?.turno || '-'}</p>
+                      )}
                     </div>
                     {selectedCandidate?.curso_id2 && (
                       <>
                         <div>
                           <p className="text-sm text-muted-foreground mb-1">2ª Opção de Curso</p>
-                          <p className="font-medium">Curso ID: {selectedCandidate.curso_id2}</p>
+                          <p className="font-medium">
+                            {selectedCandidate.curso2?.nome ||
+                              (selectedCandidate.curso_id2 ? `Curso ID: ${selectedCandidate.curso_id2}` : '-')}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground mb-1">Turno (2ª opção)</p>
@@ -1080,8 +1280,8 @@ const ProcessoSeletivo = () => {
                       <div className="md:col-span-2">
                         <p className="text-sm text-muted-foreground mb-1">Local desejado</p>
                         <p className="font-medium text-sm">
-                          {selectedCandidate.local_curso === 'SUKATECH_SEDE' 
-                            ? 'SUKATECH SEDE - Escola do Futuro José Luiz Bittencourt' 
+                          {selectedCandidate.local_curso === 'SUKATECH_SEDE'
+                            ? 'SUKATECH SEDE - Escola do Futuro José Luiz Bittencourt'
                             : 'Laboratório na ONG de Mãos Dadas J.K'}
                         </p>
                       </div>
@@ -1089,6 +1289,99 @@ const ProcessoSeletivo = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Botões de Aprovação - Escolha de Curso */}
+              {!isEditing && selectedCandidate && selectedCandidate.status !== 'aprovado' && (
+                <Card className="border-emerald-200 bg-emerald-50/50">
+                  <CardHeader className="bg-emerald-100/50">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-emerald-600" />
+                      Aprovar Candidato
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Escolha para qual curso deseja aprovar este candidato:
+                    </p>
+                    <div className="space-y-3">
+                      {/* 1ª Opção */}
+                      <div className="p-4 border-2 border-emerald-200 rounded-lg bg-white hover:border-emerald-400 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="font-semibold text-emerald-900">
+                              1ª Opção: {turmaInfo.opcao1?.curso || selectedCandidate?.curso?.nome ||
+                                (selectedCandidate?.curso_id ? `Curso ID: ${selectedCandidate.curso_id}` : '-')}
+                            </p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Turno: {selectedCandidate?.turno || '-'}
+                            </p>
+                            {turmaInfo.opcao1 && (
+                              <div className="mt-2 space-y-1">
+                                <p className="text-sm font-medium text-blue-700">
+                                  📚 Turma: {turmaInfo.opcao1.turma}
+                                </p>
+                                <p className={`text-sm font-bold ${turmaInfo.opcao1.vagas > 0 ? 'text-emerald-600' : 'text-red-600'
+                                  }`}>
+                                  {turmaInfo.opcao1.vagas > 0 ? '✅' : '❌'} Vagas disponíveis: {turmaInfo.opcao1.vagas} de {turmaInfo.opcao1.total}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            onClick={() => handleApproveWithCourse(selectedCandidate.id, 1)}
+                            className="bg-emerald-600 hover:bg-emerald-700 ml-4"
+                            size="sm"
+                            disabled={turmaInfo.opcao1 && turmaInfo.opcao1.vagas <= 0}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Aprovar 1ª Opção
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* 2ª Opção (se existir) */}
+                      {selectedCandidate?.curso_id2 && (
+                        <div className="p-4 border-2 border-emerald-200 rounded-lg bg-white hover:border-emerald-400 transition-colors">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <p className="font-semibold text-emerald-900">
+                                2ª Opção: {turmaInfo.opcao2?.curso || selectedCandidate?.curso2?.nome ||
+                                  (selectedCandidate?.curso_id2 ? `Curso ID ${selectedCandidate.curso_id2}` : '-')}
+                              </p>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Turno: {selectedCandidate.turno2 || '-'}
+                              </p>
+                              {turmaInfo.opcao2 && (
+                                <div className="mt-2 space-y-1">
+                                  <p className="text-sm font-medium text-blue-700">
+                                    📚 Turma: {turmaInfo.opcao2.turma}
+                                  </p>
+                                  <p className={`text-sm font-bold ${turmaInfo.opcao2.vagas > 0 ? 'text-emerald-600' : 'text-red-600'
+                                    }`}>
+                                    {turmaInfo.opcao2.vagas > 0 ? '✅' : '❌'} Vagas disponíveis: {turmaInfo.opcao2.vagas} de {turmaInfo.opcao2.total}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                            <Button
+                              onClick={() => handleApproveWithCourse(selectedCandidate.id, 2)}
+                              className="bg-emerald-600 hover:bg-emerald-700 ml-4"
+                              size="sm"
+                              disabled={turmaInfo.opcao2 && turmaInfo.opcao2.vagas <= 0}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Aprovar 2ª Opção
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-4 italic">
+                      * O botão fica desabilitado automaticamente se não houver vagas disponíveis.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Questionário Social */}
               {(selectedCandidate?.raca_cor || selectedCandidate?.renda_mensal) && (
@@ -1102,36 +1395,36 @@ const ProcessoSeletivo = () => {
                   <CardContent className="pt-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {selectedCandidate?.raca_cor && (
-                      <div>
+                        <div>
                           <p className="text-sm text-muted-foreground mb-1">Raça/Cor</p>
                           <p className="font-medium">{selectedCandidate.raca_cor}</p>
-                      </div>
-                    )}
+                        </div>
+                      )}
                       {selectedCandidate?.renda_mensal && (
-                      <div>
+                        <div>
                           <p className="text-sm text-muted-foreground mb-1">Renda Mensal</p>
                           <p className="font-medium text-sm">{selectedCandidate.renda_mensal.replace(/_/g, ' ')}</p>
-                      </div>
-                    )}
+                        </div>
+                      )}
                       {selectedCandidate?.pessoas_renda && (
-                      <div>
+                        <div>
                           <p className="text-sm text-muted-foreground mb-1">Pessoas na Renda</p>
                           <p className="font-medium">{selectedCandidate.pessoas_renda}</p>
-                      </div>
-                    )}
+                        </div>
+                      )}
                       {selectedCandidate?.tipo_residencia && (
-                      <div>
+                        <div>
                           <p className="text-sm text-muted-foreground mb-1">Tipo de Residência</p>
                           <p className="font-medium text-sm">{selectedCandidate.tipo_residencia.replace(/_/g, ' ')}</p>
-                      </div>
-                    )}
+                        </div>
+                      )}
                       {selectedCandidate?.itens_casa && (
                         <div className="md:col-span-2">
                           <p className="text-sm text-muted-foreground mb-1">Itens em Casa</p>
                           <p className="font-medium">{selectedCandidate.itens_casa.split(',').join(', ')}</p>
-                  </div>
+                        </div>
                       )}
-                </div>
+                    </div>
                   </CardContent>
                 </Card>
               )}
@@ -1147,7 +1440,7 @@ const ProcessoSeletivo = () => {
                   </CardHeader>
                   <CardContent className="pt-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+                      <div>
                         <p className="text-sm text-muted-foreground mb-1">Nome do Responsável</p>
                         <p className="font-medium">{selectedCandidate.nome_responsavel || '-'}</p>
                       </div>
@@ -1177,6 +1470,124 @@ const ProcessoSeletivo = () => {
                 </Card>
               )}
 
+              {/* Documentos Anexados */}
+              {(selectedCandidate?.rg_frente_url || selectedCandidate?.rg_verso_url || selectedCandidate?.cpf_aluno_url ||
+                selectedCandidate?.comprovante_endereco_url || selectedCandidate?.foto_3x4_url ||
+                selectedCandidate?.comprovante_escolaridade_url || selectedCandidate?.identidade_responsavel_frente_url ||
+                selectedCandidate?.identidade_responsavel_verso_url || selectedCandidate?.cpf_responsavel_url) && (
+                  <Card className="border-purple-200">
+                    <CardHeader className="bg-purple-50">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Documentos Anexados
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {selectedCandidate.rg_frente_url && (
+                          <a
+                            href={`http://localhost:3333${selectedCandidate.rg_frente_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                          >
+                            <Download className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium">RG Frente</span>
+                          </a>
+                        )}
+                        {selectedCandidate.rg_verso_url && (
+                          <a
+                            href={`http://localhost:3333${selectedCandidate.rg_verso_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                          >
+                            <Download className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium">RG Verso</span>
+                          </a>
+                        )}
+                        {selectedCandidate.cpf_aluno_url && (
+                          <a
+                            href={`http://localhost:3333${selectedCandidate.cpf_aluno_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                          >
+                            <Download className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium">CPF</span>
+                          </a>
+                        )}
+                        {selectedCandidate.comprovante_endereco_url && (
+                          <a
+                            href={`http://localhost:3333${selectedCandidate.comprovante_endereco_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                          >
+                            <Download className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium">Comprovante de Endereço</span>
+                          </a>
+                        )}
+                        {selectedCandidate.foto_3x4_url && (
+                          <a
+                            href={`http://localhost:3333${selectedCandidate.foto_3x4_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                          >
+                            <Download className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium">Foto 3x4</span>
+                          </a>
+                        )}
+                        {selectedCandidate.comprovante_escolaridade_url && (
+                          <a
+                            href={`http://localhost:3333${selectedCandidate.comprovante_escolaridade_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                          >
+                            <Download className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium">Comprovante Escolaridade</span>
+                          </a>
+                        )}
+                        {selectedCandidate.identidade_responsavel_frente_url && (
+                          <a
+                            href={`http://localhost:3333${selectedCandidate.identidade_responsavel_frente_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                          >
+                            <Download className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium">RG Responsável (Frente)</span>
+                          </a>
+                        )}
+                        {selectedCandidate.identidade_responsavel_verso_url && (
+                          <a
+                            href={`http://localhost:3333${selectedCandidate.identidade_responsavel_verso_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                          >
+                            <Download className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium">RG Responsável (Verso)</span>
+                          </a>
+                        )}
+                        {selectedCandidate.cpf_responsavel_url && (
+                          <a
+                            href={`http://localhost:3333${selectedCandidate.cpf_responsavel_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                          >
+                            <Download className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium">CPF Responsável</span>
+                          </a>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
               {/* Status e Data */}
               <Card className="border-primary/20">
                 <CardHeader className="bg-primary/5">
@@ -1186,8 +1597,8 @@ const ProcessoSeletivo = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
                       <p className="text-sm text-muted-foreground mb-2">Status Atual</p>
                       {isEditing ? (
                         <Select
@@ -1202,6 +1613,12 @@ const ProcessoSeletivo = () => {
                               <div className="flex items-center gap-2">
                                 <Clock className="h-4 w-4 text-amber-600" />
                                 Pendente
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="lista_espera">
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-orange-600" />
+                                Lista de Espera
                               </div>
                             </SelectItem>
                             <SelectItem value="aprovado">
@@ -1227,11 +1644,11 @@ const ProcessoSeletivo = () => {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Data de Inscrição</p>
-                    <p className="font-medium flex items-center gap-2">
+                      <p className="font-medium flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         {formatDate(selectedCandidate?.createdAt)}
-                    </p>
-                  </div>
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1266,7 +1683,7 @@ const ProcessoSeletivo = () => {
                   </Button>
                 </div>
               ) : null}
-              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
@@ -1302,7 +1719,7 @@ const ProcessoSeletivo = () => {
                     </p>
                     <p className="text-xs text-blue-700">
                       Marque os cursos que estarão disponíveis no formulário público de inscrição. Apenas cursos ATIVOS aparecerão para os candidatos.
-                </p>
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1371,7 +1788,7 @@ const ProcessoSeletivo = () => {
                       </Card>
                     ))}
                   </div>
-                  
+
                   <div className="pt-4 border-t">
                     <Button
                       onClick={() => setIsAddCourseDialogOpen(true)}
@@ -1391,15 +1808,15 @@ const ProcessoSeletivo = () => {
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
                 <div className="flex gap-3">
                   <FileText className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <div>
+                  <div>
                     <p className="text-sm font-semibold text-green-900 mb-1">
                       Configurar Campos da Inscrição
                     </p>
                     <p className="text-xs text-green-700">
                       Controle quais campos aparecem no formulário, se são obrigatórios, e personalize os textos. As mudanças aparecem INSTANTANEAMENTE na página de inscrição.
-                </p>
-              </div>
-            </div>
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-6">

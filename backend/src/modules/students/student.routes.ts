@@ -350,6 +350,24 @@ router.put(
   StudentController.update
 );
 
+/**
+ * Transfere um aluno para lista de espera
+ * POST /api/students/:id/transfer-to-waiting-list
+ */
+router.post(
+  '/:id/transfer-to-waiting-list',
+  isAuthenticated,
+  auditMiddleware({
+    entidade: 'aluno',
+    getEntityId: (req) => Number(req.params.id),
+    getOldData: async (req) => {
+      const student = await Student.findByPk(req.params.id);
+      return student?.toJSON();
+    }
+  }),
+  StudentController.transferToWaitingList
+);
+
 router.delete(
   '/:id',
   isAuthenticated,

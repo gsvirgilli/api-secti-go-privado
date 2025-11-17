@@ -195,15 +195,18 @@ class CandidateController {
     }
   }
 
-  /**
-   * Aprova candidato e converte em aluno
+    /**
+   * Aprova um candidato
    * POST /api/candidates/:id/approve
+   * Body (opcional): { opcaoCurso: 1 | 2 }
    */
   async approve(req: Request, res: Response) {
     try {
-      const { id } = req.params;
+  const { id } = req.params;
+  // req.body may be undefined in some test setups; guard access
+  const opcaoCurso = (req.body && (req.body as any).opcaoCurso) || undefined;
       
-      const result = await CandidateService.approve(Number(id));
+      const result = await CandidateService.approve(Number(id), opcaoCurso);
       
       return res.status(200).json(result);
     } catch (error) {
@@ -220,7 +223,13 @@ class CandidateController {
           });
         }
 
-        if (error.message === 'Candidato precisa ter uma turma desejada para ser aprovado') {
+        if (error.message.includes('não há mais vagas')) {
+          return res.status(400).json({
+            error: error.message
+          });
+        }
+
+        if (error.message.includes('turma disponível')) {
           return res.status(400).json({
             error: error.message
           });
@@ -229,8 +238,7 @@ class CandidateController {
 
       console.error('Erro ao aprovar candidato:', error);
       return res.status(500).json({
-        error: 'Erro ao aprovar candidato',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: 'Erro ao aprovar candidato'
       });
     }
   }
@@ -301,10 +309,13 @@ class CandidateController {
    */
   async createPublic(req: Request, res: Response) {
     try {
-      // O middleware validateRequest já fez o parse
+      // Dados do formulário
       const data = req.body;
       
-      const candidate = await CandidateService.createPublic(data);
+      // Arquivos enviados (se houver)
+      const files = req.files;
+      
+      const candidate = await CandidateService.createPublic(data, files);
       
       return res.status(201).json({
         message: 'Candidatura enviada com sucesso',
@@ -319,41 +330,74 @@ class CandidateController {
       }
 
       if (error instanceof Error) {
-        // Erros de validação específicos
-        if (error.message === 'CPF inválido') {
-          return res.status(400).json({
-            error: 'CPF inválido'
-          });
+        // Retornar a mensagem de erro completa do service
+        // Isso inclui todas as validações: CPF, email, telefone, etc.
+        const errorMessage = error.message;
+
+        // Determinar o status code apropriado
+        let statusCode = 500;
+
+        if (errorMessage.includes('CPF inválido') || 
+            errorMessage.includes('Verifique se digitou corretamente')) {
+          statusCode = 400; // Bad Request
+        } else if (
+          errorMessage.includes('já possui uma inscrição') ||
+          errorMessage.includes('já está cadastrado') ||
+          errorMessage.includes('já foi aprovado') ||
+          errorMessage.includes('Use um email diferente') ||
+          errorMessage.includes('Use um telefone diferente')
+        ) {
+          statusCode = 409; // Conflict
+        } else if (errorMessage.includes('não encontrado')) {
+          statusCode = 404; // Not Found
+        } else if (
+          errorMessage.includes('não disponível') ||
+          errorMessage.includes('não há vagas')
+        ) {
+          statusCode = 400; // Bad Request
         }
 
-        if (error.message === 'CPF já cadastrado') {
-          return res.status(409).json({
-            error: 'Já existe uma candidatura com este CPF'
-          });
-        }
-
-        if (error.message === 'Email já cadastrado') {
-          return res.status(409).json({
-            error: 'Já existe uma candidatura com este email'
-          });
-        }
-
-        if (error.message === 'Curso não encontrado') {
-          return res.status(404).json({
-            error: 'Curso não encontrado ou inativo'
-          });
-        }
-
-        if (error.message === 'Turno não disponível para este curso') {
-          return res.status(400).json({
-            error: 'Não há turmas disponíveis no turno selecionado para este curso'
-          });
-        }
+        return res.status(statusCode).json({
+          error: errorMessage
+        });
       }
 
       console.error('Erro ao criar candidatura pública:', error);
       return res.status(500).json({
         error: 'Erro ao processar candidatura. Tente novamente mais tarde.'
+      });
+    }
+  }
+
+  /**
+   * Valida se CPF, email e telefone estão disponíveis
+   * POST /api/candidates/validate
+   */
+  async validateUniqueFields(req: Request, res: Response) {
+    try {
+      const { cpf, email, telefone } = req.body;
+
+      const result = await CandidateService.validateUniqueFields({
+        cpf,
+        email,
+        telefone
+      });
+
+      if (!result.valid) {
+        return res.status(409).json({
+          valid: false,
+          errors: result.errors
+        });
+      }
+
+      return res.status(200).json({
+        valid: true,
+        message: 'Dados válidos'
+      });
+    } catch (error) {
+      console.error('Erro ao validar campos únicos:', error);
+      return res.status(500).json({
+        error: 'Erro ao validar dados'
       });
     }
   }

@@ -113,6 +113,10 @@ const ClassDetailsModal = ({ isOpen, onClose, classData }: ClassDetailsModalProp
                 <span className="font-medium">{classData.instructor}</span>
               </div>
               <div className="flex justify-between">
+                <span className="text-muted-foreground">Turno:</span>
+                <span className="font-medium">{classData.schedule || 'Não definido'}</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-muted-foreground">Vagas:</span>
                 <span className="font-medium">{classData.enrolled}/{classData.capacity}</span>
               </div>

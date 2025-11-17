@@ -61,7 +61,8 @@ const Login = () => {
         description: "Login realizado com sucesso",
       });
       
-      navigate("/dashboard");
+      // Recarregar a página para que o AppContext carregue os dados com o novo token
+      window.location.href = "/dashboard";
     } catch (error: any) {
       console.error('Erro ao fazer login:', error);
       

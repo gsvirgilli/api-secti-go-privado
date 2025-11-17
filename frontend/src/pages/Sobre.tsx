@@ -1,10 +1,56 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { GraduationCap, Users, BookOpen, Target, Heart, LogIn, FileText, MapPin, Clock, Phone, Recycle, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { CoursesAPI } from "@/lib/api";
+
+interface Course {
+  id: number;
+  nome: string;
+  descricao?: string;
+  carga_horaria?: number;
+  nivel?: string;
+  status?: string;
+}
 
 const Sobre = () => {
   const navigate = useNavigate();
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true);
+
+  // Carregar cursos da API pública
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        setIsLoadingCourses(true);
+        const response = await CoursesAPI.listPublic();
+        
+        // Extrair dados da resposta
+        let coursesData = [];
+        if (response.data?.data?.data) {
+          coursesData = response.data.data.data;
+        } else if (response.data?.data) {
+          coursesData = response.data.data;
+        } else if (Array.isArray(response.data)) {
+          coursesData = response.data;
+        }
+        
+        // Filtrar apenas cursos ativos
+        const activeCourses = coursesData.filter((c: Course) => c.status === 'ATIVO');
+        setCourses(activeCourses);
+        console.log('✅ Cursos públicos carregados:', activeCourses);
+      } catch (error) {
+        console.error('Erro ao carregar cursos públicos:', error);
+        // Em caso de erro, manter array vazio
+        setCourses([]);
+      } finally {
+        setIsLoadingCourses(false);
+      }
+    };
+
+    loadCourses();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -153,25 +199,48 @@ const Sobre = () => {
                   <GraduationCap className="w-6 h-6 text-primary" />
                   Cursos Disponíveis
                 </h4>
-                <ul className="space-y-3 text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary mt-1">•</span>
-                    <span><strong className="text-foreground">Informática básica</strong></span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary mt-1">•</span>
-                    <span><strong className="text-foreground">Manutenção de computadores e celulares</strong></span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary mt-1">•</span>
-                    <span><strong className="text-foreground">Robótica</strong></span>
-                  </li>
-                </ul>
-                <div className="mt-6 p-4 bg-primary/5 rounded-lg">
-                  <p className="text-sm">
-                    <strong className="text-foreground">Idade mínima:</strong> 12 anos
-                  </p>
-                </div>
+                
+                {isLoadingCourses ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <p className="text-sm text-muted-foreground mt-2">Carregando cursos...</p>
+                  </div>
+                ) : courses.length > 0 ? (
+                  <>
+                    <ul className="space-y-3 text-muted-foreground">
+                      {courses.map((course) => (
+                        <li key={course.id} className="flex items-start gap-2">
+                          <span className="text-primary mt-1">•</span>
+                          <div className="flex-1">
+                            <strong className="text-foreground">{course.nome}</strong>
+                            {course.descricao && (
+                              <p className="text-sm mt-1">{course.descricao}</p>
+                            )}
+                            {course.carga_horaria && (
+                              <p className="text-xs mt-1 text-muted-foreground/70">
+                                Carga horária: {course.carga_horaria}h
+                              </p>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-6 p-4 bg-primary/5 rounded-lg">
+                      <p className="text-sm">
+                        <strong className="text-foreground">Total de cursos disponíveis:</strong> {courses.length}
+                      </p>
+                      <p className="text-sm mt-1">
+                        <strong className="text-foreground">Idade mínima:</strong> 12 anos
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      Nenhum curso disponível no momento.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

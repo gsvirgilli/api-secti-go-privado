@@ -13,6 +13,7 @@ export interface CourseFilters {
   nome?: string;
   carga_horaria_min?: number;
   carga_horaria_max?: number;
+  status?: string;
   page?: number;
   limit?: number;
 }
@@ -48,6 +49,11 @@ class CourseService {
       if (filters.carga_horaria_max) {
         whereClause.carga_horaria[Op.lte] = filters.carga_horaria_max;
       }
+    }
+
+    // Filtro por status
+    if (filters.status) {
+      whereClause.status = filters.status;
     }
 
     // Buscar total de registros

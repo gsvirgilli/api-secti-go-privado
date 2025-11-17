@@ -68,16 +68,13 @@ const Courses = () => {
   });
 
   const handleEditCourse = (course: Course) => {
-    console.log('Editar curso:', course);
     setSelectedCourse(course);
     setIsFormModalOpen(true);
   };
 
   const handleDeleteCourse = async (course: Course) => {
-    console.log('Tentando excluir curso:', course);
     if (confirm(`Tem certeza que deseja excluir o curso "${course.title}"? Esta ação não pode ser desfeita.`)) {
       try {
-        console.log('Confirmado, excluindo curso:', course.id);
         await deleteCourse(course.id);
         toast({
           title: "Curso Excluído",
@@ -215,7 +212,6 @@ const Courses = () => {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log('Clicou em editar curso');
                           handleEditCourse(course);
                         }}
                         className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
@@ -229,7 +225,6 @@ const Courses = () => {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log('Clicou em excluir curso');
                           handleDeleteCourse(course);
                         }}
                         className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"

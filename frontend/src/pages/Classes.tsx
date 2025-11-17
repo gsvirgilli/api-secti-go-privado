@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { DataBot } from "@/components/ui/DataBot";
-import { Plus, Search, Eye, Grid, List, Filter, Download, MoreHorizontal, Calendar, Users, BookOpen } from "lucide-react";
+import { Plus, Search, Eye, Grid, List, Filter, Download, MoreHorizontal, Calendar, Users, BookOpen, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +22,7 @@ type SortField = "name" | "course" | "instructor" | "status" | "startDate" | "en
 type SortOrder = "asc" | "desc";
 
 const Classes = () => {
-  const { classes, stats } = useAppData();
+  const { classes, stats, deleteClass } = useAppData();
   const { toast } = useToast();
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -88,7 +88,7 @@ const Classes = () => {
 
       // Filtros temporais
       let matchesTemporal = true;
-      if (temporalFilter !== "all") {
+      if (temporalFilter !== "all" && classItem.startDate && classItem.endDate) {
         const today = new Date();
         const startDate = new Date(classItem.startDate.split('/').reverse().join('-'));
         const endDate = new Date(classItem.endDate.split('/').reverse().join('-'));
@@ -155,6 +155,7 @@ const Classes = () => {
     
     // Turmas que iniciam em 24h
     const startingSoon = classes.filter(c => {
+      if (!c.startDate) return false; // Ignorar se não tem data de início
       const startDate = new Date(c.startDate.split('/').reverse().join('-'));
       const daysToStart = Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       return daysToStart >= 0 && daysToStart <= 1 && c.status === "Planejada";
@@ -182,6 +183,7 @@ const Classes = () => {
     
     // Turmas que terminam em breve
     const endingSoon = classes.filter(c => {
+      if (!c.endDate) return false; // Ignorar se não tem data de término
       const endDate = new Date(c.endDate.split('/').reverse().join('-'));
       const daysToEnd = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       return daysToEnd >= 0 && daysToEnd <= 7 && c.status === "Ativo";
@@ -248,6 +250,27 @@ const Classes = () => {
     });
   };
 
+  const handleDeleteClass = async (classData: Class) => {
+    if (!confirm(`Tem certeza que deseja excluir a turma "${classData.name}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+
+    try {
+      await deleteClass(classData.id);
+      toast({
+        title: "✅ Turma excluída",
+        description: `A turma "${classData.name}" foi excluída com sucesso`,
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Não foi possível excluir a turma";
+      toast({
+        title: "❌ Erro ao excluir turma",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Ativo":
@@ -269,6 +292,7 @@ const Classes = () => {
   };
 
   const isStartingSoon = (startDate: string) => {
+    if (!startDate) return false; // Retornar false se não tem data
     const today = new Date();
     const start = new Date(startDate.split('/').reverse().join('-'));
     const diffDays = Math.ceil((start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -410,11 +434,11 @@ const Classes = () => {
                   <SelectValue placeholder="Todos os status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="Ativo">Ativo</SelectItem>
-                  <SelectItem value="Planejada">Planejada</SelectItem>
-                  <SelectItem value="Concluída">Concluída</SelectItem>
-                  <SelectItem value="Cancelada">Cancelada</SelectItem>
+                  <SelectItem key="all-status" value="all">Todos os status</SelectItem>
+                  <SelectItem key="ativo" value="Ativo">Ativo</SelectItem>
+                  <SelectItem key="planejada" value="Planejada">Planejada</SelectItem>
+                  <SelectItem key="concluida" value="Concluída">Concluída</SelectItem>
+                  <SelectItem key="cancelada" value="Cancelada">Cancelada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -426,9 +450,9 @@ const Classes = () => {
                   <SelectValue placeholder="Todos os cursos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os cursos</SelectItem>
+                  <SelectItem key="all-courses" value="all">Todos os cursos</SelectItem>
                   {uniqueCourses.map(course => (
-                    <SelectItem key={course} value={course}>{course}</SelectItem>
+                    <SelectItem key={`course-${course}`} value={course}>{course}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -441,9 +465,9 @@ const Classes = () => {
                   <SelectValue placeholder="Todos os instrutores" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os instrutores</SelectItem>
+                  <SelectItem key="all-instructors" value="all">Todos os instrutores</SelectItem>
                   {uniqueInstructors.map(instructor => (
-                    <SelectItem key={instructor} value={instructor}>{instructor}</SelectItem>
+                    <SelectItem key={`instructor-${instructor}`} value={instructor}>{instructor}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -456,10 +480,10 @@ const Classes = () => {
                   <SelectValue placeholder="Todas as capacidades" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as capacidades</SelectItem>
-                  <SelectItem value="empty">Vazias</SelectItem>
-                  <SelectItem value="available">Com vagas</SelectItem>
-                  <SelectItem value="full">Lotadas</SelectItem>
+                  <SelectItem key="all-capacity" value="all">Todas as capacidades</SelectItem>
+                  <SelectItem key="empty" value="empty">Vazias</SelectItem>
+                  <SelectItem key="available" value="available">Com vagas</SelectItem>
+                  <SelectItem key="full" value="full">Lotadas</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -471,12 +495,12 @@ const Classes = () => {
                   <SelectValue placeholder="Todos os períodos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os períodos</SelectItem>
-                  <SelectItem value="today">Começam hoje</SelectItem>
-                  <SelectItem value="tomorrow">Começam amanhã</SelectItem>
-                  <SelectItem value="this_week">Esta semana</SelectItem>
-                  <SelectItem value="ending_soon">Terminam em breve</SelectItem>
-                  <SelectItem value="active">Em andamento</SelectItem>
+                  <SelectItem key="all-periods" value="all">Todos os períodos</SelectItem>
+                  <SelectItem key="today" value="today">Começam hoje</SelectItem>
+                  <SelectItem key="tomorrow" value="tomorrow">Começam amanhã</SelectItem>
+                  <SelectItem key="this-week" value="this_week">Esta semana</SelectItem>
+                  <SelectItem key="ending-soon" value="ending_soon">Terminam em breve</SelectItem>
+                  <SelectItem key="active" value="active">Em andamento</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -500,10 +524,10 @@ const Classes = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
+                <SelectItem key="items-5" value="5">5</SelectItem>
+                <SelectItem key="items-10" value="10">10</SelectItem>
+                <SelectItem key="items-20" value="20">20</SelectItem>
+                <SelectItem key="items-50" value="50">50</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -614,6 +638,7 @@ const Classes = () => {
                 >
                   Instrutor {sortField === "instructor" && (sortOrder === "asc" ? "↑" : "↓")}
                 </TableHead>
+                <TableHead>Turno</TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort("enrolled")}
@@ -657,6 +682,7 @@ const Classes = () => {
                   </TableCell>
                   <TableCell>{classItem.course}</TableCell>
                   <TableCell>{classItem.instructor}</TableCell>
+                  <TableCell>{classItem.schedule || 'Não definido'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <span>{classItem.enrolled}/{classItem.capacity}</span>
@@ -694,6 +720,13 @@ const Classes = () => {
                         <DropdownMenuItem onClick={() => handleArchiveClass(classItem)}>
                           <MoreHorizontal className="h-4 w-4 mr-2" />
                           Arquivar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDeleteClass(classItem)}
+                          className="text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Excluir turma
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

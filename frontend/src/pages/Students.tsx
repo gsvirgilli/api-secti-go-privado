@@ -5,7 +5,7 @@ import {
   Users, TrendingUp, Calendar, AlertTriangle, CheckCircle, XCircle, Clock,
   ChevronDown, ChevronUp, BarChart3, PieChart, Activity, Target, BookOpen,
   GraduationCap, Clock4, TrendingDown, UserCheck, UserX, CalendarDays,
-  Eye, Edit, Trash2
+  Eye, Edit, Trash2, ArrowLeftRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ReportsAPI } from "@/lib/api";
 
 const Students = () => {
-  const { students, stats, charts, updateStudent, deleteStudent } = useAppData();
+  const { students, stats, charts, updateStudent, deleteStudent, transferStudentToWaitingList } = useAppData();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -167,22 +167,18 @@ const Students = () => {
   };
 
   const handleViewDetails = (student: Student) => {
-    console.log('Ver detalhes:', student);
     setSelectedStudent(student);
     setIsModalOpen(true);
   };
 
   const handleEditStudent = (student: Student) => {
-    console.log('Editar aluno:', student);
     setSelectedStudent(student);
     setIsFormModalOpen(true);
   };
 
   const handleDeleteStudent = async (student: Student) => {
-    console.log('Tentando excluir aluno:', student);
     if (confirm(`Tem certeza que deseja excluir o aluno ${student.name}? Esta ação não pode ser desfeita.`)) {
       try {
-        console.log('Confirmado, excluindo aluno:', student.id);
         await deleteStudent(student.id);
         toast({
           title: "Aluno Excluído",
@@ -194,6 +190,32 @@ const Students = () => {
         toast({
           title: "Erro ao Excluir",
           description: error.message || "Não foi possível excluir o aluno",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleTransferToWaitingList = async (student: Student) => {
+    const motivo = prompt(
+      `Tem certeza que deseja transferir ${student.name} para a lista de espera?\n\n` +
+      `O aluno será removido da turma atual e voltará para a lista de espera.\n\n` +
+      `Digite o motivo da transferência (opcional):`
+    );
+    
+    if (motivo !== null) { // null = cancelado, string vazia = confirmado sem motivo
+      try {
+        await transferStudentToWaitingList(student.id, motivo || undefined);
+        toast({
+          title: "Aluno Transferido",
+          description: `${student.name} foi transferido para a lista de espera`,
+          className: "bg-blue-100 text-blue-800 border-blue-200",
+        });
+      } catch (error: any) {
+        console.error('Erro ao transferir aluno:', error);
+        toast({
+          title: "Erro ao Transferir",
+          description: error.message || "Não foi possível transferir o aluno",
           variant: "destructive",
         });
       }
@@ -220,6 +242,13 @@ const Students = () => {
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              {student.matricula && (
+                <Badge variant="outline" className="text-xs font-mono">
+                  {student.matricula}
+                </Badge>
+              )}
+            </div>
             <h3 className="font-semibold text-lg text-foreground">{student.name}</h3>
             <p className="text-sm text-muted-foreground">{student.cpf}</p>
           </div>
@@ -252,7 +281,6 @@ const Students = () => {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('Clicou em ver detalhes (mobile)');
               handleViewDetails(student);
             }}
             className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
@@ -266,7 +294,6 @@ const Students = () => {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('Clicou em editar (mobile)');
               handleEditStudent(student);
             }}
             className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
@@ -280,7 +307,19 @@ const Students = () => {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('Clicou em excluir (mobile)');
+              handleTransferToWaitingList(student);
+            }}
+            className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+            title="Transferir para lista de espera"
+          >
+            <ArrowLeftRight className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               handleDeleteStudent(student);
             }}
             className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
@@ -413,16 +452,23 @@ const Students = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Matrícula</TableHead>
                       <TableHead>Nome</TableHead>
                       <TableHead>CPF</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Curso</TableHead>
+                      <TableHead>Turma</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {currentStudents.map((student) => (
                       <TableRow key={student.id} className="hover:bg-muted/50 transition-colors">
+                        <TableCell>
+                          <Badge variant="outline" className="font-mono text-xs">
+                            {student.matricula || '-'}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="font-medium">{student.name}</TableCell>
                         <TableCell>{student.cpf}</TableCell>
                         <TableCell>
@@ -437,6 +483,7 @@ const Students = () => {
                           </div>
                         </TableCell>
                         <TableCell>{student.course}</TableCell>
+                        <TableCell>{student.class}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center gap-2 justify-end">
                           <Button 
@@ -445,7 +492,6 @@ const Students = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                console.log('Clicou em ver detalhes');
                                 handleViewDetails(student);
                               }}
                               className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
@@ -459,7 +505,6 @@ const Students = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                console.log('Clicou em editar');
                                 handleEditStudent(student);
                               }}
                               className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
@@ -473,7 +518,19 @@ const Students = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                console.log('Clicou em excluir');
+                                handleTransferToWaitingList(student);
+                              }}
+                              className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                              title="Transferir para lista de espera"
+                            >
+                              <ArrowLeftRight className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 handleDeleteStudent(student);
                               }}
                               className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
@@ -643,18 +700,15 @@ const Students = () => {
       <StudentDetailsModal 
         isOpen={isModalOpen}
         onClose={() => {
-          console.log('Fechando modal de detalhes');
           setIsModalOpen(false);
         }}
         student={selectedStudent}
         onEdit={(student) => {
-          console.log('Editar aluno do modal:', student);
           setSelectedStudent(student);
           setIsModalOpen(false);
           setIsFormModalOpen(true);
         }}
         onDelete={(studentId) => {
-          console.log('Excluir aluno do modal:', studentId);
           const student = students.find(s => s.id === studentId);
           if (student) {
             handleDeleteStudent(student);
@@ -665,7 +719,6 @@ const Students = () => {
       <StudentFormModal
         isOpen={isFormModalOpen}
         onClose={() => {
-          console.log('Fechando modal de formulário');
           setIsFormModalOpen(false);
           setSelectedStudent(null);
         }}
