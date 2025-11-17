@@ -320,11 +320,19 @@ class StudentService {
       throw new Error('Turma do aluno não encontrada');
     }
 
+    // Mapear turno da turma para o formato do candidato
+    const turnoMapeado = {
+      'MANHA': 'MATUTINO',
+      'TARDE': 'VESPERTINO', 
+      'NOITE': 'NOTURNO',
+      'INTEGRAL': 'MATUTINO' // fallback para integral
+    }[studentClass.turno] || studentClass.turno;
+
     // Atualizar candidato para lista de espera
     // Preserva o turno da turma atual e remove turma_id para que possa ser reavaliado
     await candidate.update({ 
       status: 'lista_espera',
-      turno: studentClass.turno, // Preserva o turno da turma atual
+      turno: turnoMapeado, // Preserva o turno da turma atual (mapeado)
       turma_id: null  // Candidato fica sem turma específica, aguardando nova vaga
     });
 
