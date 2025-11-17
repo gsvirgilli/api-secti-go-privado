@@ -320,10 +320,6 @@ Candidate.init({
   ]
 });
 
-// Associações
-Candidate.belongsTo(Class, {
-  foreignKey: 'turma_id',
-  as: 'turma'
-});
+// Associações serão configuradas em src/models/associations.ts
 
 export default Candidate;
