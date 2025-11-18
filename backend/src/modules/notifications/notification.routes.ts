@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import NotificationService from './notification.service.js';
 import { isAuthenticated } from '../../middlewares/isAuthenticated.js';
-import * as z from 'zod';
+import { z } from 'zod';
 
 const router = Router();
 

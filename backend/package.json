@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "postinstall": "mkdir -p node_modules/zod/v4/locales && echo 'export default () => ({})' > node_modules/zod/v4/locales/ps.js && echo 'export default () => ({})' > node_modules/zod/v4/locales/zh-CN.js",
     "start": "node --loader tsx dist/server.js",
     "dev": "nodemon --ext ts,json --exec tsx src/server.ts",
     "migrate": "sequelize-cli db:migrate",

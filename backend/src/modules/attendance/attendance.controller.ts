@@ -6,7 +6,7 @@ import {
   bulkAttendanceSchema,
   attendanceFiltersSchema
 } from './attendance.validator.js';
-import * as z from 'zod';
+import { z } from 'zod';
 
 /**
  * Controller de Presenças
