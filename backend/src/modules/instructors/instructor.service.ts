@@ -26,7 +26,7 @@ interface InstructorFilters {
 /**
  * Interface para dados de criação de instrutor
  */
-interface CreateInstructorData {
+export interface CreateInstructorData {
   cpf: string;
   nome: string;
   email: string;

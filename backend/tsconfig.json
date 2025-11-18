@@ -2,26 +2,25 @@
   "compilerOptions": {
     "outDir": "./dist",
     "target": "ES2022",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-
     // Tipos básicos
-    "types": ["node"],
-
+    "types": [
+      "node"
+    ],
     // Emissão
     "sourceMap": true,
-    "declaration": false,
-
+    "declaration": true,
     // Checagens básicas
     "strict": false,
     "forceConsistentCasingInFileNames": true,
-
     // Interop
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
-
     // JSON support
     "resolveJsonModule": true
   },

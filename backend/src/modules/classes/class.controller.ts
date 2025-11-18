@@ -7,6 +7,7 @@ import {
   updateClassStatusSchema
 } from './class.validator.js';
 import { ZodError } from 'zod';
+import type { CreateClassData } from './class.types.js';
 
 /**
  * Controller de Turmas
@@ -72,7 +73,7 @@ class ClassController {
   async create(req: Request, res: Response) {
     try {
       // Validar dados
-      const data = createClassSchema.parse(req.body);
+      const data = createClassSchema.parse(req.body) as CreateClassData;
       
       const turma = await ClassService.create(data);
       

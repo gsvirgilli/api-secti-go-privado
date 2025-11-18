@@ -22,7 +22,7 @@ interface StudentFilters {
 /**
  * Interface para dados de criação de aluno
  */
-interface CreateStudentData {
+export interface CreateStudentData {
   nome: string;
   cpf: string;
   email: string;

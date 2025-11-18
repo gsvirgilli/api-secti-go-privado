@@ -8,6 +8,7 @@ import {
 } from './instructor.validator.js';
 import { ZodError } from 'zod';
 import { AppError } from '../../utils/AppError.js';
+import type { CreateInstructorData } from './instructor.types.js';
 
 /**
  * Controller de Instrutores
@@ -121,7 +122,7 @@ class InstructorController {
    */
   async create(req: Request, res: Response) {
     try {
-      const data = createInstructorSchema.parse(req.body);
+      const data = createInstructorSchema.parse(req.body) as CreateInstructorData;
       
       const instructor = await InstructorService.create(data);
       

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import StudentService from './student.service.js';
 import { createStudentSchema, updateStudentSchema, listStudentFiltersSchema } from './student.validator.js';
 import { ZodError } from 'zod';
+import type { CreateStudentData } from './student.types.js';
 
 /**
  * Controller de Alunos
@@ -115,7 +116,7 @@ class StudentController {
    */
   async create(req: Request, res: Response) {
     try {
-      const data = createStudentSchema.parse(req.body);
+      const data = createStudentSchema.parse(req.body) as CreateStudentData;
       
       const student = await StudentService.create(data);
       
