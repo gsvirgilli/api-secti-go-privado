@@ -6,7 +6,7 @@ import {
   bulkAttendanceSchema,
   attendanceFiltersSchema
 } from './attendance.validator.js';
-import { ZodError } from 'zod';
+import { z } from 'zod/v4';
 
 /**
  * Controller de Presenças
@@ -25,7 +25,7 @@ class AttendanceController {
       
       return res.status(200).json(attendances);
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -71,7 +71,7 @@ class AttendanceController {
         data: attendance
       });
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -113,7 +113,7 @@ class AttendanceController {
         data: attendances
       });
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -146,7 +146,7 @@ class AttendanceController {
         data: attendance
       });
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues

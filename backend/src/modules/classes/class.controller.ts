@@ -6,7 +6,7 @@ import {
   listClassFiltersSchema,
   updateClassStatusSchema
 } from './class.validator.js';
-import { ZodError } from 'zod';
+import { z } from 'zod/v4';
 import type { CreateClassData } from './class.types.js';
 
 /**
@@ -27,7 +27,7 @@ class ClassController {
       
       return res.status(200).json(turmas);
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -79,7 +79,7 @@ class ClassController {
       
       return res.status(201).json(turma);
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -122,7 +122,7 @@ class ClassController {
       
       return res.status(200).json(turma);
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -219,7 +219,7 @@ class ClassController {
         hasConflict
       });
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -246,7 +246,7 @@ class ClassController {
       
       return res.status(200).json(turma);
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
