@@ -2,10 +2,10 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "postinstall": "mkdir -p node_modules/zod/v4/locales && echo 'export default () => ({})' > node_modules/zod/v4/locales/ps.js && echo 'export default () => ({})' > node_modules/zod/v4/locales/zh-CN.js",
     "start": "node --loader tsx dist/server.js",
     "dev": "nodemon --ext ts,json --exec tsx src/server.ts",
     "migrate": "sequelize-cli db:migrate",
@@ -33,7 +33,7 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "tsx": "^4.7.0",
-    "zod": "^4.1.12"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

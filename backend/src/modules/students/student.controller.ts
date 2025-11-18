@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import StudentService from './student.service.js';
 import { createStudentSchema, updateStudentSchema, listStudentFiltersSchema } from './student.validator.js';
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 import type { CreateStudentData } from './student.types.js';
 
 /**
@@ -21,7 +21,7 @@ class StudentController {
       
       return res.status(200).json(students);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -126,7 +126,7 @@ class StudentController {
         message: 'Aluno criado com sucesso'
       });
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof ZodError) {
         return res.status(400).json({
           success: false,
           error: 'Erro de validação',
@@ -164,7 +164,7 @@ class StudentController {
       
       return res.status(200).json(student);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues

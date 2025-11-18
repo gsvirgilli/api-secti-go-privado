@@ -6,7 +6,7 @@ import {
   listCandidateFiltersSchema,
   rejectCandidateSchema
 } from './candidate.validator.js';
-import { z } from 'zod';
+import { z,ZodError } from 'zod';
 
 /**
  * Controller de Candidatos
@@ -25,7 +25,7 @@ class CandidateController {
       
       return res.status(200).json(candidates);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -77,7 +77,7 @@ class CandidateController {
       
       return res.status(201).json(candidate);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -127,7 +127,7 @@ class CandidateController {
       
       return res.status(200).json(candidate);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -257,7 +257,7 @@ class CandidateController {
       
       return res.status(200).json(result);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -322,7 +322,7 @@ class CandidateController {
         data: candidate
       });
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues

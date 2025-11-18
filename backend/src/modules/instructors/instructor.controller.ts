@@ -6,7 +6,7 @@ import {
   listInstructorFiltersSchema,
   assignInstructorToClassSchema
 } from './instructor.validator.js';
-import { z} from 'zod';
+import { z,ZodError } from 'zod';
 import { AppError } from '../../utils/AppError.js';
 import type { CreateInstructorData } from './instructor.types.js';
 
@@ -27,7 +27,7 @@ class InstructorController {
       
       return res.status(200).json(instructors);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -128,7 +128,7 @@ class InstructorController {
       
       return res.status(201).json(instructor);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -166,7 +166,7 @@ class InstructorController {
       
       return res.status(200).json(instructor);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof ZodError) {
         console.error('❌ Erro de validação:', JSON.stringify(error.issues, null, 2));
         return res.status(400).json({
           error: 'Erro de validação',
@@ -254,7 +254,7 @@ class InstructorController {
       
       return res.status(201).json(instructorClass);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
