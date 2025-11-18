@@ -578,7 +578,6 @@ class CandidateService {
     }
 
     // Contar quantos alunos já estão matriculados em cada turma
-    const Student = (await import('../students/student.model.js')).default;
     const alunosNaTurma1 = await Student.count({ where: { turma_id: turma1.id } });
     const vagasDisponiveis1 = turma1.vagas - alunosNaTurma1;
 
