@@ -6,7 +6,7 @@ import {
   listInstructorFiltersSchema,
   assignInstructorToClassSchema
 } from './instructor.validator.js';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 import { AppError } from '../../utils/AppError.js';
 import type { CreateInstructorData } from './instructor.types.js';
 
