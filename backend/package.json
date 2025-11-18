@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "postinstall": "mkdir -p node_modules/zod/v4/locales && echo 'export default () => ({})' > node_modules/zod/v4/locales/ps.js && echo 'export default () => ({})' > node_modules/zod/v4/locales/zh-CN.js",
-    "start": "node --loader tsx dist/server.js",
+    "start": "tsx dist/server.js",
     "dev": "nodemon --ext ts,json --exec tsx src/server.ts",
     "migrate": "sequelize-cli db:migrate",
     "migrate:undo": "sequelize-cli db:migrate:undo",
@@ -33,7 +33,7 @@
     "sequelize": "^6.37.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "tsx": "^4.7.0",
+    "tsx": "^4.20.6",
     "zod": "^4.1.12"
   },
   "devDependencies": {
