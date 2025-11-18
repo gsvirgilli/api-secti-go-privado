@@ -6,7 +6,7 @@ import {
   listClassFiltersSchema,
   updateClassStatusSchema
 } from './class.validator.js';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 import type { CreateClassData } from './class.types.js';
 
 /**
