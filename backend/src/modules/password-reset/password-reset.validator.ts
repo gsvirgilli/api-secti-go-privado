@@ -38,7 +38,7 @@ export const resetPasswordSchema = z.object({
 /**
  * Middleware genérico de validação com Zod
  */
-export const validate = (schema: z.ZodSchema) => {
+export const validate = (schema: z.ZodType) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       await schema.parseAsync({

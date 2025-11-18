@@ -21,7 +21,7 @@ class StudentController {
       
       return res.status(200).json(students);
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
@@ -126,7 +126,7 @@ class StudentController {
         message: 'Aluno criado com sucesso'
       });
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof z.ZodError) {
         return res.status(400).json({
           success: false,
           error: 'Erro de validação',
@@ -164,7 +164,7 @@ class StudentController {
       
       return res.status(200).json(student);
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues

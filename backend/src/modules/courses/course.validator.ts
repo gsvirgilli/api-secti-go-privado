@@ -108,7 +108,7 @@ export const getCourseFiltersSchema = z.object({
 });
 
 // Middleware de validação genérico
-export const validateSchema = (schema: z.ZodSchema) => {
+export const validateSchema = (schema: z.ZodType) => {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       const parsed = schema.parse({
