@@ -489,13 +489,9 @@ class CandidateService {
     }
 
     // 3. Verificar se CPF já está cadastrado como ALUNO (já foi aprovado)
-    const existingStudent = await Student.findOne({
-      where: { cpf: cleanCPF }
-    });
-
-    if (existingStudent) {
-      throw new Error('Este CPF já está cadastrado como aluno. Você já foi aprovado em um processo seletivo anterior.');
-    }
+      if (await Student.findOne({ where: { cpf: cleanCPF } })) {
+        throw new Error('Este CPF já está cadastrado como aluno. Você já foi aprovado em um processo seletivo anterior.');
+      }
 
     // 4. Verificar se EMAIL já está cadastrado como CANDIDATO
     const existingCandidateByEmail = await Candidate.findOne({
@@ -507,13 +503,9 @@ class CandidateService {
     }
 
     // 5. Verificar se EMAIL já está cadastrado como ALUNO
-    const existingStudentByEmail = await Student.findOne({
-      where: { email: data.email }
-    });
-
-    if (existingStudentByEmail) {
-      throw new Error('Este email já está cadastrado como aluno no sistema.');
-    }
+      if (await Student.findOne({ where: { email: data.email } })) {
+        throw new Error('Este email já está cadastrado como aluno no sistema.');
+      }
 
     // 6. Verificar se EMAIL já está cadastrado como USUÁRIO
     const existingUserByEmail = await User.findOne({
