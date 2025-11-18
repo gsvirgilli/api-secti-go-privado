@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { z } from 'zod';
+import * as z from 'zod';
 
 dotenv.config();
 

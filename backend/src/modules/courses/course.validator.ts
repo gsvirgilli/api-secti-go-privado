@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../../utils/AppError.js';
 
