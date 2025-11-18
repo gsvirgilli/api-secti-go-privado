@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import StudentService from './student.service.js';
 import { createStudentSchema, updateStudentSchema, listStudentFiltersSchema } from './student.validator.js';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import type { CreateStudentData } from './student.types.js';
 
 /**

@@ -6,7 +6,7 @@ import {
   listCandidateFiltersSchema,
   rejectCandidateSchema
 } from './candidate.validator.js';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 /**
  * Controller de Candidatos
