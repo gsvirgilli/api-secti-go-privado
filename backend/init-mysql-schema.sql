@@ -32,9 +32,35 @@ CREATE TABLE IF NOT EXISTS turmas (
   data_fim DATE,
   turno VARCHAR(20),
   id_curso INT,
+  vagas INT DEFAULT 0,
+  status VARCHAR(50) DEFAULT 'ATIVO',
   createdAt DATETIME NOT NULL,
   updatedAt DATETIME NOT NULL,
   FOREIGN KEY (id_curso) REFERENCES cursos(id) ON DELETE SET NULL
+);
+
+-- Tabela de Instrutores
+CREATE TABLE IF NOT EXISTS instrutores (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  nome VARCHAR(100) NOT NULL,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  cpf VARCHAR(11) UNIQUE,
+  especialidade VARCHAR(100),
+  telefone VARCHAR(20),
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL
+);
+
+-- Tabela de Associação Instrutor-Turma
+CREATE TABLE IF NOT EXISTS instrutor_turma (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  id_instrutor INT NOT NULL,
+  id_turma INT NOT NULL,
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL,
+  UNIQUE KEY unique_instrutor_turma (id_instrutor, id_turma),
+  FOREIGN KEY (id_instrutor) REFERENCES instrutores(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_turma) REFERENCES turmas(id) ON DELETE CASCADE
 );
 
 -- Tabela de Candidatos
@@ -61,6 +87,9 @@ CREATE TABLE IF NOT EXISTS alunos (
   cpf VARCHAR(11) NOT NULL UNIQUE,
   nome VARCHAR(100) NOT NULL,
   email VARCHAR(100) NOT NULL UNIQUE,
+  telefone VARCHAR(20),
+  data_nascimento DATE,
+  endereco VARCHAR(255),
   candidato_id INT,
   usuario_id INT,
   turma_id INT,
