@@ -21,55 +21,55 @@ const Login = () => {
 
   const validateForm = () => {
     const newErrors = { username: "", password: "" };
-    
+
     if (!credentials.username.trim()) {
       newErrors.username = "Usuário é obrigatório";
     }
-    
+
     if (!credentials.password) {
       newErrors.password = "Senha é obrigatória";
     } else if (credentials.password.length < 6) {
       newErrors.password = "Senha deve ter pelo menos 6 caracteres";
     }
-    
+
     setErrors(newErrors);
     return !newErrors.username && !newErrors.password;
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
-    
+
     try {
       // Chamar API de login
       const response = await AuthAPI.login({
         email: credentials.username, // usando username como email
         senha: credentials.password
       });
-      
+
       // Salvar token e dados do usuário
       if (response.data.token) {
         localStorage.setItem('@sukatech:token', response.data.token);
         localStorage.setItem('@sukatech:user', JSON.stringify(response.data.usuario || response.data.user));
       }
-      
+
       toast({
         title: "Sucesso!",
         description: "Login realizado com sucesso",
       });
-      
+
       // Usar navigate do React Router em vez de window.location.href
       navigate("/dashboard");
     } catch (error: any) {
       console.error('Erro ao fazer login:', error);
-      
-      const errorMessage = error.response?.data?.error || 
-                          error.response?.data?.message || 
-                          "Credenciais inválidas. Tente novamente.";
-      
+
+      const errorMessage = error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Credenciais inválidas. Tente novamente.";
+
       toast({
         title: "Erro",
         description: errorMessage,
@@ -89,7 +89,7 @@ const Login = () => {
         <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-primary/6 rounded-full blur-2xl floating-orb"></div>
         <div className="absolute inset-0 opacity-[0.02] grid-pattern"></div>
       </div>
-      
+
       {/* Left side - Logo and Welcome */}
       <div className="flex-1 bg-transparent flex items-center justify-center p-4 sm:p-6 lg:p-8 xl:p-12 2xl:p-16 hidden lg:flex">
         <div className="max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl w-full space-y-6 text-center animate-fade-in">
@@ -98,9 +98,9 @@ const Login = () => {
             <div className="flex justify-center mb-6">
               <div className="text-center">
                 <div className="relative">
-                  <img 
-                    src="/logo_suckatech.png" 
-                    alt="Suka Tech Logo" 
+                  <img
+                    src="/logo_suckatech.png"
+                    alt="Suka Tech Logo"
                     className="w-40 h-40 sm:w-48 sm:h-48 lg:w-56 lg:h-56 xl:w-64 xl:h-64 object-contain drop-shadow-xl"
                   />
                   <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent rounded-full"></div>
@@ -139,7 +139,7 @@ const Login = () => {
           <div className="absolute bottom-20 left-20 w-24 h-24 border border-white/15 rounded-full floating-orb"></div>
           <div className="absolute inset-0 opacity-[0.03] grid-pattern"></div>
         </div>
-        
+
         <Card className="w-full max-w-md auth-glass animate-scale-in relative overflow-hidden">
           <CardContent className="p-6 sm:p-8 lg:p-10 relative">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
@@ -170,9 +170,8 @@ const Login = () => {
                         setCredentials({ ...credentials, username: e.target.value });
                         if (errors.username) setErrors(prev => ({ ...prev, username: "" }));
                       }}
-                      className={`pl-12 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 sm:h-14 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-roboto tracking-wide ${
-                        errors.username ? 'border-destructive focus:border-destructive' : ''
-                      }`}
+                      className={`pl-12 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 sm:h-14 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-roboto tracking-wide ${errors.username ? 'border-destructive focus:border-destructive' : ''
+                        }`}
                       aria-describedby="username-error"
                       aria-invalid={!!errors.username}
                     />
@@ -197,9 +196,8 @@ const Login = () => {
                         setCredentials({ ...credentials, password: e.target.value });
                         if (errors.password) setErrors(prev => ({ ...prev, password: "" }));
                       }}
-                      className={`pl-12 pr-12 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 sm:h-14 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-roboto tracking-wide ${
-                        errors.password ? 'border-destructive focus:border-destructive' : ''
-                      }`}
+                      className={`pl-12 pr-12 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 sm:h-14 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-roboto tracking-wide ${errors.password ? 'border-destructive focus:border-destructive' : ''
+                        }`}
                       aria-describedby="password-error"
                       aria-invalid={!!errors.password}
                     />
