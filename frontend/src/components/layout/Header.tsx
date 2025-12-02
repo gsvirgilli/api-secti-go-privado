@@ -40,9 +40,9 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAsRead = (id: number) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id 
+    setNotifications(prev =>
+      prev.map(notification =>
+        notification.id === id
           ? { ...notification, read: true }
           : notification
       )
@@ -54,7 +54,7 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => 
+    setNotifications(prev =>
       prev.map(notification => ({ ...notification, read: true }))
     );
   };
@@ -71,7 +71,7 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
     // Limpar dados de autenticação
     localStorage.removeItem("@sukatech:token");
     localStorage.removeItem("@sukatech:user");
-    
+
     // Redirecionar para a página inicial usando React Router
     navigate("/");
   };
@@ -79,14 +79,14 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
   return (
     <>
       {/* Skip to main content for screen readers */}
-      <a 
-        href="#main-content" 
+      <a
+        href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:shadow-lg"
       >
         Pular para o conteúdo principal
       </a>
-      
-      <header 
+
+      <header
         className="h-14 sm:h-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border flex items-center justify-between px-3 sm:px-4 lg:px-6 lg:pl-6 sticky top-0 z-40"
         role="banner"
       >
@@ -104,15 +104,15 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
             <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
         </div>
-        
+
         {/* Action Buttons */}
         <nav className="flex items-center gap-1 sm:gap-2" aria-label="Ações do usuário">
           {/* Notifications */}
           <Popover open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
             <PopoverTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="relative hover:bg-muted focus:ring-2 focus:ring-primary focus:ring-offset-2 h-8 w-8 sm:h-9 sm:w-9"
                 aria-label={`Notificações${unreadCount > 0 ? ` - ${unreadCount} não lidas` : ''}`}
                 aria-describedby="notification-count"
@@ -120,7 +120,7 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
                 <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                 {unreadCount > 0 && (
                   <>
-                    <Badge 
+                    <Badge
                       id="notification-count"
                       className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center p-0 bg-destructive hover:bg-destructive text-destructive-foreground text-xs min-w-0 animate-pulse"
                       aria-live="polite"
@@ -132,8 +132,8 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent 
-              className="w-72 sm:w-80 p-0 bg-background border shadow-lg z-50" 
+            <PopoverContent
+              className="w-72 sm:w-80 p-0 bg-background border shadow-lg z-50"
               align="end"
               role="dialog"
               aria-label="Painel de notificações"
@@ -176,17 +176,15 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
                   notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`group p-3 sm:p-4 border-b last:border-b-0 hover:bg-muted/50 focus-within:bg-muted/50 cursor-pointer transition-colors ${
-                        !notification.read ? "bg-primary/5 border-l-2 border-l-primary" : ""
-                      }`}
+                      className={`group p-3 sm:p-4 border-b last:border-b-0 hover:bg-muted/50 focus-within:bg-muted/50 cursor-pointer transition-colors ${!notification.read ? "bg-primary/5 border-l-2 border-l-primary" : ""
+                        }`}
                       role="listitem"
                       aria-label={`${notification.title} - ${notification.message}`}
                     >
                       <div className="flex items-start gap-2 sm:gap-3">
-                        <div 
-                          className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                            !notification.read ? "bg-primary" : "bg-transparent"
-                          }`} 
+                        <div
+                          className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${!notification.read ? "bg-primary" : "bg-transparent"
+                            }`}
                           aria-hidden="true"
                         />
                         <div className="flex-1 min-w-0">
@@ -244,22 +242,22 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
           {/* Profile Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="hover:bg-muted focus:ring-2 focus:ring-primary focus:ring-offset-2 h-8 w-8 sm:h-9 sm:w-9"
                 aria-label="Menu do usuário"
               >
                 <User className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
+            <DropdownMenuContent
+              align="end"
               className="w-48 sm:w-56 bg-background border shadow-lg z-50"
               role="menu"
               aria-label="Opções do usuário"
             >
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={handleProfileClick}
                 className="cursor-pointer hover:bg-muted focus:bg-muted focus:ring-2 focus:ring-primary focus:ring-offset-1 text-xs sm:text-sm"
                 role="menuitem"
@@ -267,7 +265,7 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
                 <User className="mr-2 h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
                 Meu Perfil
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={handleLogout}
                 className="cursor-pointer hover:bg-muted focus:bg-muted focus:ring-2 focus:ring-destructive focus:ring-offset-1 text-destructive focus:text-destructive text-xs sm:text-sm"
                 role="menuitem"

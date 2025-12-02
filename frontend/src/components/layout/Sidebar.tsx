@@ -1,9 +1,9 @@
-import { 
-  Home, 
-  Users, 
-  GraduationCap, 
-  BookOpen, 
-  UserCheck, 
+import {
+  Home,
+  Users,
+  GraduationCap,
+  BookOpen,
+  UserCheck,
   Settings,
   LogOut,
   User,
@@ -39,7 +39,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     // Limpar dados de autenticação
     localStorage.removeItem("@sukatech:token");
     localStorage.removeItem("@sukatech:user");
-    
+
     // Redirecionar para a página inicial usando React Router
     navigate("/");
   };
@@ -48,7 +48,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-64 h-full bg-primary text-primary-foreground flex-col fixed left-0 top-0 z-30 overflow-hidden">
-        <SidebarContent location={location} onClose={() => {}} handleLogout={handleLogout} />
+        <SidebarContent location={location} onClose={() => { }} handleLogout={handleLogout} />
       </aside>
 
       {/* Mobile Sidebar */}
@@ -65,7 +65,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 const SidebarContent = ({ location, onClose, handleLogout }: { location: any; onClose: () => void; handleLogout: () => void }) => {
   // O Sidebar só aparece dentro do Layout, que é usado apenas em rotas protegidas
   // Portanto, o botão "Processo Seletivo" sempre aparecerá quando o Sidebar estiver visível
-  
+
   return (
     <div className="flex flex-col h-full">
       {/* Mobile Close Button */}
@@ -84,9 +84,9 @@ const SidebarContent = ({ location, onClose, handleLogout }: { location: any; on
         <div className="flex items-center justify-center">
           <div className="relative group">
             <div className="w-16 h-16 bg-white/95 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-400 hover:scale-105 ring-1 ring-white/20">
-              <img 
-                src="/image.png" 
-                alt="Suka Tech Logo" 
+              <img
+                src="/image.png"
+                alt="Suka Tech Logo"
                 className="w-14 h-14 object-contain flex-shrink-0 drop-shadow-sm"
               />
             </div>
@@ -101,7 +101,7 @@ const SidebarContent = ({ location, onClose, handleLogout }: { location: any; on
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
-            
+
             return (
               <li key={item.path} className="animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
                 <Button
