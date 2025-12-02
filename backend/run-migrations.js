@@ -74,6 +74,22 @@ async function runMigrations() {
     console.log('\n📊 Cursos:');
     console.log(cursos);
 
+    const [turmas] = await connection.execute('SELECT id, nome, id_curso, status FROM turmas LIMIT 5');
+    console.log('\n📊 Turmas:');
+    console.log(turmas);
+
+    const [instrutores] = await connection.execute('SELECT id, nome, email, especialidade FROM instrutores LIMIT 5');
+    console.log('\n📊 Instrutores:');
+    console.log(instrutores);
+
+    const [candidatos] = await connection.execute('SELECT id, nome, email, status FROM candidatos LIMIT 5');
+    console.log('\n📊 Candidatos:');
+    console.log(candidatos);
+
+    const [alunos] = await connection.execute('SELECT id, nome, email, matricula FROM alunos LIMIT 5');
+    console.log('\n📊 Alunos:');
+    console.log(alunos);
+
     console.log('\n✅ Todas as migrações foram executadas com sucesso!');
     console.log('\n🔑 Credenciais para teste:');
     console.log('Email: teste@example.com');
