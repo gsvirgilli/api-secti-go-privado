@@ -1,8 +1,10 @@
 import axios from "axios";
 
-// Configuração base da API
+// Configuração base da API - usar variável de ambiente ou fallback para localhost
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3333/api";
+
 export const api = axios.create({
-  baseURL: "http://localhost:3333/api",
+  baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -107,7 +109,7 @@ export const CandidatesAPI = {
         }
       });
       
-      return axios.post(`${api.defaults.baseURL}/candidates/public`, formData, {
+      return axios.post(`${API_BASE_URL}/candidates/public`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -115,7 +117,7 @@ export const CandidatesAPI = {
     }
     
     // Se não houver arquivos, enviar JSON
-    return axios.post(`${api.defaults.baseURL}/candidates/public`, data, {
+    return axios.post(`${API_BASE_URL}/candidates/public`, data, {
       headers: {
         "Content-Type": "application/json",
       },
@@ -136,7 +138,7 @@ export const CandidatesAPI = {
   
   // Validar campos únicos antes de enviar formulário
   validateUniqueFields: (data: { cpf?: string; email?: string; telefone?: string }) =>
-    axios.post(`${api.defaults.baseURL}/candidates/validate`, data, {
+    axios.post(`${API_BASE_URL}/candidates/validate`, data, {
       headers: {
         "Content-Type": "application/json",
       },
@@ -179,7 +181,7 @@ export const CoursesAPI = {
   // Listagem pública de cursos (sem autenticação)
   listPublic: () => {
     // Criar uma requisição sem token para endpoint público
-    return axios.get(`${api.defaults.baseURL}/courses/public`, {
+    return axios.get(`${API_BASE_URL}/courses/public`, {
       headers: {
         "Content-Type": "application/json",
       },
