@@ -13,7 +13,13 @@ export const sequelize = new Sequelize(
     host: databaseHost,
     port: env.DATABASE_PORT,
     dialect: 'mysql', 
-    logging: isTest ? false : console.log, // Desabilitar logs nos testes
+    logging: isTest ? false : console.log,
+    pool: {
+      max: 5,           // Máximo de conexões simultâneas
+      min: 0,           // Mínimo de conexões
+      acquire: 30000,   // Timeout para adquirir conexão (ms)
+      idle: 10000       // Timeout para conexão ociosa (ms)
+    }
   }
 );
 

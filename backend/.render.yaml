@@ -1,2 +1,2 @@
 buildCommand: npm install && npm run build
-startCommand: node --loader tsx src/server.ts
+startCommand: node --import tsx/esm src/server.ts

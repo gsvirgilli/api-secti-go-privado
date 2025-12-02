@@ -5,7 +5,7 @@ services:
     region: ohio
     plan: starter
     buildCommand: cd backend && npm install && npm run build
-    startCommand: cd backend && node --loader tsx src/server.ts
+    startCommand: cd backend && node --import tsx/esm src/server.ts
     envVars:
       - key: NODE_ENV
         value: production
