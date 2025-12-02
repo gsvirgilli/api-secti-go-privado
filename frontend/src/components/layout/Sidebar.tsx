@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
@@ -33,14 +33,15 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     // Limpar dados de autenticação
     localStorage.removeItem("@sukatech:token");
     localStorage.removeItem("@sukatech:user");
     
-    // Redirecionar para a página inicial
-    window.location.href = "/";
+    // Redirecionar para a página inicial usando React Router
+    navigate("/");
   };
 
   return (

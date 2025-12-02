@@ -72,8 +72,8 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
     localStorage.removeItem("@sukatech:token");
     localStorage.removeItem("@sukatech:user");
     
-    // Redirecionar para a página inicial (que mostrará a página Sobre)
-    window.location.href = "/";
+    // Redirecionar para a página inicial usando React Router
+    navigate("/");
   };
 
   return (
