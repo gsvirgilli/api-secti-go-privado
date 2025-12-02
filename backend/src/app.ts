@@ -8,9 +8,23 @@ import { errorHandler } from './middlewares/errorHandler.js';
 
 const app = express();
 
-// CORS configurado com segurança
+// CORS configurado com segurança - aceitar múltiplas origens
+const allowedOrigins = [
+  'http://localhost:5173',        // Dev local
+  'http://localhost:3000',        // Dev alternativo
+  process.env.FRONTEND_URL,       // Variável de ambiente
+  'https://api-secti-go-privado.vercel.app',  // Vercel (produção)
+].filter(origin => origin && origin !== 'undefined'); // Remover undefined
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Se não houver origin (requisições não-browser como curl), permitir
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS policy: origin ${origin} not allowed`));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
