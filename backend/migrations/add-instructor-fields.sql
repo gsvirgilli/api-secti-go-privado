@@ -28,7 +28,7 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 SET @column_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='instrutores' AND COLUMN_NAME='status' AND TABLE_SCHEMA=@db);
-SET @sql = IF(@column_exists = 0, 'ALTER TABLE instrutores ADD COLUMN status VARCHAR(50) NULL DEFAULT \\'Ativo\\'', 'SELECT 1');
+SET @sql = IF(@column_exists = 0, 'ALTER TABLE instrutores ADD COLUMN status VARCHAR(50) NULL', 'SELECT 1');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
