@@ -11,18 +11,18 @@ declare module 'express-serve-static-core' {
 }
 
 export function isAuthenticated(req: Request, _res: Response, next: NextFunction) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new AppError('Unauthorized', 401);
-  }
-
-  const token = authHeader.replace('Bearer ', '').trim();
   try {
-  const payload = verifyJwt<{ sub: string } & Record<string, unknown>>(token);
-  req.user = { id: payload.sub, ...payload } as AuthUser;
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    const token = authHeader.replace('Bearer ', '').trim();
+    const payload = verifyJwt<{ sub: string } & Record<string, unknown>>(token);
+    req.user = { id: payload.sub, ...payload } as AuthUser;
     return next();
-  } catch {
-    throw new AppError('Invalid token', 401);
+  } catch (error) {
+    return next(error);
   }
 }
 
