@@ -1,17 +1,17 @@
 #!/bin/bash
+set -e
 
-# Script para rodar migrações antes de iniciar a aplicação
+echo "📋 Iniciando aplicação com setup do banco de dados..."
 
-echo "🔄 Executando migrações do banco de dados..."
-
-# Rodar migrações com timeout de 60 segundos
-timeout 60 node /opt/render/project/src/backend/run-migrations.js
-
-if [ $? -eq 0 ]; then
-  echo "✅ Migrações completadas com sucesso!"
-else
-  echo "⚠️  Aviso: Migrações tiveram erro ou timeout (continuando)"
+# Verificar se estamos em produção (Render)
+if [ ! -z "$RENDER" ]; then
+  echo "🔄 Rodando em produção - executando migrações..."
+  
+  # Rodar migrações
+  timeout 120 node run-migrations.js || {
+    echo "⚠️  Aviso: Migrações falharam ou timeout (continuando mesmo assim)"
+  }
 fi
 
-echo "🚀 Iniciando aplicação..."
+echo "🚀 Iniciando servidor..."
 exec npm start
