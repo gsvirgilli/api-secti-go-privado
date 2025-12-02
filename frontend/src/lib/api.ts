@@ -3,6 +3,11 @@ import axios from "axios";
 // Configuração base da API - usar variável de ambiente ou fallback para localhost
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3333/api";
 
+// DEBUG: Log para verificar qual URL está sendo usada
+console.log('🔍 API_BASE_URL configurada:', API_BASE_URL);
+console.log('🔍 VITE_API_BASE_URL env var:', import.meta.env.VITE_API_BASE_URL);
+console.log('🔍 import.meta.env:', import.meta.env);
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
