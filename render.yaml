@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: api-secti-backend
+    runtime: node
+    region: ohio
+    plan: starter
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && node --loader tsx src/server.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: '20'

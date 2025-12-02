@@ -6,8 +6,9 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "postinstall": "mkdir -p node_modules/zod/v4/locales && echo 'export default () => ({})' > node_modules/zod/v4/locales/ps.js && echo 'export default () => ({})' > node_modules/zod/v4/locales/zh-CN.js",
-    "start": "tsx src/server.js",
+    "postinstall": "npm run postbuild || true",
+    "postbuild": "mkdir -p node_modules/zod/v4/locales 2>/dev/null; echo 'export default () => ({})' > node_modules/zod/v4/locales/ps.js 2>/dev/null; echo 'export default () => ({})' > node_modules/zod/v4/locales/zh-CN.js 2>/dev/null; true",
+    "start": "node --loader tsx src/server.ts",
     "dev": "nodemon --ext ts,json --exec tsx src/server.ts",
     "migrate": "sequelize-cli db:migrate",
     "migrate:undo": "sequelize-cli db:migrate:undo",
