@@ -61,6 +61,17 @@ app.get('/api/health', (req, res) => {
 // Rotas da API
 app.use('/api', router);
 
+// Handler para rotas não encontradas (404)
+app.use((req, res) => {
+  console.error(`[404] Rota não encontrada: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({
+    success: false,
+    message: `Rota não encontrada: ${req.method} ${req.originalUrl}`,
+    path: req.originalUrl,
+    method: req.method
+  });
+});
+
 // Error handler central
 app.use(errorHandler);
 
