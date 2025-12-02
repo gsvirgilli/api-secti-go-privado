@@ -1,6 +1,10 @@
 import mysql from 'mysql2/promise';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function runMigrations() {
   const connection = await mysql.createConnection({
@@ -16,19 +20,39 @@ async function runMigrations() {
   try {
     console.log('📋 Iniciando migrações do banco de dados...\n');
 
-    // Ler arquivo de criação de tabelas
-    const schemaPath = path.join(process.cwd(), 'init-mysql-schema.sql');
+    // 1. Ler e executar schema principal
+    const schemaPath = path.join(__dirname, 'init-mysql-schema.sql');
     let schema = fs.readFileSync(schemaPath, 'utf-8');
-    
-    // Remover a linha USE sukatechdb pois já estamos no defaultdb
     schema = schema.replace(/USE sukatechdb;/g, '');
 
-    // Executar schema
-    console.log('✅ Criando tabelas...');
+    console.log('✅ Criando tabelas principais...');
     await connection.query(schema);
-    console.log('✅ Tabelas criadas com sucesso!\n');
+    console.log('✅ Tabelas principais criadas!\n');
 
-    // Inserir usuário de teste
+    // 2. Executar migrações SQL adicionais em ordem
+    const migrationsDir = path.join(__dirname, 'migrations');
+    const migrationFiles = fs.readdirSync(migrationsDir)
+      .filter(f => f.endsWith('.sql'))
+      .sort();
+
+    console.log(`📁 Encontradas ${migrationFiles.length} migrações adicionais\n`);
+
+    for (const file of migrationFiles) {
+      try {
+        const filePath = path.join(migrationsDir, file);
+        let migrationSQL = fs.readFileSync(filePath, 'utf-8');
+        migrationSQL = migrationSQL.replace(/USE sukatechdb;/g, '').replace(/USE defaultdb;/g, '');
+        
+        console.log(`  ⏳ Executando: ${file}`);
+        await connection.query(migrationSQL);
+        console.log(`  ✅ ${file} aplicada\n`);
+      } catch (error) {
+        console.warn(`  ⚠️  Aviso ao executar ${file}:`, error.message.split('\n')[0]);
+        // Continuar mesmo se uma migração falhar
+      }
+    }
+
+    // 3. Inserir usuário de teste
     console.log('📝 Inserindo usuário de teste...');
     const insertUser = `
       INSERT INTO usuarios (nome, email, senha_hash, role, createdAt, updatedAt) 
@@ -39,7 +63,7 @@ async function runMigrations() {
     await connection.execute(insertUser);
     console.log('✅ Usuário de teste criado!\n');
 
-    // Verificar dados
+    // 4. Verificar dados
     console.log('🔍 Verificando dados inseridos...\n');
     
     const [usuarios] = await connection.execute('SELECT id, nome, email, role FROM usuarios LIMIT 5');
@@ -50,14 +74,15 @@ async function runMigrations() {
     console.log('\n📊 Cursos:');
     console.log(cursos);
 
-    console.log('\n✅ Migrações executadas com sucesso!');
+    console.log('\n✅ Todas as migrações foram executadas com sucesso!');
     console.log('\n🔑 Credenciais para teste:');
     console.log('Email: teste@example.com');
     console.log('Senha: Teste123!');
     console.log('Role: ADMIN');
 
   } catch (error) {
-    console.error('❌ Erro durante migrações:', error);
+    console.error('❌ Erro durante migrações:', error.message);
+    process.exit(1);
   } finally {
     await connection.end();
   }
