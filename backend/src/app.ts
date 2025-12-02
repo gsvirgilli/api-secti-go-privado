@@ -8,6 +8,9 @@ import { errorHandler } from './middlewares/errorHandler.js';
 
 const app = express();
 
+// Configurar Express para confiar em proxy reverso (Render, Vercel, etc)
+app.set('trust proxy', 1);
+
 // CORS configurado com segurança - aceitar múltiplas origens
 const allowedOrigins = [
   'http://localhost:5173',        // Dev local
