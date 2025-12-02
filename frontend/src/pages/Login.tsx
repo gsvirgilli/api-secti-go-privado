@@ -61,8 +61,8 @@ const Login = () => {
         description: "Login realizado com sucesso",
       });
       
-      // Recarregar a página para que o AppContext carregue os dados com o novo token
-      window.location.href = "/dashboard";
+      // Usar navigate do React Router em vez de window.location.href
+      navigate("/dashboard");
     } catch (error: any) {
       console.error('Erro ao fazer login:', error);
       
