@@ -22,9 +22,19 @@ const allowedOrigins = [
 app.use(cors({
   origin: (origin, callback) => {
     // Se não houver origin (requisições não-browser como curl), permitir
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin) {
       callback(null, true);
-    } else {
+    }
+    // Permitir se estiver na whitelist
+    else if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    }
+    // Permitir qualquer URL do Vercel Preview (*.vercel.app)
+    else if (origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    }
+    // Rejeitar outras origens
+    else {
       callback(new Error(`CORS policy: origin ${origin} not allowed`));
     }
   },
