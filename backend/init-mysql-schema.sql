@@ -152,3 +152,12 @@ INSERT IGNORE INTO candidatos (nome, cpf, email, telefone, data_nascimento, stat
 SELECT 'Ana Candidata', '55566677788', 'ana.candidata@example.com', '11987654322', '1996-08-20', 'PENDENTE', t.id, NOW(), NOW()
 FROM turmas t WHERE t.nome = 'Python - Turma C'
 LIMIT 1;
+
+-- Inserir alunos
+INSERT IGNORE INTO alunos (matricula, cpf, nome, email, telefone, data_nascimento, endereco, status, createdAt, updatedAt)
+VALUES
+  ('MAT001', '11111111111', 'Pedro Silva', 'pedro@example.com', '11987654323', '1998-03-10', 'Rua A, 123', 'ativo', NOW(), NOW()),
+  ('MAT002', '22222222222', 'Julia Costa', 'julia@example.com', '11987654324', '1997-07-22', 'Rua B, 456', 'ativo', NOW(), NOW()),
+  ('MAT003', '33333333333', 'Lucas Oliveira', 'lucas@example.com', '11987654325', '1999-11-05', 'Rua C, 789', 'ativo', NOW(), NOW()),
+  ('MAT004', '44444444444', 'Fernanda Lima', 'fernanda@example.com', '11987654326', '1996-01-18', 'Rua D, 101', 'ativo', NOW(), NOW()),
+  ('MAT005', '66666666666', 'Roberto Alves', 'roberto@example.com', '11987654327', '1994-09-30', 'Rua E, 202', 'ativo', NOW(), NOW());
