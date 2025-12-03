@@ -221,6 +221,32 @@ async function seedDatabase() {
       }
     });
 
+    const [candidato4] = await models.Candidate.findOrCreate({
+      where: { cpf: '44455566677' },
+      defaults: {
+        nome: 'Roberto Ferreira',
+        cpf: '44455566677',
+        email: 'roberto.ferreira@email.com',
+        telefone: '11954321098',
+        data_nascimento: new Date('1999-02-10'),
+        id_turma_desejada: turmaPython1.id,
+        status: 'PENDENTE'
+      }
+    });
+
+    const [candidato5] = await models.Candidate.findOrCreate({
+      where: { cpf: '55566677788' },
+      defaults: {
+        nome: 'Juliana Mendes',
+        cpf: '55566677788',
+        email: 'juliana.mendes@email.com',
+        telefone: '11943210987',
+        data_nascimento: new Date('2002-06-25'),
+        id_turma_desejada: turmaMobile1.id,
+        status: 'PENDENTE'
+      }
+    });
+
     // 7. Criar alunos (candidatos aprovados)
     console.log('🎒 Criando alunos...');
     await models.Student.findOrCreate({
@@ -261,12 +287,16 @@ async function seedDatabase() {
     console.log(`  - ${await models.Instructor.count()} instrutores`);
     console.log(`  - ${await models.Course.count()} cursos`);
     console.log(`  - ${await models.Class.count()} turmas`);
-    console.log(`  - ${await models.Candidate.count()} candidatos`);
+    console.log(`  - ${await models.Candidate.count()} candidatos (3 pendentes)`);
     console.log(`  - ${await models.Student.count()} alunos`);
     console.log('\n🔐 Credenciais de acesso:');
     console.log('  Admin: admin@secti.com / admin123');
     console.log('  Instrutor: maria.silva@secti.com / instrutor123');
     console.log('  Instrutor: joao.santos@secti.com / instrutor123');
+    console.log('\n📋 Candidatos pendentes:');
+    console.log('  - Beatriz Santos (beatriz.santos@email.com)');
+    console.log('  - Roberto Ferreira (roberto.ferreira@email.com)');
+    console.log('  - Juliana Mendes (juliana.mendes@email.com)');
     
     process.exit(0);
   } catch (error) {
