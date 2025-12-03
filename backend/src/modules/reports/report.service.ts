@@ -90,7 +90,7 @@ class ReportService {
 
     return new Promise(async (resolve, reject) => {
       try {
-        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        const doc = new PDFDocument({ margin: 50, size: 'A4', bufferPages: true });
         const chunks: Buffer[] = [];
 
         doc.on('data', (chunk) => chunks.push(chunk));
@@ -153,13 +153,14 @@ class ReportService {
         });
 
         // Footer - adicionar em todas as páginas criadas
-        for (let i = 0; i < pageCount; i++) {
+        const totalPages = doc.bufferedPageRange().count;
+        for (let i = 0; i < totalPages; i++) {
           doc.switchToPage(i);
           doc
             .fontSize(8)
             .fillColor('#999')
             .text(
-              `Página ${i + 1} de ${pageCount} | SECTI - Sistema de Gestão`,
+              `Página ${i + 1} de ${totalPages} | SECTI - Sistema de Gestão`,
               50,
               doc.page.height - 50,
               { align: 'center' }
@@ -207,7 +208,7 @@ class ReportService {
 
     return new Promise((resolve, reject) => {
       try {
-        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        const doc = new PDFDocument({ margin: 50, size: 'A4', bufferPages: true });
         const chunks: Buffer[] = [];
 
         doc.on('data', (chunk) => chunks.push(chunk));
@@ -296,13 +297,14 @@ class ReportService {
         });
 
         // Footer - adicionar em todas as páginas criadas
-        for (let i = 0; i < pageCount; i++) {
+        const totalPages = doc.bufferedPageRange().count;
+        for (let i = 0; i < totalPages; i++) {
           doc.switchToPage(i);
           doc
             .fontSize(8)
             .fillColor('#999')
             .text(
-              `Página ${i + 1} de ${pageCount} | SECTI - Sistema de Gestão`,
+              `Página ${i + 1} de ${totalPages} | SECTI - Sistema de Gestão`,
               50,
               doc.page.height - 50,
               { align: 'center' }
@@ -387,7 +389,7 @@ class ReportService {
 
     return new Promise((resolve, reject) => {
       try {
-        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        const doc = new PDFDocument({ margin: 50, size: 'A4', bufferPages: true });
         const chunks: Buffer[] = [];
 
         doc.on('data', (chunk) => chunks.push(chunk));
@@ -451,13 +453,14 @@ class ReportService {
         });
 
         // Footer - adicionar em todas as páginas criadas
-        for (let i = 0; i < pageCount; i++) {
+        const totalPages = doc.bufferedPageRange().count;
+        for (let i = 0; i < totalPages; i++) {
           doc.switchToPage(i);
           doc
             .fontSize(8)
             .fillColor('#999')
             .text(
-              `Página ${i + 1} de ${pageCount} | SECTI - Sistema de Gestão`,
+              `Página ${i + 1} de ${totalPages} | SECTI - Sistema de Gestão`,
               50,
               doc.page.height - 50,
               { align: 'center' }
@@ -493,7 +496,7 @@ class ReportService {
 
     return new Promise((resolve, reject) => {
       try {
-        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        const doc = new PDFDocument({ margin: 50, size: 'A4', bufferPages: true });
         const chunks: Buffer[] = [];
 
         doc.on('data', (chunk) => chunks.push(chunk));
@@ -533,11 +536,9 @@ class ReportService {
         });
         doc.moveDown(1);
 
-        let pageCount = 1;
         courses.forEach((course, index) => {
           if (doc.y > 650) {
             doc.addPage();
-            pageCount++;
           }
 
           const totalAlunos = course.turmas?.reduce(
@@ -565,14 +566,15 @@ class ReportService {
           doc.moveDown(1);
         });
 
-        // Footer - adicionar em todas as páginas criadas
-        for (let i = 0; i < pageCount; i++) {
+        // Footer - adicionar após todo o conteúdo ser renderizado
+        const pages = doc.bufferedPageRange().count;
+        for (let i = 0; i < pages; i++) {
           doc.switchToPage(i);
           doc
             .fontSize(8)
             .fillColor('#999')
             .text(
-              `Página ${i + 1} de ${pageCount} | SECTI - Sistema de Gestão`,
+              `Página ${i + 1} de ${pages} | SECTI - Sistema de Gestão`,
               50,
               doc.page.height - 50,
               { align: 'center' }
