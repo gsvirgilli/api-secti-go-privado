@@ -117,9 +117,9 @@ VALUES
 -- Inserir turmas
 INSERT IGNORE INTO turmas (nome, descricao, data_inicio, data_fim, turno, id_curso, vagas, status, createdAt, updatedAt)
 VALUES
-  ('Web - Turma A', 'Turma A de desenvolvimento web', '2025-01-15', '2025-06-15', 'matutino', 1, 30, 'ATIVO', NOW(), NOW()),
-  ('BD - Turma B', 'Turma B de banco de dados', '2025-02-01', '2025-05-01', 'vespertino', 2, 25, 'ATIVO', NOW(), NOW()),
-  ('Python - Turma C', 'Turma C de Python', '2025-01-20', '2025-07-20', 'noturno', 3, 20, 'ATIVO', NOW(), NOW());
+  ('Web - Turma A', 'Turma A de desenvolvimento web', '2025-01-15', '2025-06-15', 'MANHA', 1, 30, 'ATIVA', NOW(), NOW()),
+  ('BD - Turma B', 'Turma B de banco de dados', '2025-02-01', '2025-05-01', 'TARDE', 2, 25, 'ATIVA', NOW(), NOW()),
+  ('Python - Turma C', 'Turma C de Python', '2025-01-20', '2025-07-20', 'NOITE', 3, 20, 'ATIVA', NOW(), NOW());
 
 -- Inserir instrutores
 INSERT IGNORE INTO instrutores (nome, email, cpf, especialidade, telefone, createdAt, updatedAt)
