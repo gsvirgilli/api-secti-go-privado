@@ -34,20 +34,20 @@ interface DashboardData {
 const Reports = () => {
   const { toast } = useToast();
   const { stats, charts, students, courses, classes } = useAppData();
-  
+
   // Estados para dados do dashboard da API
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const [filters, setFilters] = useState({
     dateFrom: "",
     dateTo: "",
     course: "all",
-    class: "all", 
+    class: "all",
     status: "all",
     instructor: "all"
   });
-  
+
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
 
   // Carregar dados do dashboard da API
@@ -56,12 +56,12 @@ const Reports = () => {
       try {
         setLoading(true);
         const params: Record<string, string | number> = {};
-        
+
         if (filters.dateFrom) params.data_inicio = filters.dateFrom;
         if (filters.dateTo) params.data_fim = filters.dateTo;
         if (filters.course !== "all") params.id_curso = parseInt(filters.course);
         if (filters.class !== "all") params.id_turma = parseInt(filters.class);
-        
+
         const response = await ReportsAPI.dashboard(params);
         setDashboardData(response.data);
       } catch (error) {
@@ -79,32 +79,32 @@ const Reports = () => {
     loadDashboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.dateFrom, filters.dateTo, filters.course, filters.class]);
- 
-  
+
+
   // Tipo auxiliar para linhas de relatório
   type Row = Record<string, string | number | null | undefined>;
 
   // Process real data for charts
   // Usar dados da API se disponíveis
   const rawStudentsByCourse = dashboardData?.alunos_por_curso as Array<{ curso: string; total: number }> | undefined;
-  
-  const studentsPerCourse = rawStudentsByCourse 
+
+  const studentsPerCourse = rawStudentsByCourse
     ? rawStudentsByCourse.map(item => ({
-        name: item.curso,
-        students: item.total,
-        active: Math.floor(item.total * 0.85), // Mock para active
-        inactive: Math.floor(item.total * 0.15), // Mock para inactive
-      }))
+      name: item.curso,
+      students: item.total,
+      active: Math.floor(item.total * 0.85), // Mock para active
+      inactive: Math.floor(item.total * 0.15), // Mock para inactive
+    }))
     : courses.map(course => {
-        const courseStudents = students.filter(s => s.course === course.title);
-        const activeStudents = courseStudents.filter(s => s.status === "Ativo");
-        return {
-          name: course.title,
-          students: courseStudents.length,
-          active: activeStudents.length,
-          inactive: courseStudents.length - activeStudents.length
-        };
-      });
+      const courseStudents = students.filter(s => s.course === course.title);
+      const activeStudents = courseStudents.filter(s => s.status === "Ativo");
+      return {
+        name: course.title,
+        students: courseStudents.length,
+        active: activeStudents.length,
+        inactive: courseStudents.length - activeStudents.length
+      };
+    });
 
   // Usar dados da API se disponíveis, senão fallback para mock
   const rawMonthlyData = dashboardData?.matriculas_mensais as Array<{ mes: string; total: number }> | undefined;
@@ -198,11 +198,11 @@ const Reports = () => {
   // Função auxiliar para gerar CSV
   const generateCSV = (data: Row[], filename: string) => {
     if (data.length === 0) return;
-    
+
     const headers = Object.keys(data[0]).join(',');
     const rows = data.map(row => Object.values(row).join(',')).join('\n');
     const csv = `${headers}\n${rows}`;
-    
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -255,10 +255,10 @@ const Reports = () => {
     }
 
     // Gerar dados do relatório baseado nas seleções
-  let reportData: Row[] = [];
-  // Ajustar extensão correta por formato
-  const ext = format === 'excel' ? 'xlsx' : format === 'pdf' ? 'pdf' : 'csv';
-  const filename = `relatorio-personalizado-${new Date().toISOString().split('T')[0]}.${ext}`;
+    let reportData: Row[] = [];
+    // Ajustar extensão correta por formato
+    const ext = format === 'excel' ? 'xlsx' : format === 'pdf' ? 'pdf' : 'csv';
+    const filename = `relatorio-personalizado-${new Date().toISOString().split('T')[0]}.${ext}`;
 
     if (selectedReports.includes('students')) {
       reportData = students.map(s => ({
@@ -470,12 +470,12 @@ const Reports = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Todos os cursos" />
                     </SelectTrigger>
-                     <SelectContent>
-                       <SelectItem value="all">Todos os cursos</SelectItem>
-                       {courses.map(course => (
-                         <SelectItem key={course.id} value={course.id.toString()}>{course.title}</SelectItem>
-                       ))}
-                     </SelectContent>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os cursos</SelectItem>
+                      {courses.map(course => (
+                        <SelectItem key={course.id} value={course.id.toString()}>{course.title}</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
@@ -484,12 +484,12 @@ const Reports = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Todas as turmas" />
                     </SelectTrigger>
-                     <SelectContent>
-                       <SelectItem value="all">Todas as turmas</SelectItem>
-                       {classes.map(cls => (
-                         <SelectItem key={cls.id} value={cls.id.toString()}>{cls.name}</SelectItem>
-                       ))}
-                     </SelectContent>
+                    <SelectContent>
+                      <SelectItem value="all">Todas as turmas</SelectItem>
+                      {classes.map(cls => (
+                        <SelectItem key={cls.id} value={cls.id.toString()}>{cls.name}</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
@@ -524,7 +524,7 @@ const Reports = () => {
                 </div>
               </div>
               <div className="flex gap-2 mt-4">
-                <Button 
+                <Button
                   onClick={() => setFilters({ dateFrom: "", dateTo: "", course: "all", class: "all", status: "all", instructor: "all" })}
                   variant="outline"
                 >
@@ -642,7 +642,7 @@ const Reports = () => {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis />
-                        <Tooltip 
+                        <Tooltip
                           content={({ active, payload, label }) => {
                             if (active && payload && payload.length) {
                               const data = payload[0].payload;
@@ -700,7 +700,7 @@ const Reports = () => {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip 
+                      <Tooltip
                         content={({ active, payload, label }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;
@@ -747,7 +747,7 @@ const Reports = () => {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="month" />
                         <YAxis />
-                        <Tooltip 
+                        <Tooltip
                           content={({ active, payload, label }) => {
                             if (active && payload && payload.length) {
                               const data = payload[0].payload;
@@ -792,7 +792,7 @@ const Reports = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis domain={[80, 100]} />
-                      <Tooltip 
+                      <Tooltip
                         content={({ active, payload, label }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;
@@ -818,7 +818,7 @@ const Reports = () => {
             </Card>
 
             {/* Gráficos movidos da página de alunos */}
-            
+
             {/* Evolução Temporal */}
             <Card>
               <CardHeader>
@@ -834,7 +834,7 @@ const Reports = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Tooltip 
+                      <Tooltip
                         content={({ active, payload, label }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;
@@ -864,17 +864,17 @@ const Reports = () => {
                           return null;
                         }}
                       />
-                      <Line 
-                        type="monotone" 
-                        dataKey="students" 
-                        stroke="#10b981" 
+                      <Line
+                        type="monotone"
+                        dataKey="students"
+                        stroke="#10b981"
                         strokeWidth={3}
                         name="Total de Alunos"
                       />
-                      <Line 
-                        type="monotone" 
-                        dataKey="newStudents" 
-                        stroke="#10b981" 
+                      <Line
+                        type="monotone"
+                        dataKey="newStudents"
+                        stroke="#10b981"
                         strokeWidth={2}
                         strokeDasharray="5 5"
                         name="Novos Alunos"
@@ -900,7 +900,7 @@ const Reports = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="course" />
                       <YAxis domain={[0, 100]} />
-                      <Tooltip 
+                      <Tooltip
                         content={({ active, payload, label }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;
@@ -927,8 +927,8 @@ const Reports = () => {
                           return null;
                         }}
                       />
-                      <Bar 
-                        dataKey="retention" 
+                      <Bar
+                        dataKey="retention"
                         fill="#10b981"
                         name="Taxa de Retenção (%)"
                       />
@@ -960,14 +960,14 @@ const Reports = () => {
                         dataKey="value"
                       >
                         {allCharts.ageDistribution.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
+                          <Cell
+                            key={`cell-${index}`}
                             fill={entry.color}
                             className="hover:opacity-80 transition-opacity cursor-pointer"
                           />
                         ))}
                       </Pie>
-                      <Tooltip 
+                      <Tooltip
                         content={({ active, payload, label }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;
@@ -1036,9 +1036,9 @@ const Reports = () => {
                 <div className="text-sm text-muted-foreground mb-4">
                   Relatórios selecionados: {selectedReports.length > 0 ? selectedReports.length : "Nenhum"}
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Button 
+                  <Button
                     onClick={() => handleGenerateCustomReport("pdf")}
                     className="w-full justify-start gap-2"
                     variant="outline"
@@ -1046,8 +1046,8 @@ const Reports = () => {
                     <FileText className="h-4 w-4" />
                     Exportar como PDF
                   </Button>
-                  
-                  <Button 
+
+                  <Button
                     onClick={() => handleGenerateCustomReport("excel")}
                     className="w-full justify-start gap-2"
                     variant="outline"
@@ -1055,8 +1055,8 @@ const Reports = () => {
                     <Download className="h-4 w-4" />
                     Exportar como Excel
                   </Button>
-                  
-                  <Button 
+
+                  <Button
                     onClick={() => handleGenerateCustomReport("csv")}
                     className="w-full justify-start gap-2"
                     variant="outline"
@@ -1099,17 +1099,17 @@ const Reports = () => {
                 </p>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button 
+                <Button
                   onClick={() => handleQuickReport("Alunos", "pdf")}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   PDF
                 </Button>
-                <Button 
+                <Button
                   onClick={() => handleQuickReport("Alunos", "excel")}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -1130,17 +1130,17 @@ const Reports = () => {
                 </p>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button 
+                <Button
                   onClick={() => handleQuickReport("Turmas", "pdf")}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   PDF
                 </Button>
-                <Button 
+                <Button
                   onClick={() => handleQuickReport("Turmas", "excel")}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -1161,17 +1161,17 @@ const Reports = () => {
                 </p>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button 
+                <Button
                   onClick={() => handleQuickReport("Desempenho", "pdf")}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   PDF
                 </Button>
-                <Button 
+                <Button
                   onClick={() => handleQuickReport("Desempenho", "excel")}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -1192,17 +1192,17 @@ const Reports = () => {
                 </p>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button 
+                <Button
                   onClick={() => handleQuickReport("Frequência", "pdf")}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   PDF
                 </Button>
-                <Button 
+                <Button
                   onClick={() => handleQuickReport("Frequência", "excel")}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -1223,17 +1223,17 @@ const Reports = () => {
                 </p>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button 
+                <Button
                   onClick={() => handleQuickReport("Cursos", "pdf")}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   PDF
                 </Button>
-                <Button 
+                <Button
                   onClick={() => handleQuickReport("Cursos", "excel")}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
