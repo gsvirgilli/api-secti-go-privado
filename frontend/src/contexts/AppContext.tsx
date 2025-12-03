@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { StudentsAPI, CoursesAPI, ClassesAPI, InstructorsAPI } from '@/lib/api';
+import { StudentsAPI, CoursesAPI, ClassesAPI, InstructorsAPI, CandidatesAPI } from '@/lib/api';
 
 // Types
 export interface Student {
@@ -106,6 +106,7 @@ interface AppContextType {
   updateInstructor: (id: number, instructor: Partial<Instructor>) => Promise<void>;
   deleteInstructor: (id: number) => Promise<void>;
   getInstructorById: (id: number) => Instructor | undefined;
+  refreshCandidates: () => Promise<void>;
 
   // Utils
   getStudentsByCourse: (courseName: string) => Student[];
@@ -504,11 +505,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         };
 
         // Carregar dados (com limit maior para pegar todos)
-        const [studentsRes, coursesRes, classesRes, instructorsRes] = await Promise.all([
+        const [studentsRes, coursesRes, classesRes, instructorsRes, candidatesRes] = await Promise.all([
           StudentsAPI.list({ limit: 100, page: 1 }).catch(() => ({ data: [] })),
           loadAllCourses().catch(() => ({ data: { data: { data: [] } } })),
           ClassesAPI.list({ limit: 100, page: 1 }).catch(() => ({ data: [] })),
-          InstructorsAPI.list().catch(() => ({ data: [] }))
+          InstructorsAPI.list().catch(() => ({ data: [] })),
+          CandidatesAPI.list({ limit: 100, page: 1 }).catch(() => ({ data: [] }))
         ]);
 
         // Garantir que students seja um array e transformar do backend para frontend
@@ -734,6 +736,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
         console.log('✅ Instrutores carregados:', frontendInstructors);
         setInstructors(frontendInstructors);
+
+        // Transformar candidates do backend para formato frontend
+        let backendCandidates = [];
+        if (candidatesRes.data && typeof candidatesRes.data === 'object') {
+          if (Array.isArray(candidatesRes.data)) {
+            backendCandidates = candidatesRes.data;
+          } else if (candidatesRes.data.data && Array.isArray(candidatesRes.data.data.data)) {
+            backendCandidates = candidatesRes.data.data.data;
+          } else if (Array.isArray(candidatesRes.data.data)) {
+            backendCandidates = candidatesRes.data.data;
+          }
+        }
+
+        console.log('✅ Candidatos carregados:', backendCandidates);
+        setCandidates(backendCandidates);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
         // Em caso de erro, usar arrays vazios ao invés de dados mockados
@@ -1688,6 +1705,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const getInstructorById = (id: number) => instructors.find(i => i.id === id);
 
+  const refreshCandidates = async () => {
+    try {
+      const response = await CandidatesAPI.list({ limit: 100, page: 1 });
+
+      // Extrair e transformar candidatos
+      let backendCandidates = [];
+      if (response.data && typeof response.data === 'object') {
+        if (Array.isArray(response.data)) {
+          backendCandidates = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data.data)) {
+          backendCandidates = response.data.data.data;
+        } else if (Array.isArray(response.data.data)) {
+          backendCandidates = response.data.data;
+        }
+      }
+
+      setCandidates(backendCandidates);
+      setError(null);
+    } catch (err: any) {
+      console.error('Erro ao carregar candidatos:', err);
+      setError(err.response?.data?.message || 'Erro ao carregar candidatos');
+    }
+  };
+
   const value: AppContextType = {
     students,
     courses,
@@ -1716,6 +1757,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     updateInstructor,
     deleteInstructor,
     getInstructorById,
+    refreshCandidates,
     getStudentsByCourse,
     getStudentsByClass,
     getClassesByCourse,
