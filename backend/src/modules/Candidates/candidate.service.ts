@@ -130,6 +130,7 @@ class CandidateService {
 
     // Buscar candidatos com paginação
     const data = await Candidate.findAll({
+      attributes: ['id', 'nome', 'cpf', 'email', 'telefone', 'data_nascimento', 'status', 'id_turma_desejada', 'turma_id', 'createdAt', 'updatedAt'],
       where,
       include: [{
         model: Class,
