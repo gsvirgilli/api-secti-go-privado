@@ -188,16 +188,9 @@ async function seedDatabase() {
         email: 'ana.costa@email.com',
         telefone: '11987654321',
         data_nascimento: new Date('2000-03-15'),
-        cep: '12345678',
-        rua: 'Rua A',
-        numero: '100',
-        bairro: 'Centro',
-        cidade: 'São Paulo',
-        estado: 'SP',
-        curso_id: cursoWeb.id,
-        turno: 'MATUTINO',
+        id_turma_desejada: turmaWeb1.id,
         turma_id: turmaWeb1.id,
-        status: 'aprovado'
+        status: 'APROVADO'
       }
     });
 
@@ -209,16 +202,9 @@ async function seedDatabase() {
         email: 'carlos.oliveira@email.com',
         telefone: '11976543210',
         data_nascimento: new Date('1998-07-20'),
-        cep: '87654321',
-        rua: 'Rua B',
-        numero: '200',
-        bairro: 'Jardim',
-        cidade: 'São Paulo',
-        estado: 'SP',
-        curso_id: cursoPython.id,
-        turno: 'VESPERTINO',
+        id_turma_desejada: turmaPython1.id,
         turma_id: turmaPython1.id,
-        status: 'aprovado'
+        status: 'APROVADO'
       }
     });
 
@@ -230,15 +216,8 @@ async function seedDatabase() {
         email: 'beatriz.santos@email.com',
         telefone: '11965432109',
         data_nascimento: new Date('2001-11-05'),
-        cep: '11223344',
-        rua: 'Rua C',
-        numero: '300',
-        bairro: 'Vila',
-        cidade: 'São Paulo',
-        estado: 'SP',
-        curso_id: cursoWeb.id,
-        turno: 'MATUTINO',
-        status: 'pendente'
+        id_turma_desejada: turmaWeb1.id,
+        status: 'PENDENTE'
       }
     });
 
