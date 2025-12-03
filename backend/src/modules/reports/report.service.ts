@@ -927,6 +927,15 @@ class ReportService {
       alunos_ativos,
       taxa_atividade,
       cursos_ativos,
+      total_turmas,
+      turmas_ativas,
+      total_matriculas,
+      taxa_aprovacao_candidatos,
+      alunos_por_curso,
+      matriculas_mensais,
+    };
+  }
+
   /**
    * Gera relatório de instrutores em PDF
    */
@@ -1092,17 +1101,7 @@ class ReportService {
       nome: `Total: ${instructors.length} instrutores`,
     });
 
-    const buffer = await workbook.xlsx.writeBuffer();
-    return buffer as Buffer;
-  }
-
-      total_turmas,
-      turmas_ativas,
-      total_matriculas,
-      taxa_aprovacao_candidatos,
-      alunos_por_curso,
-      matriculas_mensais,
-    };
+    return (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
   }
 }
 
