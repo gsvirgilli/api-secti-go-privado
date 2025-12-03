@@ -1241,37 +1241,6 @@ const Reports = () => {
                 </Button>
               </CardContent>
             </Card>
-
-            {/* Financial Report */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Relatório Financeiro
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Receitas, despesas e análises financeiras
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button 
-                  onClick={() => handleQuickReport("Financeiro", "pdf")}
-                  variant="outline" 
-                  className="w-full"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  PDF
-                </Button>
-                <Button 
-                  onClick={() => handleQuickReport("Financeiro", "excel")}
-                  variant="outline" 
-                  className="w-full"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Excel
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         </TabsContent>
 
