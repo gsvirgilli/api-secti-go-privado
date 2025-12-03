@@ -75,9 +75,10 @@ interface AppContextType {
   courses: Course[];
   classes: Class[];
   instructors: Instructor[];
+  candidates: any[];
   loading: boolean;
   error: string | null;
-  
+
   // Student actions
   addStudent: (student: Omit<Student, 'id'>) => Promise<Student>;
   updateStudent: (id: number, student: Partial<Student>) => Promise<void>;
@@ -85,27 +86,27 @@ interface AppContextType {
   transferStudentToWaitingList: (id: number, motivo?: string) => Promise<void>;
   getStudentById: (id: number) => Student | undefined;
   refreshStudents: () => Promise<void>;
-  
+
   // Course actions
   addCourse: (course: Omit<Course, 'id'>) => Promise<Course>;
   updateCourse: (id: number, course: Partial<Course>) => Promise<void>;
   deleteCourse: (id: number) => Promise<void>;
   getCourseById: (id: number) => Course | undefined;
   refreshCourses: () => Promise<void>;
-  
+
   // Class actions
   addClass: (classData: Omit<Class, 'id'>) => Promise<Class>;
   updateClass: (id: number, classData: Partial<Class>) => Promise<void>;
   deleteClass: (id: number) => Promise<void>;
   getClassById: (id: number) => Class | undefined;
   refreshClasses: () => Promise<void>;
-  
+
   // Instructor actions
   addInstructor: (instructor: Omit<Instructor, 'id'>) => Promise<void>;
   updateInstructor: (id: number, instructor: Partial<Instructor>) => Promise<void>;
   deleteInstructor: (id: number) => Promise<void>;
   getInstructorById: (id: number) => Instructor | undefined;
-  
+
   // Utils
   getStudentsByCourse: (courseName: string) => Student[];
   getStudentsByClass: (className: string) => Student[];
@@ -229,7 +230,7 @@ const initialCourses: Course[] = [
     id: 2,
     title: "Informática",
     description: "Curso básico de informática",
-    duration: "80h", 
+    duration: "80h",
     students: 25,
     level: "Básico",
     status: "Ativo",
@@ -241,7 +242,7 @@ const initialCourses: Course[] = [
     description: "Curso introdutório de informática básica",
     duration: "60h",
     students: 42,
-    level: "Iniciante", 
+    level: "Iniciante",
     status: "Ativo",
     color: "bg-purple-500"
   },
@@ -252,7 +253,7 @@ const initialCourses: Course[] = [
     duration: "100h",
     students: 18,
     level: "Avançado",
-    status: "Ativo", 
+    status: "Ativo",
     color: "bg-orange-500"
   },
   {
@@ -267,7 +268,7 @@ const initialCourses: Course[] = [
   },
   {
     id: 6,
-    title: "Python", 
+    title: "Python",
     description: "Banco de dados e SQL",
     duration: "70h",
     students: 22,
@@ -441,6 +442,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [candidates, setCandidates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -450,7 +452,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       // Não carregar dados se estiver em páginas públicas
       const publicPaths = ['/login', '/register', '/reset-password', '/new-password'];
       const isPublicPath = publicPaths.some(path => window.location.pathname.includes(path));
-      
+
       if (isPublicPath) {
         setLoading(false);
         return;
@@ -465,19 +467,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       try {
         setLoading(true);
-        
+
         // Função para carregar todos os cursos (backend limita a 10 por página)
         const loadAllCourses = async () => {
           const seenIds = new Set();
           let uniqueCourses: any[] = [];
           let currentPage = 1;
           let hasMore = true;
-          
+
           while (hasMore && currentPage <= 10) {
             const response = await CoursesAPI.list({ page: currentPage, limit: 100 });
             const pageData = response.data?.data?.data || [];
             const pagination = response.data?.data?.pagination;
-            
+
             // Filtrar apenas cursos novos (não duplicados)
             const newCourses = pageData.filter((course: any) => {
               if (seenIds.has(course.id)) {
@@ -486,21 +488,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               seenIds.add(course.id);
               return true;
             });
-            
+
             uniqueCourses = [...uniqueCourses, ...newCourses];
-            
+
             // Se não teve cursos novos, parar (backend não suporta paginação)
             if (newCourses.length === 0) {
               break;
             }
-            
+
             hasMore = pagination?.hasNextPage || false;
             currentPage++;
           }
-          
+
           return { data: { data: { data: uniqueCourses } } };
         };
-        
+
         // Carregar dados (com limit maior para pegar todos)
         const [studentsRes, coursesRes, classesRes, instructorsRes] = await Promise.all([
           StudentsAPI.list({ limit: 100, page: 1 }).catch(() => ({ data: [] })),
@@ -520,7 +522,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             backendStudents = studentsRes.data.data;
           }
         }
-        
+
         // Transformar students do backend para formato frontend
         const frontendStudents: Student[] = backendStudents.map((bs: any) => {
           const formatDate = (date: string | null) => {
@@ -528,13 +530,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             const d = new Date(date);
             return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
           };
-          
+
           // Converter status do backend (minúsculo) para frontend (primeira letra maiúscula)
           const formatStatus = (status: string) => {
             if (!status) return 'Ativo';
             return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
           };
-          
+
           return {
             id: bs.id,
             matricula: bs.matricula || '',
@@ -553,9 +555,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             grades: 0
           };
         });
-        
+
         setStudents(frontendStudents);
-        
+
         // Transform backend courses to frontend format
         // Backend retorna { success, data: { data: [...], pagination: {...} }, message }
         let backendCourses = [];
@@ -571,7 +573,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             backendCourses = coursesRes.data.data;
           }
         }
-        
+
         const frontendCourses: Course[] = backendCourses.map((bc: any) => {
           // Contar alunos de todas as turmas deste curso
           let totalStudents = 0;
@@ -580,7 +582,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               return sum + (turma.alunos ? turma.alunos.length : 0);
             }, 0);
           }
-          
+
           return {
             id: bc.id,
             title: bc.nome,
@@ -606,9 +608,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             color: 'bg-blue-500'
           };
         });
-        
+
         setCourses(frontendCourses);
-        
+
         // Garantir que classes seja um array e transformar do backend para frontend
         let backendClasses = [];
         if (classesRes.data && typeof classesRes.data === 'object') {
@@ -620,7 +622,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             backendClasses = classesRes.data.data;
           }
         }
-        
+
         // Transformar classes do backend para formato frontend
         const frontendClasses: Class[] = backendClasses.map((bc: any) => {
           const formatDate = (date: string | null) => {
@@ -634,7 +636,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             }
             return date;
           };
-          
+
           // Transformar alunos da turma
           const students = (bc.alunos || []).map((aluno: any) => ({
             id: aluno.id,
@@ -643,15 +645,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             email: aluno.email,
             status: aluno.status
           }));
-          
+
           // Pegar primeiro instrutor (se houver)
-          const instructor = bc.instrutores && bc.instrutores.length > 0 
-            ? bc.instrutores[0].nome 
+          const instructor = bc.instrutores && bc.instrutores.length > 0
+            ? bc.instrutores[0].nome
             : 'A definir';
-          const instructorId = bc.instrutores && bc.instrutores.length > 0 
-            ? bc.instrutores[0].id 
+          const instructorId = bc.instrutores && bc.instrutores.length > 0
+            ? bc.instrutores[0].id
             : undefined;
-          
+
           // Mapear status do backend para frontend
           const statusMap: Record<string, string> = {
             'ATIVA': 'Ativo',
@@ -660,7 +662,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             'CANCELADA': 'Cancelada'
           };
           const frontendStatus = bc.status ? (statusMap[bc.status] || 'Planejada') : 'Planejada';
-          
+
           // Mapear turno do backend para formato amigável
           const turnoMap: Record<string, string> = {
             'MANHA': 'Matutino',
@@ -669,7 +671,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             'INTEGRAL': 'Integral'
           };
           const frontendSchedule = bc.turno ? (turnoMap[bc.turno] || bc.turno) : '';
-          
+
           return {
             id: bc.id,
             name: bc.nome || '',
@@ -686,10 +688,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             students: students
           };
         });
-        
+
         console.log('✅ Classes no loadData:', frontendClasses);
         setClasses(frontendClasses);
-        
+
         // Transformar instructors do backend para formato frontend
         let backendInstructors = [];
         if (instructorsRes.data && typeof instructorsRes.data === 'object') {
@@ -699,14 +701,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             backendInstructors = instructorsRes.data.data;
           }
         }
-        
+
         const frontendInstructors: Instructor[] = backendInstructors.map((bi: any) => {
           const formatDate = (date: string | null) => {
             if (!date) return '';
             const d = new Date(date);
             return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
           };
-          
+
           // Mapear turmas associadas
           const classes = (bi.turmas || []).map((turma: any) => ({
             id: turma.id,
@@ -714,7 +716,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             status: turma.status,
             courseName: turma.curso?.nome || ''
           }));
-          
+
           return {
             id: bi.id,
             name: bi.nome || '',
@@ -729,7 +731,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             classes: classes
           };
         });
-        
+
         console.log('✅ Instrutores carregados:', frontendInstructors);
         setInstructors(frontendInstructors);
       } catch (error) {
@@ -755,7 +757,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         window.location.reload();
       }
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
@@ -764,7 +766,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const refreshStudents = async () => {
     try {
       const response = await StudentsAPI.list({ limit: 100, page: 1 });
-      
+
       // Extrair e transformar students
       let backendStudents = [];
       if (response.data && typeof response.data === 'object') {
@@ -776,14 +778,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           backendStudents = response.data.data;
         }
       }
-      
+
       const frontendStudents: Student[] = backendStudents.map((bs: any) => {
         const formatDate = (date: string | null) => {
           if (!date) return '';
           const d = new Date(date);
           return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
         };
-        
+
         // Converter status do backend (minúsculo) para frontend (primeira letra maiúscula)
         const formatStatus = (status: string) => {
           if (!status) return 'Ativo';
@@ -809,7 +811,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             className += ` - ${formatTurno(bs.turma.turno)}`;
           }
         }
-        
+
         return {
           id: bs.id,
           matricula: bs.matricula || '',
@@ -828,7 +830,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           grades: 0
         };
       });
-      
+
       setStudents(frontendStudents);
       setError(null);
     } catch (err: any) {
@@ -841,23 +843,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addStudent = async (studentData: Omit<Student, 'id'>): Promise<Student> => {
     try {
       setError(null);
-      
+
       console.log('➕ Criando aluno:', studentData);
-      
+
       // Buscar id_curso baseado no nome do curso selecionado
       let id_curso = null;
       if (studentData.course) {
         const selectedCourse = courses.find(c => c.title === studentData.course);
         id_curso = selectedCourse ? selectedCourse.id : null;
       }
-      
+
       // Buscar id_turma baseado no nome da turma selecionada
       let id_turma = null;
       if (studentData.class) {
         const selectedClass = classes.find(c => c.name === studentData.class);
         id_turma = selectedClass ? selectedClass.id : null;
       }
-      
+
       // Transform frontend format to backend format
       const backendData = {
         nome: studentData.name,
@@ -870,28 +872,28 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         id_turma: id_turma,
         status: 'ativo'
       };
-      
+
       console.log('➕ Dados para backend:', backendData);
-      
+
       const response = await StudentsAPI.create(backendData);
       console.log('➕ Resposta do backend:', response);
-      
+
       const backendStudent = response.data.data; // Backend returns { success, data, message }
       console.log('➕ Backend student:', backendStudent);
-      
+
       // Transform backend format to frontend format
       const formatDate = (date: string | null) => {
         if (!date) return '';
         const d = new Date(date);
         return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
       };
-      
+
       // Converter status do backend (minúsculo) para frontend (primeira letra maiúscula)
       const formatStatus = (status: string) => {
         if (!status) return 'Ativo';
         return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
       };
-      
+
       const newStudent: Student = {
         id: backendStudent.id,
         name: backendStudent.nome,
@@ -908,19 +910,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         attendance: 0,
         grades: 0
       };
-      
+
       console.log('➕ Novo aluno transformado:', newStudent);
-      
+
       setStudents(prev => {
         const updated = [...prev, newStudent];
         console.log('➕ Alunos após adicionar:', updated);
         return updated;
       });
-      
+
       // Refresh related data
       await refreshClasses();
       await refreshCourses();
-      
+
       return newStudent;
     } catch (err: any) {
       console.error('Erro ao criar aluno:', err);
@@ -934,16 +936,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const updateStudent = async (id: number, studentData: Partial<Student>): Promise<void> => {
     try {
       setError(null);
-      
+
       console.log('✏️ Atualizando aluno:', id, studentData);
-      
+
       // Transform frontend format to backend format
       // IMPORTANTE: Enviar APENAS os campos que o backend aceita (nome, email, telefone, turma_id, status)
       const backendData: Record<string, unknown> = {};
       if (studentData.name !== undefined) backendData.nome = studentData.name;
       if (studentData.email !== undefined) backendData.email = studentData.email;
       if (studentData.phone !== undefined) backendData.telefone = studentData.phone;
-      
+
       // Buscar turma_id se turma foi alterada
       if (studentData.class !== undefined) {
         if (studentData.class === "" || studentData.class === null) {
@@ -955,30 +957,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           }
         }
       }
-      
+
       if (studentData.status !== undefined) {
         console.log('🔍 Status enviado:', studentData.status);
         backendData.status = studentData.status; // Backend vai converter automaticamente
       }
-      
+
       console.log('✏️ Dados para backend:', backendData);
       console.log('✏️ Dados em JSON:', JSON.stringify(backendData, null, 2));
-      
+
       // Verificar se há dados para enviar
       if (Object.keys(backendData).length === 0) {
         console.warn('⚠️ Nenhum dado para atualizar');
         return;
       }
-      
+
       const response = await StudentsAPI.update(id, backendData);
       console.log('✅ Resposta do backend:', response.data);
-      
+
       // Recarregar a lista de alunos do backend para garantir sincronização
       await refreshStudents();
-      
+
       // Refresh related data
       await refreshClasses();
-      
+
     } catch (err: unknown) {
       console.error('❌ Erro completo ao atualizar aluno:', err);
       const error = err as { response?: { data?: { error?: string; message?: string; details?: any } } };
@@ -994,13 +996,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
       setError(null);
       await StudentsAPI.delete(id);
-      
+
       setStudents(prev => prev.filter(s => s.id !== id));
-      
+
       // Refresh related data
       await refreshClasses();
       await refreshCourses();
-      
+
     } catch (err: any) {
       console.error('Erro ao deletar aluno:', err);
       const errorMessage = err.response?.data?.message || 'Erro ao deletar aluno';
@@ -1013,14 +1015,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
       setError(null);
       await StudentsAPI.transferToWaitingList(id, motivo);
-      
+
       // Remove aluno da lista
       setStudents(prev => prev.filter(s => s.id !== id));
-      
+
       // Refresh related data
       await refreshClasses();
       await refreshCourses();
-      
+
     } catch (err: any) {
       console.error('Erro ao transferir aluno para lista de espera:', err);
       const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Erro ao transferir aluno para lista de espera';
@@ -1036,7 +1038,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const response = await CoursesAPI.list({ limit: 100 });
       console.log('🔍 Response completa:', response);
       console.log('🔍 response.data:', response.data);
-      
+
       // Backend retorna { success, data: { data: [...], pagination: {...} }, message }
       let backendCourses = [];
       if (response.data && typeof response.data === 'object') {
@@ -1051,7 +1053,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
       console.log('🔍 Backend courses:', backendCourses);
       console.log('🔍 É array?', Array.isArray(backendCourses));
-      
+
       // Transform backend format to frontend format
       const frontendCourses: Course[] = backendCourses.map((bc: any) => {
         // Contar alunos de todas as turmas deste curso
@@ -1061,7 +1063,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return sum + (turma.alunos ? turma.alunos.length : 0);
           }, 0);
         }
-        
+
         return {
           id: bc.id,
           title: bc.nome,
@@ -1087,7 +1089,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           color: 'bg-blue-500'
         };
       });
-      
+
       console.log('🔍 Frontend courses transformados:', frontendCourses);
       setCourses(frontendCourses);
       setError(null);
@@ -1101,9 +1103,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addCourse = async (courseData: Omit<Course, 'id'>): Promise<Course> => {
     try {
       setError(null);
-      
+
       console.log('➕ Criando curso:', courseData);
-      
+
       // Transform frontend format to backend format
       const backendData: any = {
         nome: courseData.title,
@@ -1128,16 +1130,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         };
         backendData.status = mapToBackend[courseData.status] || 'ATIVO';
       }
-      
+
       console.log('➕ Dados para backend:', backendData);
-      
+
       const response = await CoursesAPI.create(backendData);
       console.log('➕ Resposta do backend:', response);
       console.log('➕ response.data:', response.data);
-      
+
       const backendCourse = response.data.data; // Backend returns { success, data, message }
       console.log('➕ Backend course:', backendCourse);
-      
+
       // Transform backend format to frontend format
       const newCourse: Course = {
         id: backendCourse.id,
@@ -1163,14 +1165,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         })(),
         color: 'bg-blue-500'
       };
-      
+
       console.log('➕ Novo curso transformado:', newCourse);
       setCourses(prev => {
         const updated = [...prev, newCourse];
         console.log('➕ Cursos após adicionar:', updated);
         return updated;
       });
-      
+
       return newCourse;
     } catch (err: any) {
       console.error('Erro ao criar curso:', err);
@@ -1183,9 +1185,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const updateCourse = async (id: number, courseData: Partial<Course>): Promise<void> => {
     try {
       setError(null);
-      
+
       console.log('🔧 Atualizando curso:', id, courseData);
-      
+
       // Transform frontend format to backend format
       const backendData: any = {};
       if (courseData.title) backendData.nome = courseData.title;
@@ -1207,19 +1209,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         };
         backendData.status = mapToBackend[courseData.status] || 'ATIVO';
       }
-      
+
       console.log('🔧 Dados backend:', backendData);
-      
+
       const response = await CoursesAPI.update(id, backendData);
       console.log('🔧 Resposta do update:', response);
-      
+
       // Ao invés de atualizar manualmente, recarregar do backend para garantir consistência
       await refreshCourses();
-      
+
       // Refresh related data
       await refreshClasses();
       await refreshStudents();
-      
+
     } catch (err: any) {
       console.error('❌ Erro ao atualizar curso:', err);
       const errorMessage = err.response?.data?.message || 'Erro ao atualizar curso';
@@ -1232,12 +1234,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
       setError(null);
       await CoursesAPI.delete(id);
-      
+
       setCourses(prev => prev.filter(c => c.id !== id));
-      
+
       // Refresh related data
       await refreshClasses();
-      
+
     } catch (err: any) {
       console.error('Erro ao deletar curso:', err);
       const errorMessage = err.response?.data?.message || 'Erro ao deletar curso';
@@ -1251,7 +1253,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const refreshClasses = async () => {
     try {
       const response = await ClassesAPI.list({ limit: 100 });
-      
+
       // Extrair e transformar classes
       let backendClasses = [];
       if (response.data && typeof response.data === 'object') {
@@ -1263,7 +1265,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           backendClasses = response.data.data;
         }
       }
-      
+
       const frontendClasses: Class[] = backendClasses.map((bc: any) => {
         const formatDate = (date: string | null) => {
           if (!date) return '';
@@ -1286,11 +1288,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }));
 
         // Pegar primeiro instrutor (se houver)
-        const instructor = bc.instrutores && bc.instrutores.length > 0 
-          ? bc.instrutores[0].nome 
+        const instructor = bc.instrutores && bc.instrutores.length > 0
+          ? bc.instrutores[0].nome
           : 'A definir';
-        const instructorId = bc.instrutores && bc.instrutores.length > 0 
-          ? bc.instrutores[0].id 
+        const instructorId = bc.instrutores && bc.instrutores.length > 0
+          ? bc.instrutores[0].id
           : undefined;
 
         // Mapear status do backend para frontend
@@ -1327,7 +1329,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           students: students
         };
       });
-      
+
       setClasses(frontendClasses);
       setError(null);
     } catch (err: any) {
@@ -1340,15 +1342,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addClass = async (classData: Omit<Class, 'id'>): Promise<Class> => {
     try {
       setError(null);
-      
+
       // Mapear campos do frontend para o backend
       const backendData: any = {
         nome: classData.name,
         vagas: classData.capacity || 0,
-        status: classData.status === 'Ativo' ? 'ATIVA' : 
-                classData.status === 'Concluída' ? 'ENCERRADA' : 
-                classData.status === 'Cancelada' ? 'CANCELADA' : 
-                'ATIVA', // Default para "Planejada" vira ATIVA
+        status: classData.status === 'Ativo' ? 'ATIVA' :
+          classData.status === 'Concluída' ? 'ENCERRADA' :
+            classData.status === 'Cancelada' ? 'CANCELADA' :
+              'ATIVA', // Default para "Planejada" vira ATIVA
       };
 
       // Mapear turno baseado no schedule ou usar default
@@ -1384,10 +1386,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       backendData.data_fim = parseDate(classData.endDate);
 
       console.log('📤 Enviando dados para backend:', backendData);
-      
+
       const response = await ClassesAPI.create(backendData);
       const newClass = response.data;
-      
+
       // Associate instructor if provided
       if (classData.instructorId && newClass.id) {
         try {
@@ -1398,12 +1400,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           // Don't throw - allow class creation to succeed
         }
       }
-      
+
       setClasses(prev => [...prev, newClass]);
-      
+
       // Refresh to get updated data with instructor
       await refreshClasses();
-      
+
       return newClass;
     } catch (err: any) {
       console.error('Erro ao criar turma:', err);
@@ -1474,11 +1476,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           'Cancelada': 'CANCELADA'
         };
         const mapped = statusMap[classData.status];
-        
+
         // Get current class to check if status actually changed
         const currentClass = classes.find(c => c.id === id);
         const currentBackendStatus = currentClass ? statusMap[currentClass.status] : undefined;
-        
+
         if (mapped && mapped !== currentBackendStatus) {
           console.log('🔄 Atualizando status da turma:', { id, from: currentBackendStatus, to: mapped });
           try {
@@ -1495,7 +1497,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (classData.instructorId) {
         // Get current class to check if instructor changed
         const currentClass = classes.find(c => c.id === id);
-        
+
         // If instructor changed, update association
         if (!currentClass || currentClass.instructorId !== classData.instructorId) {
           try {
@@ -1514,14 +1516,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Update local state: merge changes (keep students etc.)
-      setClasses(prev => prev.map(cls => 
+      setClasses(prev => prev.map(cls =>
         cls.id === id ? { ...cls, ...classData } : cls
       ));
 
       // Refresh related data
       await refreshStudents();
       await refreshClasses();
-      
+
     } catch (err: any) {
       console.error('Erro ao atualizar turma:', err);
       const errorMessage = err.response?.data?.message || 'Erro ao atualizar turma';
@@ -1534,12 +1536,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
       setError(null);
       await ClassesAPI.delete(id);
-      
+
       setClasses(prev => prev.filter(c => c.id !== id));
-      
+
       // Refresh students data
       await refreshStudents();
-      
+
     } catch (err: any) {
       console.error('Erro ao deletar turma:', err);
       const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Erro ao deletar turma';
@@ -1551,20 +1553,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const getClassById = (id: number) => classes.find(c => c.id === id);
 
   // Utility functions
-  const getStudentsByCourse = (courseName: string) => 
+  const getStudentsByCourse = (courseName: string) =>
     students.filter(s => s.course === courseName);
 
-  const getStudentsByClass = (className: string) => 
+  const getStudentsByClass = (className: string) =>
     students.filter(s => s.class === className);
 
-  const getClassesByCourse = (courseName: string) => 
+  const getClassesByCourse = (courseName: string) =>
     classes.filter(c => c.course === courseName);
 
   // Instructor actions
   const addInstructor = async (instructorData: Omit<Instructor, 'id'>): Promise<void> => {
     try {
       setError(null);
-      
+
       const backendData = {
         nome: instructorData.name,
         cpf: instructorData.cpf.replace(/\D/g, ''), // Remove formatação
@@ -1575,9 +1577,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         experiencia: instructorData.experience,
         status: instructorData.status
       };
-      
+
       await InstructorsAPI.create(backendData);
-      
+
       // Recarregar instrutores
       const response = await InstructorsAPI.list();
       let backendInstructors = [];
@@ -1588,7 +1590,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           backendInstructors = response.data.data;
         }
       }
-      
+
       const frontendInstructors: Instructor[] = backendInstructors.map((bi: any) => {
         return {
           id: bi.id,
@@ -1604,7 +1606,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           classes: []
         };
       });
-      
+
       setInstructors(frontendInstructors);
     } catch (err: any) {
       console.error('Erro ao criar instrutor:', err);
@@ -1617,7 +1619,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const updateInstructor = async (id: number, instructorData: Partial<Instructor>): Promise<void> => {
     try {
       setError(null);
-      
+
       const backendData: any = {};
       if (instructorData.name !== undefined) backendData.nome = instructorData.name;
       if (instructorData.cpf !== undefined) backendData.cpf = instructorData.cpf.replace(/\D/g, '');
@@ -1627,13 +1629,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (instructorData.specialization !== undefined) backendData.especialidade = instructorData.specialization;
       if (instructorData.experience !== undefined) backendData.experiencia = instructorData.experience;
       if (instructorData.status !== undefined) backendData.status = instructorData.status;
-      
+
       console.log('🔄 Atualizando instrutor ID:', id);
       console.log('📤 Dados enviados:', backendData);
-      
+
       const updateResponse = await InstructorsAPI.update(id, backendData);
       console.log('✅ Resposta da API:', updateResponse.data);
-      
+
       // Recarregar instrutores
       const response = await InstructorsAPI.list();
       let backendInstructors = [];
@@ -1644,7 +1646,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           backendInstructors = response.data.data;
         }
       }
-      
+
       const frontendInstructors: Instructor[] = backendInstructors.map((bi: any) => {
         return {
           id: bi.id,
@@ -1660,7 +1662,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           classes: []
         };
       });
-      
+
       setInstructors(frontendInstructors);
     } catch (err: any) {
       console.error('Erro ao atualizar instrutor:', err);
@@ -1674,7 +1676,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
       setError(null);
       await InstructorsAPI.delete(id);
-      
+
       setInstructors(prev => prev.filter(i => i.id !== id));
     } catch (err: any) {
       console.error('Erro ao deletar instrutor:', err);
@@ -1691,6 +1693,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     courses,
     classes,
     instructors,
+    candidates,
     loading,
     error,
     addStudent,

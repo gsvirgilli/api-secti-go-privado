@@ -2,7 +2,7 @@ import { useAppContext } from '@/contexts/AppContext';
 
 export const useAppData = () => {
   const context = useAppContext();
-  
+
   if (!context) {
     throw new Error('useAppData must be used within an AppProvider');
   }
@@ -38,6 +38,13 @@ export const useAppData = () => {
     inactive: context.instructors.filter(i => i.status === "Inativo").length,
   };
 
+  const candidateStats = {
+    total: context.candidates?.length || 0,
+    pending: context.candidates?.filter(c => c.status === "PENDENTE").length || 0,
+    approved: context.candidates?.filter(c => c.status === "APROVADO").length || 0,
+    rejected: context.candidates?.filter(c => c.status === "REJEITADO").length || 0,
+  };
+
   // ---------- Dados para Charts ----------
   const charts = {
     studentsByStatus: [
@@ -67,6 +74,7 @@ export const useAppData = () => {
       classes: classStats,
       courses: courseStats,
       instructors: instructorStats,
+      candidates: candidateStats,
     },
     // Dados para gráficos
     charts,
