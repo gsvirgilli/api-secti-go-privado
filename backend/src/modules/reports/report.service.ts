@@ -127,10 +127,12 @@ class ReportService {
         });
         doc.moveDown(1);
 
+        let pageCount = 1;
         students.forEach((student: any, index: number) => {
           // Quebra de página se necessário
           if (doc.y > 700) {
             doc.addPage();
+            pageCount++;
           }
 
           doc
@@ -150,15 +152,14 @@ class ReportService {
           doc.moveDown(0.5);
         });
 
-        // Footer
-        const totalPages = doc.bufferedPageRange().count;
-        for (let i = 0; i < totalPages; i++) {
+        // Footer - adicionar em todas as páginas criadas
+        for (let i = 0; i < pageCount; i++) {
           doc.switchToPage(i);
           doc
             .fontSize(8)
             .fillColor('#999')
             .text(
-              `Página ${i + 1} de ${totalPages} | SECTI - Sistema de Gestão`,
+              `Página ${i + 1} de ${pageCount} | SECTI - Sistema de Gestão`,
               50,
               doc.page.height - 50,
               { align: 'center' }
@@ -254,10 +255,12 @@ class ReportService {
         });
         doc.moveDown(1);
 
+        let pageCount = 1;
         classes.forEach((turma, index) => {
           // Quebra de página se necessário
           if (doc.y > 650) {
             doc.addPage();
+            pageCount++;
           }
 
           doc
@@ -292,15 +295,14 @@ class ReportService {
           doc.moveDown(1);
         });
 
-        // Footer
-        const totalPages = doc.bufferedPageRange().count;
-        for (let i = 0; i < totalPages; i++) {
+        // Footer - adicionar em todas as páginas criadas
+        for (let i = 0; i < pageCount; i++) {
           doc.switchToPage(i);
           doc
             .fontSize(8)
             .fillColor('#999')
             .text(
-              `Página ${i + 1} de ${totalPages} | SECTI - Sistema de Gestão`,
+              `Página ${i + 1} de ${pageCount} | SECTI - Sistema de Gestão`,
               50,
               doc.page.height - 50,
               { align: 'center' }
@@ -426,9 +428,11 @@ class ReportService {
         });
         doc.moveDown(1);
 
+        let pageCount = 1;
         Array.from(studentStats.entries()).forEach(([id, stats], index) => {
           if (doc.y > 700) {
             doc.addPage();
+            pageCount++;
           }
 
           const percentual = ((stats.presente / stats.total) * 100).toFixed(1);
@@ -446,15 +450,14 @@ class ReportService {
           doc.moveDown(0.5);
         });
 
-        // Footer
-        const totalPages = doc.bufferedPageRange().count;
-        for (let i = 0; i < totalPages; i++) {
+        // Footer - adicionar em todas as páginas criadas
+        for (let i = 0; i < pageCount; i++) {
           doc.switchToPage(i);
           doc
             .fontSize(8)
             .fillColor('#999')
             .text(
-              `Página ${i + 1} de ${totalPages} | SECTI - Sistema de Gestão`,
+              `Página ${i + 1} de ${pageCount} | SECTI - Sistema de Gestão`,
               50,
               doc.page.height - 50,
               { align: 'center' }
@@ -530,9 +533,11 @@ class ReportService {
         });
         doc.moveDown(1);
 
+        let pageCount = 1;
         courses.forEach((course, index) => {
           if (doc.y > 650) {
             doc.addPage();
+            pageCount++;
           }
 
           const totalAlunos = course.turmas?.reduce(
@@ -560,15 +565,14 @@ class ReportService {
           doc.moveDown(1);
         });
 
-        // Footer
-        const totalPages = doc.bufferedPageRange().count;
-        for (let i = 0; i < totalPages; i++) {
+        // Footer - adicionar em todas as páginas criadas
+        for (let i = 0; i < pageCount; i++) {
           doc.switchToPage(i);
           doc
             .fontSize(8)
             .fillColor('#999')
             .text(
-              `Página ${i + 1} de ${totalPages} | SECTI - Sistema de Gestão`,
+              `Página ${i + 1} de ${pageCount} | SECTI - Sistema de Gestão`,
               50,
               doc.page.height - 50,
               { align: 'center' }
