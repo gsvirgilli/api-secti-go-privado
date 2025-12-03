@@ -272,7 +272,7 @@ class CandidateService {
     }
 
     // Não permitir deletar candidato aprovado
-    if (candidate.status === 'aprovado') {
+    if (candidate.status === 'APROVADO') {
       throw new Error('Não é possível deletar candidato aprovado. O aluno já foi criado.');
     }
 
@@ -293,43 +293,22 @@ class CandidateService {
       throw new Error('Candidato não encontrado');
     }
 
-    if (candidate.status === 'aprovado') {
+    if (candidate.status === 'APROVADO') {
       throw new Error('Candidato já foi aprovado');
     }
 
-    // Determinar qual curso/turno usar
-    let cursoId: number;
-    let turno: string;
-    
-    if (opcaoCurso === 2 && candidate.curso_id2 && candidate.turno2) {
-      cursoId = candidate.curso_id2;
-      turno = candidate.turno2;
-    } else {
-      if (!candidate.curso_id || !candidate.turno) {
-        throw new Error('Candidato não possui curso ou turno definido');
-      }
-      cursoId = candidate.curso_id;
-      turno = candidate.turno;
+    // Para esta versão simplificada, o candidato é aprovado e vinculado à turma desejada
+    if (!candidate.id_turma_desejada) {
+      throw new Error('Candidato não possui turma desejada definida');
     }
 
-    // Buscar automaticamente a turma baseado no curso e turno escolhidos
-    const turnoMap: Record<string, string> = {
-      'MATUTINO': 'MANHA',
-      'VESPERTINO': 'TARDE',
-      'NOTURNO': 'NOITE'
-    };
+    // Buscar a turma desejada
+    const turma = await Class.findByPk(candidate.id_turma_desejada);
     
-    const turnoParaBusca = turnoMap[turno] || turno;
-    
-    const turmaDisponivel = await Class.findOne({
-      where: {
-        id_curso: cursoId,
-        turno: turnoParaBusca
-      }
-    });
+    const turmaDisponivel = turma;
     
     if (!turmaDisponivel) {
-      throw new Error('Não foi possível encontrar uma turma disponível para este curso e turno');
+      throw new Error('Turma não encontrada');
     }
 
     // Verificar se ainda há vagas na turma
@@ -390,7 +369,7 @@ class CandidateService {
       } as any);
 
       // Atualizar status do candidato
-      await candidate.update({ status: 'aprovado' });
+      await candidate.update({ status: 'APROVADO' });
 
       return {
         candidate,
@@ -415,7 +394,7 @@ class CandidateService {
       throw new Error('Candidato não encontrado');
     }
 
-    if (candidate.status === 'aprovado') {
+    if (candidate.status === 'APROVADO') {
       throw new Error('Não é possível rejeitar candidato aprovado');
     }
 
