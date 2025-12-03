@@ -102,13 +102,53 @@ CREATE TABLE IF NOT EXISTS alunos (
 );
 
 -- Inserir usuário de teste
-INSERT INTO usuarios (nome, email, senha_hash, role, createdAt, updatedAt) 
-VALUES ('Admin Teste', 'admin@sukatech.com', '$2b$10$YourHashHere', 'ADMIN', NOW(), NOW())
+INSERT IGNORE INTO usuarios (nome, email, senha_hash, role, createdAt, updatedAt) 
+VALUES ('Admin Teste', 'teste@example.com', '$2b$10$3TNbU8TS0pN3XsJU7O9elu8KwSBB5pVqN4dFZKNtCdqVKYlvEXnzK', 'ADMIN', NOW(), NOW());
+
+-- Inserir cursos de exemplo
+INSERT IGNORE INTO cursos (nome, descricao, carga_horaria, createdAt, updatedAt) 
+VALUES 
+  ('Desenvolvimento Web', 'Curso completo de desenvolvimento web com React e Node.js', 120, NOW(), NOW()),
+  ('Banco de Dados', 'Fundamentos de banco de dados SQL e NoSQL', 80, NOW(), NOW()),
+  ('Python Avançado', 'Programação em Python com frameworks', 100, NOW(), NOW()),
+  ('Mobile iOS', 'Desenvolvimento de aplicativos para iOS', 90, NOW(), NOW()),
+  ('DevOps e Cloud', 'Containerização, CI/CD e Cloud Computing', 110, NOW(), NOW());
+
+-- Inserir turmas
+INSERT IGNORE INTO turmas (nome, descricao, data_inicio, data_fim, turno, id_curso, vagas, status, createdAt, updatedAt)
+VALUES
+  ('Web - Turma A', 'Turma A de desenvolvimento web', '2025-01-15', '2025-06-15', 'matutino', 1, 30, 'ATIVO', NOW(), NOW()),
+  ('BD - Turma B', 'Turma B de banco de dados', '2025-02-01', '2025-05-01', 'vespertino', 2, 25, 'ATIVO', NOW(), NOW()),
+  ('Python - Turma C', 'Turma C de Python', '2025-01-20', '2025-07-20', 'noturno', 3, 20, 'ATIVO', NOW(), NOW());
+
+-- Inserir instrutores
+INSERT IGNORE INTO instrutores (nome, email, cpf, especialidade, telefone, createdAt, updatedAt)
+VALUES
+  ('Carlos Silva', 'carlos@example.com', '12345678901', 'Web Development', '11999999999', NOW(), NOW()),
+  ('Maria Santos', 'maria@example.com', '98765432101', 'Banco de Dados', '11988888888', NOW(), NOW());
+
+-- Inserir relacionamento instrutor-turma
+INSERT IGNORE INTO instrutor_turma (id_instrutor, id_turma, createdAt, updatedAt)
+SELECT i.id, t.id, NOW(), NOW()
+FROM instrutores i
+CROSS JOIN turmas t
+WHERE i.email = 'carlos@example.com' AND t.nome = 'Web - Turma A'
 ON DUPLICATE KEY UPDATE updatedAt = NOW();
 
--- Inserir alguns cursos de exemplo
-INSERT INTO cursos (nome, descricao, carga_horaria, createdAt, updatedAt) 
-VALUES 
-  ('Desenvolvimento Web', 'Curso completo de desenvolvimento web', 120, NOW(), NOW()),
-  ('Banco de Dados', 'Fundamentos de banco de dados', 80, NOW(), NOW())
+INSERT IGNORE INTO instrutor_turma (id_instrutor, id_turma, createdAt, updatedAt)
+SELECT i.id, t.id, NOW(), NOW()
+FROM instrutores i
+CROSS JOIN turmas t
+WHERE i.email = 'maria@example.com' AND t.nome = 'BD - Turma B'
 ON DUPLICATE KEY UPDATE updatedAt = NOW();
+
+-- Inserir candidatos
+INSERT IGNORE INTO candidatos (nome, cpf, email, telefone, data_nascimento, status, id_turma_desejada, createdAt, updatedAt)
+SELECT 'João Candidato', '11122233344', 'joao.candidato@example.com', '11987654321', '1995-05-15', 'PENDENTE', t.id, NOW(), NOW()
+FROM turmas t WHERE t.nome = 'Web - Turma A'
+LIMIT 1;
+
+INSERT IGNORE INTO candidatos (nome, cpf, email, telefone, data_nascimento, status, id_turma_desejada, createdAt, updatedAt)
+SELECT 'Ana Candidata', '55566677788', 'ana.candidata@example.com', '11987654322', '1996-08-20', 'PENDENTE', t.id, NOW(), NOW()
+FROM turmas t WHERE t.nome = 'Python - Turma C'
+LIMIT 1;
