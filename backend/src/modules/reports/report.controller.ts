@@ -151,6 +151,37 @@ class ReportController {
   }
 
   /**
+   * Gera relatório de instrutores em PDF
+   */
+  async generateInstructorsPDF(req: Request, res: Response) {
+    const buffer = await ReportService.generateInstructorsPDF({});
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=relatorio-instrutores-${Date.now()}.pdf`
+    );
+    res.send(buffer);
+  }
+
+  /**
+   * Gera relatório de instrutores em Excel
+   */
+  async generateInstructorsExcel(req: Request, res: Response) {
+    const buffer = await ReportService.generateInstructorsExcel({});
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=relatorio-instrutores-${Date.now()}.xlsx`
+    );
+    res.send(buffer);
+  }
+
+  /**
    * Busca estatísticas do dashboard
    */
   async getDashboardStats(req: Request, res: Response) {

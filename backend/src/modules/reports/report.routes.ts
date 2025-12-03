@@ -316,4 +316,58 @@ router.get('/courses/pdf', isAuthenticated, async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/reports/instructors/pdf:
+ *   get:
+ *     summary: Gera relatório de instrutores em PDF
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: PDF gerado com sucesso
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       401:
+ *         description: Não autenticado
+ */
+router.get('/instructors/pdf', isAuthenticated, async (req, res, next) => {
+  try {
+    await ReportController.generateInstructorsPDF(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /api/reports/instructors/excel:
+ *   get:
+ *     summary: Gera relatório de instrutores em Excel
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Excel gerado com sucesso
+ *         content:
+ *           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       401:
+ *         description: Não autenticado
+ */
+router.get('/instructors/excel', isAuthenticated, async (req, res, next) => {
+  try {
+    await ReportController.generateInstructorsExcel(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

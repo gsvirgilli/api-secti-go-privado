@@ -927,6 +927,175 @@ class ReportService {
       alunos_ativos,
       taxa_atividade,
       cursos_ativos,
+  /**
+   * Gera relatório de instrutores em PDF
+   */
+  async generateInstructorsPDF(filters: ReportFilters): Promise<Buffer> {
+    const instructors: any[] = await Instructor.findAll({
+      include: [
+        {
+          model: Class,
+          as: 'turmas',
+          through: { attributes: [] },
+        },
+      ],
+      order: [['nome', 'ASC']],
+    });
+
+    return new Promise((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({ margin: 50, size: 'A4', bufferPages: true });
+        const chunks: Buffer[] = [];
+
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+
+        // Header
+        doc
+          .fontSize(20)
+          .fillColor('#667eea')
+          .text('Relatório de Instrutores', { align: 'center' });
+
+        doc.moveDown(0.5);
+        doc
+          .fontSize(10)
+          .fillColor('#666')
+          .text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, {
+            align: 'center',
+          });
+
+        doc.moveDown(2);
+
+        // Estatísticas
+        const totalInstrutores = instructors.length;
+        const instrutoresAtivos = instructors.filter(i => i.status === 'ATIVO').length;
+        const totalTurmas = instructors.reduce(
+          (sum, i) => sum + (i.turmas?.length || 0),
+          0
+        );
+
+        doc.fontSize(12).fillColor('#666');
+        doc.text(`Total de Instrutores: ${totalInstrutores}`, { continued: true });
+        doc.text(`   |   Instrutores Ativos: ${instrutoresAtivos}`);
+        doc.text(`Total de Turmas Associadas: ${totalTurmas}`);
+        doc.moveDown(2);
+
+        // Detalhes dos instrutores
+        doc.fontSize(14).fillColor('#333').text('Detalhes dos Instrutores', {
+          underline: true,
+        });
+        doc.moveDown(1);
+
+        instructors.forEach((instructor, index) => {
+          if (doc.y > 650) {
+            doc.addPage();
+          }
+
+          doc
+            .fontSize(12)
+            .fillColor('#667eea')
+            .text(`${index + 1}. ${instructor.nome}`);
+
+          doc.fontSize(10).fillColor('#666');
+          doc.text(`   CPF: ${instructor.cpf}`, { continued: true });
+          doc.text(`   |   Email: ${instructor.email}`);
+
+          doc.text(`   Telefone: ${instructor.telefone || 'N/A'}`);
+          doc.text(`   Especialidade: ${instructor.especialidade || 'N/A'}`);
+          doc.text(`   Status: ${instructor.status}`);
+          
+          if (instructor.turmas && instructor.turmas.length > 0) {
+            doc.text(`   Turmas: ${instructor.turmas.length}`);
+          }
+
+          doc.moveDown(1);
+        });
+
+        // Footer
+        const totalPages = doc.bufferedPageRange().count;
+        for (let i = 0; i < totalPages; i++) {
+          doc.switchToPage(i);
+          doc
+            .fontSize(8)
+            .fillColor('#999')
+            .text(
+              `Página ${i + 1} de ${totalPages} | SECTI - Sistema de Gestão`,
+              50,
+              doc.page.height - 50,
+              { align: 'center' }
+            );
+        }
+
+        doc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Gera relatório de instrutores em Excel
+   */
+  async generateInstructorsExcel(filters: ReportFilters): Promise<Buffer> {
+    const instructors: any[] = await Instructor.findAll({
+      include: [
+        {
+          model: Class,
+          as: 'turmas',
+          through: { attributes: [] },
+        },
+      ],
+      order: [['nome', 'ASC']],
+    });
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Instrutores');
+
+    // Header
+    worksheet.columns = [
+      { header: '#', key: 'id', width: 10 },
+      { header: 'Nome', key: 'nome', width: 30 },
+      { header: 'CPF', key: 'cpf', width: 15 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Telefone', key: 'telefone', width: 15 },
+      { header: 'Especialidade', key: 'especialidade', width: 25 },
+      { header: 'Status', key: 'status', width: 12 },
+      { header: 'Turmas', key: 'turmas_count', width: 10 },
+    ];
+
+    // Style header
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF667eea' },
+    };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+    // Add data
+    instructors.forEach((instructor, index) => {
+      worksheet.addRow({
+        id: index + 1,
+        nome: instructor.nome,
+        cpf: instructor.cpf,
+        email: instructor.email,
+        telefone: instructor.telefone || '-',
+        especialidade: instructor.especialidade || '-',
+        status: instructor.status,
+        turmas_count: instructor.turmas?.length || 0,
+      });
+    });
+
+    // Add summary
+    const lastRow = instructors.length + 3;
+    worksheet.addRow({
+      id: 'TOTAL',
+      nome: `Total: ${instructors.length} instrutores`,
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return buffer as Buffer;
+  }
+
       total_turmas,
       turmas_ativas,
       total_matriculas,
