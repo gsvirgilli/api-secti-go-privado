@@ -303,6 +303,30 @@ export const EnrollmentsAPI = {
 };
 
 // ======================================
+// 📋 PRESENÇAS / FREQUÊNCIA
+// ======================================
+export const AttendanceAPI = {
+  list: (params?: { id_turma?: number; id_aluno?: number; data?: string; status?: string; page?: number; limit?: number }) => 
+    api.get("/attendances", { params }),
+  
+  findById: (id: number) => 
+    api.get(`/attendances/${id}`),
+  
+  create: (data: any) => 
+    api.post("/attendances", data),
+  
+  update: (id: number, data: any) => 
+    api.put(`/attendances/${id}`, data),
+  
+  delete: (id: number) => 
+    api.delete(`/attendances/${id}`),
+  
+  // Registrar presenças em lote
+  bulkCreate: (attendances: any[]) => 
+    api.post("/attendances/bulk", { attendances }),
+};
+
+// ======================================
 // 📊 RELATÓRIOS
 // ======================================
 export const ReportsAPI = {

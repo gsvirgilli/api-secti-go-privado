@@ -10,6 +10,7 @@ import {
   ClipboardList,
   FileText,
   ClipboardCheck,
+  Calendar,
   X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ const menuItems = [
   { icon: GraduationCap, label: "Turmas", path: "/turmas" },
   { icon: BookOpen, label: "Cursos", path: "/cursos" },
   { icon: UserCheck, label: "Instrutores", path: "/instrutores" },
+  { icon: Calendar, label: "Frequência", path: "/frequencia" },
   { icon: ClipboardList, label: "Cadastro", path: "/cadastro" },
   { icon: FileText, label: "Relatórios", path: "/relatorios" },
 ];
