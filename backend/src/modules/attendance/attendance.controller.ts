@@ -110,7 +110,11 @@ class AttendanceController {
    */
   async createBulk(req: Request, res: Response, next: NextFunction) {
     try {
+      console.log('📝 Bulk request body:', JSON.stringify(req.body, null, 2));
+      
       const data = bulkAttendanceSchema.parse(req.body);
+      
+      console.log('✅ Validação passou:', JSON.stringify(data, null, 2));
       
       // Adicionar id_usuario do token JWT para cada registro
       const userId = (req as any).user?.id;
@@ -130,7 +134,10 @@ class AttendanceController {
         data: attendances
       });
     } catch (error) {
+      console.error('❌ Erro ao criar bulk:', error);
+      
       if (error instanceof z.ZodError) {
+        console.error('❌ Erro de validação Zod:', JSON.stringify(error.issues, null, 2));
         return res.status(400).json({
           error: 'Erro de validação',
           details: error.issues
