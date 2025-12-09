@@ -9,16 +9,16 @@ router.post('/run-migration', async (req, res) => {
 
     const sql = `
       -- Tabela PRESENCA
-      ALTER TABLE presenca ADD COLUMN IF NOT EXISTS motivo_justificacao TEXT COMMENT 'Motivo da justificação';
-      ALTER TABLE presenca ADD COLUMN IF NOT EXISTS id_usuario INT COMMENT 'ID do usuário que registrou a frequência';
+      ALTER TABLE presenca ADD motivo_justificacao TEXT COMMENT 'Motivo da justificação';
+      ALTER TABLE presenca ADD id_usuario INT COMMENT 'ID do usuário que registrou a frequência';
       ALTER TABLE presenca ADD CONSTRAINT fk_presenca_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE SET NULL;
-      ALTER TABLE presenca ADD INDEX IF NOT EXISTS idx_presenca_usuario (id_usuario);
+      ALTER TABLE presenca ADD INDEX idx_presenca_usuario (id_usuario);
 
       -- Tabela ATTENDANCE
-      ALTER TABLE attendance ADD COLUMN IF NOT EXISTS motivo_justificacao TEXT COMMENT 'Motivo da justificação';
-      ALTER TABLE attendance ADD COLUMN IF NOT EXISTS id_usuario INT COMMENT 'ID do usuário que registrou a frequência';
+      ALTER TABLE attendance ADD motivo_justificacao TEXT COMMENT 'Motivo da justificação';
+      ALTER TABLE attendance ADD id_usuario INT COMMENT 'ID do usuário que registrou a frequência';
       ALTER TABLE attendance ADD CONSTRAINT fk_attendance_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE SET NULL;
-      ALTER TABLE attendance ADD INDEX IF NOT EXISTS idx_attendance_usuario (id_usuario);
+      ALTER TABLE attendance ADD INDEX idx_attendance_usuario (id_usuario);
 
       -- Remover coluna observacoes
       ALTER TABLE presenca DROP COLUMN IF EXISTS observacoes;
@@ -44,7 +44,12 @@ router.post('/run-migration', async (req, res) => {
           status: 'success'
         });
       } catch (error: any) {
-        if (error.message?.includes('Duplicate') || error.message?.includes('already exists')) {
+        const msg = error.message || '';
+        // Ignorar erros de coluna já existente ou constraint já existente
+        if (msg.includes('Duplicate column') || 
+            msg.includes('already exists') ||
+            msg.includes('1060') ||
+            msg.includes('1061')) {
           console.log('⚠️  Já existe (ignorado)');
           results.push({
             command: command.substring(0, 60),
