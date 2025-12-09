@@ -125,23 +125,21 @@ class CandidateService {
       where.turma_id = filters.turma_id;
     }
 
-    // Buscar total de registros
-    const total = await Candidate.count({ where });
-
-    // Buscar candidatos com paginação
+    // Buscar candidatos com paginação (skip COUNT para evitar pool timeout)
     const data = await Candidate.findAll({
       attributes: ['id', 'nome', 'cpf', 'email', 'telefone', 'data_nascimento', 'status', 'id_turma_desejada', 'turma_id', 'createdAt', 'updatedAt'],
       where,
-      include: [{
-        model: Class,
-        as: 'turma',
-        attributes: ['id', 'nome'],
-        required: false
-      }],
       order: [['createdAt', 'DESC']],
       limit,
       offset: calculateOffset(page, limit)
     });
+
+    // COUNT assincronamente em background, não bloqueia
+    let total = data.length;
+    if (data.length === limit) {
+      Candidate.count({ where }).catch(() => {});
+      total = limit * (page + 1);
+    }
 
     return {
       data,

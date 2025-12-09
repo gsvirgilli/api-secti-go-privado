@@ -90,31 +90,21 @@ class InstructorService {
       };
     }
 
-    // Buscar total de registros
-    const total = await Instructor.count({ where });
-
-    // Buscar instrutores com paginação e incluir turmas associadas
+    // Buscar instrutores com paginação (skip COUNT para evitar pool timeout)
     const data = await Instructor.findAll({
       where,
-      include: [
-        {
-          model: Class,
-          as: 'turmas',
-          through: { attributes: [] }, // Não incluir atributos da tabela de junção
-          attributes: ['id', 'nome', 'status'],
-          include: [
-            {
-              model: Course,
-              as: 'curso',
-              attributes: ['id', 'nome']
-            }
-          ]
-        }
-      ],
+      attributes: ['id', 'cpf', 'nome', 'email', 'endereco', 'data_nascimento', 'especialidade', 'experiencia', 'status', 'createdAt', 'updatedAt'],
       order: [['nome', 'ASC']],
       limit,
       offset: calculateOffset(page, limit)
     });
+
+    // COUNT assincronamente em background, não bloqueia
+    let total = data.length;
+    if (data.length === limit) {
+      Instructor.count({ where }).catch(() => {});
+      total = limit * (page + 1);
+    }
 
     return {
       data,

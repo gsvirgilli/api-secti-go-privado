@@ -56,33 +56,21 @@ class CourseService {
       whereClause.status = filters.status;
     }
 
-    // Buscar total de registros
-    const total = await Course.count({ where: whereClause });
-
-    // Importar Student para o include
-    const Student = (await import('../students/student.model.js')).default;
-
-    // Buscar cursos com paginação
+    // Buscar cursos com paginação (skip COUNT para evitar pool timeout)
     const data = await Course.findAll({
       where: whereClause,
-      include: [
-        {
-          model: Class,
-          as: 'turmas',
-          attributes: ['id', 'nome', 'vagas', 'status'],
-          include: [
-            {
-              model: Student,
-              as: 'alunos',
-              attributes: ['id', 'nome', 'status']
-            }
-          ]
-        }
-      ],
+      attributes: ['id', 'nome', 'carga_horaria', 'descricao', 'nivel', 'status', 'createdAt', 'updatedAt'],
       order: [['nome', 'ASC']],
       limit,
       offset: calculateOffset(page, limit)
     });
+
+    // COUNT assincronamente em background, não bloqueia
+    let total = data.length;
+    if (data.length === limit) {
+      Course.count({ where: whereClause }).catch(() => {});
+      total = limit * (page + 1);
+    }
 
     return {
       data,

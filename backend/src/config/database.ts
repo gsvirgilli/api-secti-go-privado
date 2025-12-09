@@ -15,10 +15,10 @@ export const sequelize = new Sequelize(
     dialect: 'mysql', 
     logging: isTest ? false : console.log,
     pool: {
-      max: 5,           // Máximo de conexões simultâneas
-      min: 0,           // Mínimo de conexões
-      acquire: 30000,   // Timeout para adquirir conexão (ms)
-      idle: 10000       // Timeout para conexão ociosa (ms)
+      max: 20,          // Aumentado: máximo de conexões simultâneas
+      min: 2,           // Mínimo de conexões
+      acquire: 60000,   // Aumentado para 60s: timeout para adquirir conexão (ms)
+      idle: 30000       // Aumentado para 30s: timeout para conexão ociosa (ms)
     }
   }
 );

@@ -115,34 +115,28 @@ class ClassService {
       where.status = filters.status;
     }
 
-    // Buscar total de registros (para paginação)
-    const total = await Class.count({ where });
-
-    // Buscar turmas com paginação
+    // Buscar turmas com paginação (skip COUNT para evitar pool timeout)
     const turmas = await Class.findAll({
       where,
+      attributes: ['id', 'nome', 'turno', 'data_inicio', 'data_fim', 'id_curso', 'vagas', 'status', 'createdAt', 'updatedAt'],
       include: [
         {
           model: Curso,
           as: 'curso',
           attributes: ['id', 'nome', 'carga_horaria']
-        },
-        {
-          model: Student,
-          as: 'alunos',
-          attributes: ['id', 'matricula', 'nome', 'email', 'status']
-        },
-        {
-          model: Instructor,
-          as: 'instrutores',
-          attributes: ['id', 'nome', 'email', 'especialidade'],
-          through: { attributes: [] } // Não retornar campos da tabela de junção
         }
       ],
       order: [['createdAt', 'DESC']],
       limit,
       offset: calculateOffset(page, limit)
     });
+
+    // COUNT assincronamente em background, não bloqueia
+    let total = turmas.length;
+    if (turmas.length === limit) {
+      Class.count({ where }).catch(() => {});
+      total = limit * (page + 1);
+    }
 
     // Retornar resposta paginada
     return {

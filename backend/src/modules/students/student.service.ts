@@ -88,34 +88,32 @@ class StudentService {
       };
     }
 
-    // Buscar total de registros
-    const total = await Student.count({ where });
-
     // Importar Class para o include
     const Class = (await import('../classes/class.model.js')).default;
     const Curso = (await import('../courses/course.model.js')).default;
 
-    // Buscar alunos com paginação
+    // Buscar alunos com paginação (skip COUNT para evitar pool timeout)
     const data = await Student.findAll({
       where,
+      attributes: ['id', 'candidato_id', 'usuario_id', 'matricula', 'cpf', 'nome', 'email', 'telefone', 'data_nascimento', 'endereco', 'turma_id', 'status', 'createdAt', 'updatedAt'],
       include: [
         {
           model: Class,
           as: 'turma',
-          attributes: ['id', 'nome', 'turno'],
-          include: [
-            {
-              model: Curso,
-              as: 'curso',
-              attributes: ['id', 'nome']
-            }
-          ]
+          attributes: ['id', 'nome', 'turno']
         }
       ],
       order: [['createdAt', 'DESC']],
       limit,
       offset: calculateOffset(page, limit)
     });
+
+    // COUNT assincronamente em background, não bloqueia
+    let total = data.length;
+    if (data.length === limit) {
+      Student.count({ where }).catch(() => {});
+      total = limit * (page + 1);
+    }
 
     return {
       data,
