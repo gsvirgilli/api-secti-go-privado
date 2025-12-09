@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { DataBot } from "@/components/ui/DataBot";
-import { 
+import {
   Plus, Search, Trophy, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
   Users, TrendingUp, Calendar, AlertTriangle, CheckCircle, XCircle, Clock,
   ChevronDown, ChevronUp, BarChart3, PieChart, Activity, Target, BookOpen,
@@ -27,9 +27,10 @@ import StudentDetailsModal from "@/components/modals/StudentDetailsModal";
 import StudentFormModal from "@/components/modals/StudentFormModal";
 import { ExportButtons } from "@/components/ExportButtons";
 import { useAppData } from "@/hooks/useAppData";
-import type { Student } from "@/contexts/AppContext";
+import type { Student } from "@/types/appContext";
 import { useToast } from "@/hooks/use-toast";
 import { ReportsAPI } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/apiErrors";
 
 const Students = () => {
   const { students, stats, charts, updateStudent, deleteStudent, transferStudentToWaitingList } = useAppData();
@@ -39,14 +40,14 @@ const Students = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
-  
+
   // Estados de paginação
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
+
   // Estados para mobile e responsividade
   const [isMobile, setIsMobile] = useState(false);
-  const [collapsedSections, setCollapsedSections] = useState<{[key: string]: boolean}>({});
+  const [collapsedSections, setCollapsedSections] = useState<{ [key: string]: boolean }>({});
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
@@ -55,7 +56,7 @@ const Students = () => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -75,7 +76,7 @@ const Students = () => {
 
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
@@ -114,7 +115,7 @@ const Students = () => {
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = isMobile ? 3 : 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -142,7 +143,7 @@ const Students = () => {
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
@@ -185,11 +186,11 @@ const Students = () => {
           description: `${student.name} foi excluído com sucesso`,
           className: "bg-green-100 text-green-800 border-green-200",
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erro ao excluir aluno:', error);
         toast({
           title: "Erro ao Excluir",
-          description: error.message || "Não foi possível excluir o aluno",
+          description: getApiErrorMessage(error, "Não foi possível excluir o aluno"),
           variant: "destructive",
         });
       }
@@ -202,7 +203,7 @@ const Students = () => {
       `O aluno será removido da turma atual e voltará para a lista de espera.\n\n` +
       `Digite o motivo da transferência (opcional):`
     );
-    
+
     if (motivo !== null) { // null = cancelado, string vazia = confirmado sem motivo
       try {
         await transferStudentToWaitingList(student.id, motivo || undefined);
@@ -211,11 +212,11 @@ const Students = () => {
           description: `${student.name} foi transferido para a lista de espera`,
           className: "bg-blue-100 text-blue-800 border-blue-200",
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erro ao transferir aluno:', error);
         toast({
           title: "Erro ao Transferir",
-          description: error.message || "Não foi possível transferir o aluno",
+          description: getApiErrorMessage(error, "Não foi possível transferir o aluno"),
           variant: "destructive",
         });
       }
@@ -254,7 +255,7 @@ const Students = () => {
           </div>
           <div className="flex items-center gap-2">
             {getStatusIcon(student.status)}
-            <Badge 
+            <Badge
               variant={student.status === "Ativo" ? "default" : "secondary"}
               className={student.status === "Ativo" ? "bg-emerald-100 text-emerald-700" : ""}
             >
@@ -262,7 +263,7 @@ const Students = () => {
             </Badge>
           </div>
         </div>
-        
+
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-primary" />
@@ -273,11 +274,11 @@ const Students = () => {
             <span>{student.class}</span>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2 mt-3">
-        <Button 
-            variant="ghost" 
-          size="sm"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -287,9 +288,9 @@ const Students = () => {
             title="Ver detalhes"
           >
             <Eye className="h-4 w-4" />
-        </Button>
-          <Button 
-            variant="ghost" 
+          </Button>
+          <Button
+            variant="ghost"
             size="sm"
             onClick={(e) => {
               e.preventDefault();
@@ -301,8 +302,8 @@ const Students = () => {
           >
             <Edit className="h-4 w-4" />
           </Button>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
             onClick={(e) => {
               e.preventDefault();
@@ -314,8 +315,8 @@ const Students = () => {
           >
             <ArrowLeftRight className="h-4 w-4" />
           </Button>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
             onClick={(e) => {
               e.preventDefault();
@@ -357,7 +358,7 @@ const Students = () => {
               filename="relatorio-alunos"
               size="sm"
             />
-            <Button 
+            <Button
               onClick={() => setIsFormModalOpen(true)}
               className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
@@ -474,7 +475,7 @@ const Students = () => {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {getStatusIcon(student.status)}
-                            <Badge 
+                            <Badge
                               variant={student.status === "Ativo" ? "default" : "secondary"}
                               className={student.status === "Ativo" ? "bg-emerald-100 text-emerald-700" : ""}
                             >
@@ -486,9 +487,9 @@ const Students = () => {
                         <TableCell>{student.class}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center gap-2 justify-end">
-                          <Button 
-                              variant="ghost" 
-                            size="sm"
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -498,9 +499,9 @@ const Students = () => {
                               title="Ver detalhes"
                             >
                               <Eye className="h-4 w-4" />
-                          </Button>
-                            <Button 
-                              variant="ghost" 
+                            </Button>
+                            <Button
+                              variant="ghost"
                               size="sm"
                               onClick={(e) => {
                                 e.preventDefault();
@@ -512,8 +513,8 @@ const Students = () => {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="sm"
                               onClick={(e) => {
                                 e.preventDefault();
@@ -525,8 +526,8 @@ const Students = () => {
                             >
                               <ArrowLeftRight className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="sm"
                               onClick={(e) => {
                                 e.preventDefault();
@@ -554,8 +555,8 @@ const Students = () => {
                 {!isMobile && (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">Mostrar</span>
-                    <Select 
-                      value={String(itemsPerPage)} 
+                    <Select
+                      value={String(itemsPerPage)}
                       onValueChange={handleItemsPerPageChange}
                     >
                       <SelectTrigger className="w-20">
@@ -574,7 +575,7 @@ const Students = () => {
                     </span>
                   </div>
                 )}
-                
+
                 <span className="text-sm text-muted-foreground">
                   Página {currentPage} de {totalPages}
                 </span>
@@ -593,7 +594,7 @@ const Students = () => {
                     >
                       <ChevronsLeft className="h-4 w-4" />
                     </Button>
-                    
+
                     <Button
                       variant="outline"
                       size="sm"
@@ -633,7 +634,7 @@ const Students = () => {
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
-                    
+
                     <Button
                       variant="outline"
                       size="sm"
@@ -670,7 +671,7 @@ const Students = () => {
                       {searchTerm ? "Nenhum aluno encontrado" : "Nenhum aluno cadastrado"}
                     </p>
                     <p className="text-muted-foreground">
-                      {searchTerm 
+                      {searchTerm
                         ? `Tente ajustar os termos de busca`
                         : "Comece cadastrando o primeiro aluno"
                       }
@@ -684,20 +685,20 @@ const Students = () => {
 
         {/* Analytics Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    </div>
-                      </div>
+        </div>
+      </div>
 
       {/* Botão Flutuante de Alertas */}
       <div className="fixed bottom-32 right-6 z-50">
-                      <Button
+        <Button
           className="bg-red-500 hover:bg-red-600 text-white rounded-full w-14 h-14 shadow-lg"
           onClick={() => setIsAlertModalOpen(true)}
         >
           <AlertTriangle className="h-6 w-6" />
-                      </Button>
-                                    </div>
+        </Button>
+      </div>
 
-      <StudentDetailsModal 
+      <StudentDetailsModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
@@ -731,7 +732,7 @@ const Students = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
-                <AlertTriangle className="h-5 w-5" />
+              <AlertTriangle className="h-5 w-5" />
               Alertas Inteligentes
             </DialogTitle>
             <DialogDescription>
@@ -740,30 +741,30 @@ const Students = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
-                  <TrendingDown className="h-4 w-4 text-red-500" />
-                  <div className="flex-1">
+              <TrendingDown className="h-4 w-4 text-red-500" />
+              <div className="flex-1">
                 <p className="text-sm font-medium text-red-700">Baixa atividade detectada</p>
                 <p className="text-xs text-red-600">5 alunos com baixa frequência</p>
-                  </div>
-                </div>
+              </div>
+            </div>
             <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                  <UserCheck className="h-4 w-4 text-green-500" />
-                  <div className="flex-1">
+              <UserCheck className="h-4 w-4 text-green-500" />
+              <div className="flex-1">
                 <p className="text-sm font-medium text-green-700">Bom desempenho</p>
                 <p className="text-xs text-green-600">15 alunos com notas acima de 8.0</p>
-                  </div>
-                </div>
+              </div>
+            </div>
             <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                  <Clock4 className="h-4 w-4 text-amber-500" />
-                  <div className="flex-1">
+              <Clock4 className="h-4 w-4 text-amber-500" />
+              <div className="flex-1">
                 <p className="text-sm font-medium text-amber-700">Avaliações pendentes</p>
                 <p className="text-xs text-amber-600">3 turmas com avaliações próximas</p>
-                  </div>
-                </div>
               </div>
+            </div>
+          </div>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setIsAlertModalOpen(false)}
             >
               Fechar

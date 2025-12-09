@@ -12,7 +12,8 @@ import AssignClassModal from "@/components/modals/AssignClassModal";
 import DeleteConfirmationModal from "@/components/modals/DeleteConfirmationModal";
 import { useAppData } from "@/hooks/useAppData";
 import { useToast } from "@/hooks/use-toast";
-import type { Instructor } from "@/contexts/AppContext";
+import type { Instructor } from "@/types/appContext";
+import { getApiErrorMessage } from "@/lib/apiErrors";
 
 const Instructors = () => {
   const { instructors, updateInstructor, deleteInstructor } = useAppData();
@@ -61,11 +62,11 @@ const Instructors = () => {
           description: `O instrutor ${selectedInstructor.name} foi excluído do sistema`,
           className: "bg-red-100 text-red-800 border-red-200",
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erro ao excluir instrutor:', error);
         toast({
           title: "Erro ao excluir",
-          description: error.message || "Não foi possível excluir o instrutor",
+          description: getApiErrorMessage(error, "Não foi possível excluir o instrutor"),
           variant: "destructive",
         });
       }
@@ -85,7 +86,7 @@ const Instructors = () => {
             </h1>
             <p className="text-muted-foreground mt-1">Gerencie os instrutores cadastrados no sistema</p>
           </div>
-          <Button 
+          <Button
             onClick={() => {
               setFormMode("create");
               setSelectedInstructor(null);
@@ -133,7 +134,7 @@ const Instructors = () => {
           <CardContent className="p-4">
             <div className="text-center">
               <p className="text-2xl font-bold text-blue-600">
-                {instructors.length > 0 
+                {instructors.length > 0
                   ? Math.round((instructors.filter(i => i.status === "Ativo").length / instructors.length) * 100)
                   : 0}%
               </p>
@@ -190,13 +191,13 @@ const Instructors = () => {
                       <p className="text-muted-foreground text-sm">{instructor.specialization}</p>
                     </div>
                   </div>
-                  <Badge 
+                  <Badge
                     className={instructor.status === "Ativo" ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-700"}
                   >
                     {instructor.status}
                   </Badge>
                 </div>
-                
+
                 <div className="space-y-2 text-sm text-muted-foreground mb-4">
                   <p>Experiência: {instructor.experience}</p>
                   <p>Turmas ativas: {instructor.classes.length}</p>
@@ -204,34 +205,34 @@ const Instructors = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button 
+                  <Button
                     onClick={() => handleViewDetails(instructor)}
-                    variant="outline" 
+                    variant="outline"
                     size="sm"
                     className="flex-1 gap-1"
                   >
                     <Eye className="h-3 w-3" />
                     Ver
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => handleEdit(instructor)}
-                    variant="outline" 
+                    variant="outline"
                     size="sm"
                     className="gap-1"
                   >
                     <Edit className="h-3 w-3" />
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => handleAssignClass(instructor)}
-                    variant="outline" 
+                    variant="outline"
                     size="sm"
                     className="gap-1"
                   >
                     <UserPlus className="h-3 w-3" />
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => handleDelete(instructor)}
-                    variant="outline" 
+                    variant="outline"
                     size="sm"
                     className="gap-1 text-destructive hover:text-destructive"
                   >
@@ -263,7 +264,7 @@ const Instructors = () => {
                   <TableCell>{instructor.experience}</TableCell>
                   <TableCell>{instructor.classes.length}</TableCell>
                   <TableCell>
-                    <Badge 
+                    <Badge
                       className={instructor.status === "Ativo" ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-700"}
                     >
                       {instructor.status}
@@ -271,34 +272,34 @@ const Instructors = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button 
+                      <Button
                         onClick={() => handleViewDetails(instructor)}
-                        variant="outline" 
+                        variant="outline"
                         size="sm"
                         className="gap-1"
                       >
                         <Eye className="h-3 w-3" />
                         Ver
                       </Button>
-                      <Button 
+                      <Button
                         onClick={() => handleEdit(instructor)}
-                        variant="outline" 
+                        variant="outline"
                         size="sm"
                         className="gap-1"
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
-                      <Button 
+                      <Button
                         onClick={() => handleAssignClass(instructor)}
-                        variant="outline" 
+                        variant="outline"
                         size="sm"
                         className="gap-1"
                       >
                         <UserPlus className="h-3 w-3" />
                       </Button>
-                      <Button 
+                      <Button
                         onClick={() => handleDelete(instructor)}
-                        variant="outline" 
+                        variant="outline"
                         size="sm"
                         className="gap-1 text-destructive hover:text-destructive"
                       >
@@ -313,7 +314,7 @@ const Instructors = () => {
         </Card>
       )}
 
-      <InstructorDetailsModal 
+      <InstructorDetailsModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         instructor={selectedInstructor}

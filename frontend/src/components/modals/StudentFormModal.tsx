@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAppData } from "@/hooks/useAppData";
-import type { Student } from "@/contexts/AppContext";
+import { getApiErrorMessage } from "@/contexts/appContextCore";
+import type { Student } from "@/types/appContext";
 
 interface StudentFormModalProps {
   isOpen: boolean;
@@ -105,7 +106,7 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.cpf || !formData.email) {
       toast({
         title: "Campos obrigatórios",
@@ -138,11 +139,11 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
       });
 
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao salvar aluno:', error);
       toast({
         title: "Erro ao salvar",
-        description: error.message || "Não foi possível salvar o aluno",
+        description: getApiErrorMessage(error, "Não foi possível salvar o aluno"),
         variant: "destructive",
       });
     }
@@ -241,8 +242,8 @@ const StudentFormModal = ({ isOpen, onClose, studentData, mode }: StudentFormMod
 
             <div className="space-y-2">
               <Label htmlFor="class">Turma (opcional)</Label>
-              <Select 
-                value={formData.class || "none"} 
+              <Select
+                value={formData.class || "none"}
                 onValueChange={(value) => handleInputChange("class", value === "none" ? "" : value)}
                 disabled={!formData.course || formData.course === ""}
               >

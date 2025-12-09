@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { AuthAPI } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/apiErrors";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -63,16 +64,11 @@ const Login = () => {
 
       // Usar navigate do React Router em vez de window.location.href
       navigate("/dashboard");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao fazer login:', error);
-
-      const errorMessage = error.response?.data?.error ||
-        error.response?.data?.message ||
-        "Credenciais inválidas. Tente novamente.";
-
       toast({
         title: "Erro",
-        description: errorMessage,
+        description: getApiErrorMessage(error, "Credenciais inválidas. Tente novamente."),
         variant: "destructive",
       });
     } finally {

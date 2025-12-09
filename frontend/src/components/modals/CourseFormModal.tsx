@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAppData } from "@/hooks/useAppData";
-import type { Course } from "@/contexts/AppContext";
+import { getApiErrorMessage } from "@/contexts/appContextCore";
+import type { Course } from "@/types/appContext";
 
 interface CourseFormModalProps {
   isOpen: boolean;
@@ -72,7 +73,7 @@ const CourseFormModal = ({ isOpen, onClose, courseData, mode }: CourseFormModalP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title || !formData.duration) {
       toast({
         title: "Campos obrigatórios",
@@ -108,11 +109,11 @@ const CourseFormModal = ({ isOpen, onClose, courseData, mode }: CourseFormModalP
       });
 
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao salvar curso:', error);
       toast({
         title: "Erro ao salvar",
-        description: error.message || "Não foi possível salvar o curso",
+        description: getApiErrorMessage(error, "Não foi possível salvar o curso"),
         variant: "destructive",
       });
     }

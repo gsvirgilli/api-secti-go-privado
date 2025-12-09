@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAppData } from "@/hooks/useAppData";
-import type { Class } from "@/contexts/AppContext";
+import { getApiErrorMessage } from "@/contexts/appContextCore";
+import type { Class } from "@/types/appContext";
 
 interface ClassFormModalProps {
   isOpen: boolean;
@@ -19,7 +20,7 @@ interface ClassFormModalProps {
 const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProps) => {
   const { toast } = useToast();
   const { addClass, updateClass, courses, instructors } = useAppData();
-  
+
   // Converter dd/mm/yyyy para yyyy-MM-dd (para input type="date")
   const convertToInputFormat = (date: string) => {
     if (!date) return "";
@@ -32,7 +33,7 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
     }
     return date;
   };
-  
+
   // Converter yyyy-MM-dd para dd/mm/yyyy (para backend)
   const convertToDisplayFormat = (date: string) => {
     if (!date) return "";
@@ -45,7 +46,7 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
     }
     return date;
   };
-  
+
   const [formData, setFormData] = useState({
     name: classData?.name || "",
     course: classData?.course || "",
@@ -103,7 +104,7 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.course || !formData.instructor) {
       toast({
         title: "Campos obrigatórios",
@@ -120,7 +121,7 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
         startDate: formData.startDate ? convertToDisplayFormat(formData.startDate) : "",
         endDate: formData.endDate ? convertToDisplayFormat(formData.endDate) : ""
       };
-      
+
       if (mode === "create") {
         await addClass(dataToSend);
       } else if (classData) {
@@ -135,11 +136,11 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
       });
 
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao salvar turma:', error);
       toast({
         title: "Erro ao salvar",
-        description: error.message || "Não foi possível salvar a turma",
+        description: getApiErrorMessage(error, "Não foi possível salvar a turma"),
         variant: "destructive",
       });
     }
@@ -184,8 +185,8 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
 
             <div className="space-y-2">
               <Label htmlFor="instructor">Instrutor *</Label>
-              <Select 
-                value={formData.instructorId > 0 ? formData.instructorId.toString() : ""} 
+              <Select
+                value={formData.instructorId > 0 ? formData.instructorId.toString() : ""}
                 onValueChange={(value) => {
                   const instructorId = parseInt(value);
                   const instructor = instructors.find(i => i.id === instructorId);

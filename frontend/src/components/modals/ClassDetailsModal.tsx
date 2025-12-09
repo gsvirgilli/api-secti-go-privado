@@ -8,7 +8,7 @@ import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import StudentDetailsModal from "./StudentDetailsModal";
 import ClassFormModal from "./ClassFormModal";
 import { useAppData } from "@/hooks/useAppData";
-import type { Student } from "@/contexts/AppContext";
+import type { Student } from "@/types/appContext";
 
 interface ClassDetailsModalProps {
   isOpen: boolean;

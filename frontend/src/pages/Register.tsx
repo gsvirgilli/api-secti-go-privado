@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { AuthAPI } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/apiErrors";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -60,48 +61,48 @@ const Register = () => {
       confirmPassword: "",
       role: ""
     };
-    
+
     if (!formData.nome.trim()) {
       newErrors.nome = "Nome é obrigatório";
     } else if (formData.nome.trim().length < 2) {
       newErrors.nome = "Nome deve ter pelo menos 2 caracteres";
     }
-    
+
     if (!formData.email.trim()) {
       newErrors.email = "E-mail é obrigatório";
     } else if (!validateEmail(formData.email)) {
       newErrors.email = "E-mail inválido";
     }
-    
+
     if (!formData.telefone.trim()) {
       newErrors.telefone = "Telefone é obrigatório";
     } else if (!validatePhone(formData.telefone)) {
       newErrors.telefone = "Telefone inválido";
     }
-    
+
     if (!formData.password) {
       newErrors.password = "Senha é obrigatória";
     } else if (formData.password.length < 8) {
       newErrors.password = "Senha deve ter pelo menos 8 caracteres";
     }
-    
+
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = "Confirmação de senha é obrigatória";
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "As senhas não coincidem";
     }
-    
+
     setErrors(newErrors);
     return Object.values(newErrors).every(error => !error);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
-    
+
     try {
       // Chamar API de registro
       const response = await AuthAPI.register({
@@ -110,23 +111,19 @@ const Register = () => {
         senha: formData.password,
         role: formData.role // enviar o papel selecionado (ex: "INSTRUTOR" ou "ADMIN")
       });
-      
+
       toast({
         title: "Sucesso!",
         description: "Conta criada com sucesso. Redirecionando para login...",
       });
-      
+
       setTimeout(() => navigate("/login"), 1500);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao registrar:', error);
-      
-      const errorMessage = error.response?.data?.error || 
-                          error.response?.data?.message || 
-                          "Erro ao criar conta. Tente novamente.";
-      
+
       toast({
         title: "Erro",
-        description: errorMessage,
+        description: getApiErrorMessage(error, "Erro ao criar conta. Tente novamente."),
         variant: "destructive",
       });
     } finally {
@@ -164,9 +161,9 @@ const Register = () => {
             <div className="flex justify-center mb-6">
               <div className="text-center">
                 <div className="relative">
-                  <img 
-                    src="/logo_suckatech.png" 
-                    alt="Suka Tech Logo" 
+                  <img
+                    src="/logo_suckatech.png"
+                    alt="Suka Tech Logo"
                     className="w-48 h-48 object-contain drop-shadow-xl"
                   />
                   <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent rounded-full"></div>
@@ -204,7 +201,7 @@ const Register = () => {
           <div className="absolute bottom-20 left-20 w-24 h-24 border border-white/15 rounded-full floating-orb"></div>
           <div className="absolute inset-0 opacity-[0.03] grid-pattern"></div>
         </div>
-        
+
         <Card className="w-full max-w-md auth-glass animate-scale-in max-h-[90vh] overflow-y-auto relative overflow-hidden">
           <CardContent className="p-8 relative">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
@@ -232,9 +229,8 @@ const Register = () => {
                       placeholder="Digite seu nome completo"
                       value={formData.nome}
                       onChange={(e) => updateField("nome", e.target.value)}
-                      className={`pl-10 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-sora text-sm ${
-                        errors.nome ? 'border-destructive focus:border-destructive' : ''
-                      }`}
+                      className={`pl-10 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-sora text-sm ${errors.nome ? 'border-destructive focus:border-destructive' : ''
+                        }`}
                       required
                     />
                   </div>
@@ -276,9 +272,8 @@ const Register = () => {
                       placeholder="seu@email.com"
                       value={formData.email}
                       onChange={(e) => updateField("email", e.target.value)}
-                      className={`pl-10 pr-10 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-sora text-sm ${
-                        errors.email ? 'border-destructive focus:border-destructive' : ''
-                      }`}
+                      className={`pl-10 pr-10 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-sora text-sm ${errors.email ? 'border-destructive focus:border-destructive' : ''
+                        }`}
                       required
                     />
                     {formData.email && validateEmail(formData.email) && (
@@ -305,9 +300,8 @@ const Register = () => {
                       placeholder="(11) 99999-9999"
                       value={formData.telefone}
                       onChange={(e) => updateField("telefone", e.target.value)}
-                      className={`pl-10 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-sora text-sm ${
-                        errors.telefone ? 'border-destructive focus:border-destructive' : ''
-                      }`}
+                      className={`pl-10 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-sora text-sm ${errors.telefone ? 'border-destructive focus:border-destructive' : ''
+                        }`}
                       required
                     />
                   </div>
@@ -328,9 +322,8 @@ const Register = () => {
                       placeholder="Digite sua senha"
                       value={formData.password}
                       onChange={(e) => updateField("password", e.target.value)}
-                      className={`pl-10 pr-10 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-sora text-sm ${
-                        errors.password ? 'border-destructive focus:border-destructive' : ''
-                      }`}
+                      className={`pl-10 pr-10 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-sora text-sm ${errors.password ? 'border-destructive focus:border-destructive' : ''
+                        }`}
                       required
                     />
                     <Button
@@ -349,9 +342,8 @@ const Register = () => {
                         {[...Array(5)].map((_, i) => (
                           <div
                             key={i}
-                            className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                              i < passwordStrength ? passwordStrengthColors[passwordStrength - 1] : 'bg-white/20'
-                            }`}
+                            className={`h-1 flex-1 rounded-full transition-colors duration-300 ${i < passwordStrength ? passwordStrengthColors[passwordStrength - 1] : 'bg-white/20'
+                              }`}
                           />
                         ))}
                       </div>
@@ -377,9 +369,8 @@ const Register = () => {
                       placeholder="Confirme sua senha"
                       value={formData.confirmPassword}
                       onChange={(e) => updateField("confirmPassword", e.target.value)}
-                      className={`pl-10 pr-10 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-sora text-sm ${
-                        errors.confirmPassword ? 'border-destructive focus:border-destructive' : ''
-                      }`}
+                      className={`pl-10 pr-10 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-12 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-sora text-sm ${errors.confirmPassword ? 'border-destructive focus:border-destructive' : ''
+                        }`}
                       required
                     />
                     <Button

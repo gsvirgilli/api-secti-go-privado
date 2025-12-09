@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { AuthAPI } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/apiErrors";
 
 const NewPassword = () => {
   const [searchParams] = useSearchParams();
@@ -49,11 +50,11 @@ const NewPassword = () => {
           });
           setTimeout(() => navigate("/reset-password"), 3000);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erro ao validar token:', error);
         toast({
           title: "Erro",
-          description: error.response?.data?.message || "Erro ao validar token. Tente novamente.",
+          description: getApiErrorMessage(error, "Erro ao validar token. Tente novamente."),
           variant: "destructive",
         });
         setTimeout(() => navigate("/reset-password"), 3000);
@@ -83,7 +84,7 @@ const NewPassword = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newPassword.trim()) {
       setError("Nova senha é obrigatória");
       return;
@@ -102,7 +103,7 @@ const NewPassword = () => {
 
     setError("");
     setIsLoading(true);
-    
+
     try {
       const response = await AuthAPI.resetPassword({ token, newPassword });
 
@@ -114,9 +115,9 @@ const NewPassword = () => {
         });
         setTimeout(() => navigate("/login"), 3000);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao redefinir senha:', error);
-      const errorMessage = error.response?.data?.message || "Erro ao redefinir senha. Tente novamente.";
+      const errorMessage = getApiErrorMessage(error, "Erro ao redefinir senha. Tente novamente.");
       setError(errorMessage);
       toast({
         title: "Erro",
@@ -165,7 +166,7 @@ const NewPassword = () => {
                     Senha Redefinida!
                   </h2>
                   <p className="text-gray-600 font-sora">
-                    Sua senha foi alterada com sucesso. 
+                    Sua senha foi alterada com sucesso.
                   </p>
                   <p className="text-gray-500 font-sora text-sm">
                     Redirecionando para o login...
@@ -190,9 +191,9 @@ const NewPassword = () => {
       <div className="flex-1 bg-transparent flex items-center justify-center p-4 lg:p-8 hidden lg:flex">
         <div className="max-w-md w-full space-y-6 text-center animate-fade-in">
           <div className="flex justify-center mb-6">
-            <img 
-              src="/logo_suckatech.png" 
-              alt="Suka Tech Logo" 
+            <img
+              src="/logo_suckatech.png"
+              alt="Suka Tech Logo"
               className="w-48 h-48 object-contain drop-shadow-xl"
             />
           </div>
@@ -219,7 +220,7 @@ const NewPassword = () => {
           <div className="absolute top-32 right-20 w-20 h-20 border border-white/20 rounded-full floating-orb"></div>
           <div className="absolute bottom-20 left-20 w-24 h-24 border border-white/15 rounded-full floating-orb"></div>
         </div>
-        
+
         <Card className="w-full max-w-md auth-glass animate-scale-in relative overflow-hidden">
           <CardContent className="p-10 relative">
             <div className="space-y-8">

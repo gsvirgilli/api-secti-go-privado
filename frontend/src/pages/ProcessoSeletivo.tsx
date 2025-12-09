@@ -27,6 +27,8 @@ import { CandidatesAPI, CoursesAPI, ClassesAPI, StudentsAPI } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useFormConfig } from "@/contexts/FormConfigContext";
+import { isAxiosError } from "axios";
+import { getApiErrorMessage } from "@/lib/apiErrors";
 
 interface Candidate {
   id: number;
@@ -60,6 +62,7 @@ interface Candidate {
   curso_id2?: number;
   turno2?: string;
   local_curso?: string;
+  turma?: { nome?: string };
 
   // Questionário Social
   raca_cor?: string;
@@ -175,14 +178,14 @@ const ProcessoSeletivo = () => {
       }
       setIsAuthError(false);
 
-      const params: any = {};
+      const params: { status?: string } = {};
       if (statusFilter !== "all") {
         params.status = statusFilter;
       }
       const response = await CandidatesAPI.list(params);
 
       // A API retorna { data: Candidate[], pagination: {...} }
-      let candidatesData: any[] = [];
+      let candidatesData: Candidate[] = [];
       if (response.data) {
         if (Array.isArray(response.data)) {
           // Se for array direto
@@ -197,20 +200,24 @@ const ProcessoSeletivo = () => {
       }
 
       setCandidates(candidatesData || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao carregar candidatos:", error);
 
       let errorMessage = "Não foi possível carregar os candidatos. Tente novamente mais tarde.";
 
-      if (error.response?.status === 401) {
-        errorMessage = "Sua sessão expirou. Por favor, faça login novamente.";
-        setIsAuthError(true);
-        // Não redirecionar automaticamente - deixar o usuário decidir
+      if (isAxiosError(error) && error.response) {
+        if (error.response.status === 401) {
+          errorMessage = "Sua sessão expirou. Por favor, faça login novamente.";
+          setIsAuthError(true);
+        } else {
+          setIsAuthError(false);
+          errorMessage = error.response.data?.error ||
+            error.response.data?.message ||
+            errorMessage;
+        }
       } else {
         setIsAuthError(false);
-        errorMessage = error.response?.data?.error ||
-          error.response?.data?.message ||
-          errorMessage;
+        errorMessage = getApiErrorMessage(error, errorMessage);
       }
 
       setError(errorMessage);
@@ -336,6 +343,18 @@ const ProcessoSeletivo = () => {
   };
 
   // Buscar informações da turma e vagas disponíveis
+  type TurmaOptionInfo = {
+    curso: string;
+    turma: string;
+    vagas: number;
+    total: number;
+  };
+
+  type TurmaInfo = Partial<{
+    opcao1: TurmaOptionInfo;
+    opcao2: TurmaOptionInfo;
+  }>;
+
   const loadTurmaInfo = async (candidate: Candidate) => {
     try {
       console.log('🔍 Buscando informações da turma para candidato:', candidate);
@@ -349,7 +368,7 @@ const ProcessoSeletivo = () => {
         'NOITE': 'NOITE'
       };
 
-      const info: any = {};
+      const info: TurmaInfo = {};
 
       // Buscar turma da 1ª opção
       if (candidate.curso_id && candidate.turno) {
@@ -459,11 +478,11 @@ const ProcessoSeletivo = () => {
 
       setSelectedCandidate(editedCandidate);
       setIsEditing(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao atualizar candidato:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar os dados. Tente novamente.",
+        description: getApiErrorMessage(error, "Não foi possível atualizar os dados. Tente novamente."),
         variant: "destructive",
       });
     } finally {
@@ -532,12 +551,14 @@ const ProcessoSeletivo = () => {
         className: "bg-blue-100 text-blue-800",
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao aprovar candidato:", error);
 
       let errorMessage = "Não foi possível aprovar o candidato.";
-      if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
+      if (isAxiosError(error) && error.response?.data) {
+        errorMessage = error.response.data.error || error.response.data.message || errorMessage;
+      } else {
+        errorMessage = getApiErrorMessage(error, errorMessage);
       }
 
       toast({
@@ -659,11 +680,11 @@ const ProcessoSeletivo = () => {
       // Recarregar cursos
       console.log('🔄 Recarregando lista de cursos...');
       await loadCourses();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Erro ao criar curso:', error);
       toast({
         title: "Erro ao criar curso",
-        description: error.response?.data?.message || "Não foi possível criar o curso.",
+        description: getApiErrorMessage(error, "Não foi possível criar o curso."),
         variant: "destructive",
       });
     } finally {
@@ -855,7 +876,7 @@ const ProcessoSeletivo = () => {
                         <TableCell>{formatPhone(candidate.telefone)}</TableCell>
                         <TableCell>
                           {candidate.curso?.nome ||
-                            (candidate as any).turma?.nome ||
+                            candidate.turma?.nome ||
                             (candidate.curso_id ? `Curso ID: ${candidate.curso_id}` : '-')}
                         </TableCell>
                         <TableCell>{candidate.turno || '-'}</TableCell>

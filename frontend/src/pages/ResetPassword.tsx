@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { AuthAPI } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/apiErrors";
 
 const ResetPassword = () => {
   const [email, setEmail] = useState("");
@@ -23,7 +24,7 @@ const ResetPassword = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email.trim()) {
       setError("E-mail é obrigatório");
       return;
@@ -36,7 +37,7 @@ const ResetPassword = () => {
 
     setError("");
     setIsLoading(true);
-    
+
     try {
       const response = await AuthAPI.forgotPassword({ email });
       const data = response.data;
@@ -46,9 +47,9 @@ const ResetPassword = () => {
         title: "E-mail enviado!",
         description: data.message || "Verifique sua caixa de entrada para redefinir sua senha.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao solicitar recuperação de senha:', error);
-      const errorMessage = error.response?.data?.message || "Erro ao enviar e-mail. Tente novamente.";
+      const errorMessage = getApiErrorMessage(error, "Erro ao enviar e-mail. Tente novamente.");
       setError(errorMessage);
       toast({
         title: "Erro",
@@ -79,9 +80,9 @@ const ResetPassword = () => {
               <div className="flex justify-center mb-12">
                 <div className="text-center">
                   <div className="relative">
-                    <img 
-                      src="/logo_suckatech.png" 
-                      alt="Suka Tech Logo" 
+                    <img
+                      src="/logo_suckatech.png"
+                      alt="Suka Tech Logo"
                       className="w-64 h-64 object-contain drop-shadow-xl"
                     />
                     <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent rounded-full"></div>
@@ -125,7 +126,7 @@ const ResetPassword = () => {
             <div className="absolute bottom-20 left-20 w-24 h-24 border border-white/15 rounded-full floating-orb"></div>
             <div className="absolute inset-0 opacity-[0.03] grid-pattern"></div>
           </div>
-          
+
           <Card className="w-full max-w-md auth-glass animate-scale-in relative overflow-hidden">
             <CardContent className="p-10 relative">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
@@ -194,9 +195,9 @@ const ResetPassword = () => {
             <div className="flex justify-center mb-6">
               <div className="text-center">
                 <div className="relative">
-                  <img 
-                    src="/logo_suckatech.png" 
-                    alt="Suka Tech Logo" 
+                  <img
+                    src="/logo_suckatech.png"
+                    alt="Suka Tech Logo"
                     className="w-48 h-48 object-contain drop-shadow-xl"
                   />
                   <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent rounded-full"></div>
@@ -236,7 +237,7 @@ const ResetPassword = () => {
           <div className="absolute bottom-20 left-20 w-24 h-24 border border-white/15 rounded-full floating-orb"></div>
           <div className="absolute inset-0 opacity-[0.03] grid-pattern"></div>
         </div>
-        
+
         <Card className="w-full max-w-md auth-glass animate-scale-in relative overflow-hidden">
           <CardContent className="p-10 relative">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
@@ -263,9 +264,8 @@ const ResetPassword = () => {
                         setEmail(e.target.value);
                         if (error) setError("");
                       }}
-                      className={`pl-12 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-14 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-sora ${
-                        error ? 'border-destructive focus:border-destructive' : ''
-                      }`}
+                      className={`pl-12 bg-white/10 border-white/20 text-primary-foreground placeholder:text-primary-foreground/50 rounded-xl h-14 focus:bg-white/20 focus:border-white/40 transition-all duration-300 font-sora ${error ? 'border-destructive focus:border-destructive' : ''
+                        }`}
                       required
                     />
                   </div>

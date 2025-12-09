@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAppData } from "@/hooks/useAppData";
+import { getApiErrorMessage } from "@/contexts/appContextCore";
 
 interface InstructorFormModalProps {
   isOpen: boolean;
@@ -82,7 +83,7 @@ const InstructorFormModal = ({ isOpen, onClose, instructorData, mode }: Instruct
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.cpf || !formData.email || !formData.specialization || !formData.status) {
       toast({
         title: "Campos obrigatórios",
@@ -107,11 +108,11 @@ const InstructorFormModal = ({ isOpen, onClose, instructorData, mode }: Instruct
       });
 
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao salvar instrutor:', error);
       toast({
         title: "Erro ao salvar",
-        description: error.message || "Não foi possível salvar o instrutor",
+        description: getApiErrorMessage(error, "Não foi possível salvar o instrutor"),
         variant: "destructive",
       });
     }

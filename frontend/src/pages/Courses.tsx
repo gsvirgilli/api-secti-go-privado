@@ -10,7 +10,8 @@ import { ExportButtons } from "@/components/ExportButtons";
 import { useAppData } from "@/hooks/useAppData";
 import { useToast } from "@/hooks/use-toast";
 import { ReportsAPI } from "@/lib/api";
-import type { Course } from "@/contexts/AppContext";
+import { getApiErrorMessage } from "@/lib/apiErrors";
+import type { Course } from "@/types/appContext";
 
 const Courses = () => {
   const { courses, updateCourse, deleteCourse } = useAppData();
@@ -32,7 +33,7 @@ const Courses = () => {
   // Buscar cursos (localmente por enquanto, depois pode ser API)
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    
+
     if (value.trim() === "") {
       // Se limpar a pesquisa, volta ao estado inicial
       setIsSearching(false);
@@ -81,11 +82,11 @@ const Courses = () => {
           description: `${course.title} foi excluído com sucesso`,
           className: "bg-green-100 text-green-800 border-green-200",
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erro ao excluir curso:', error);
         toast({
           title: "Erro ao Excluir",
-          description: error.message || "Não foi possível excluir o curso",
+          description: getApiErrorMessage(error, "Não foi possível excluir o curso"),
           variant: "destructive",
         });
       }
@@ -119,7 +120,7 @@ const Courses = () => {
               showExcel={false}
               size="sm"
             />
-            <Button 
+            <Button
               onClick={() => setIsFormModalOpen(true)}
               className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
@@ -146,7 +147,7 @@ const Courses = () => {
       {/* Info */}
       {displayedCourses.length > 0 && (
         <div className="text-sm text-muted-foreground">
-          {isSearching 
+          {isSearching
             ? `${displayedCourses.length} curso(s) encontrado(s)`
             : `Mostrando ${displayedCourses.length} de ${courses.length} curso(s)`
           }
@@ -164,81 +165,81 @@ const Courses = () => {
           </div>
         ) : (
           displayedCourses.map((course) => (
-          <Card key={course.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg mb-2">{course.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {course.description}
-                  </p>
-                </div>
-                <div className={`w-3 h-3 rounded-full ${course.color} flex-shrink-0 ml-2 mt-1`}></div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>{course.duration}</span>
+            <Card key={course.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg mb-2">{course.title}</CardTitle>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {course.description}
+                    </p>
                   </div>
-                  <Badge variant="outline">
-                    {course.level}
-                  </Badge>
+                  <div className={`w-3 h-3 rounded-full ${course.color} flex-shrink-0 ml-2 mt-1`}></div>
                 </div>
-                
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Users className="h-4 w-4" />
-                  <span>{course.students} alunos matriculados</span>
-                </div>
-
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <GraduationCap className="h-4 w-4" />
-                  <span>Taxa de conclusão: 85%</span>
-                </div>
-
-                <div className="pt-2 border-t">
-                  <div className="flex items-center justify-between">
-                    <Badge 
-                      className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                    >
-                      {course.status}
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>{course.duration}</span>
+                    </div>
+                    <Badge variant="outline">
+                      {course.level}
                     </Badge>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleEditCourse(course);
-                        }}
-                        className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
-                        title="Editar curso"
+                  </div>
+
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    <span>{course.students} alunos matriculados</span>
+                  </div>
+
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <GraduationCap className="h-4 w-4" />
+                    <span>Taxa de conclusão: 85%</span>
+                  </div>
+
+                  <div className="pt-2 border-t">
+                    <div className="flex items-center justify-between">
+                      <Badge
+                        className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
                       >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleDeleteCourse(course);
-                        }}
-                        className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
-                        title="Excluir curso"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                        {course.status}
+                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleEditCourse(course);
+                          }}
+                          className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
+                          title="Editar curso"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDeleteCourse(course);
+                          }}
+                          className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                          title="Excluir curso"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
 

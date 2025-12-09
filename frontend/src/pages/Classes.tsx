@@ -16,7 +16,7 @@ import { ExportButtons } from "@/components/ExportButtons";
 import { useAppData } from "@/hooks/useAppData";
 import { useToast } from "@/hooks/use-toast";
 import { ReportsAPI } from "@/lib/api";
-import type { Class } from "@/contexts/AppContext";
+import type { Class } from "@/types/appContext";
 
 type SortField = "name" | "course" | "instructor" | "status" | "startDate" | "enrolled";
 type SortOrder = "asc" | "desc";
@@ -28,27 +28,27 @@ const Classes = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
-  
+
   // Pesquisa por texto
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Filtros avançados
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [courseFilter, setCourseFilter] = useState<string>("all");
   const [instructorFilter, setInstructorFilter] = useState<string>("all");
   const [capacityFilter, setCapacityFilter] = useState<string>("all");
-  
+
   // Ordenação
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  
+
   // Paginação
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
+
   // Filtros temporais
   const [temporalFilter, setTemporalFilter] = useState<string>("all");
-  
+
   // Notificações
   const [showNotifications, setShowNotifications] = useState(true);
 
@@ -68,15 +68,15 @@ const Classes = () => {
     const filtered = classes.filter(classItem => {
       // Filtro de pesquisa por texto (nome, curso, instrutor)
       const searchLower = searchTerm.toLowerCase();
-      const matchesSearch = searchTerm === "" || 
+      const matchesSearch = searchTerm === "" ||
         classItem.name.toLowerCase().includes(searchLower) ||
         classItem.course.toLowerCase().includes(searchLower) ||
         classItem.instructor.toLowerCase().includes(searchLower);
-      
+
       const matchesStatus = statusFilter === "all" || classItem.status === statusFilter;
       const matchesCourse = courseFilter === "all" || classItem.course === courseFilter;
       const matchesInstructor = instructorFilter === "all" || classItem.instructor === instructorFilter;
-      
+
       let matchesCapacity = true;
       if (capacityFilter === "full") {
         matchesCapacity = classItem.enrolled >= classItem.capacity;
@@ -94,7 +94,7 @@ const Classes = () => {
         const endDate = new Date(classItem.endDate.split('/').reverse().join('-'));
         const daysToStart = Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         const daysToEnd = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        
+
         switch (temporalFilter) {
           case "today":
             matchesTemporal = daysToStart === 0;
@@ -121,17 +121,17 @@ const Classes = () => {
     filtered.sort((a, b) => {
       let aValue: string | number | Date = a[sortField];
       let bValue: string | number | Date = b[sortField];
-      
+
       if (sortField === "startDate" && typeof aValue === "string" && typeof bValue === "string") {
         aValue = new Date(aValue.split('/').reverse().join('-'));
         bValue = new Date(bValue.split('/').reverse().join('-'));
       }
-      
+
       if (typeof aValue === "string" && typeof bValue === "string") {
         aValue = aValue.toLowerCase();
         bValue = bValue.toLowerCase();
       }
-      
+
       if (sortOrder === "asc") {
         return aValue > bValue ? 1 : -1;
       } else {
@@ -152,7 +152,7 @@ const Classes = () => {
   const notifications = useMemo(() => {
     const today = new Date();
     const notifications = [];
-    
+
     // Turmas que iniciam em 24h
     const startingSoon = classes.filter(c => {
       if (!c.startDate) return false; // Ignorar se não tem data de início
@@ -160,7 +160,7 @@ const Classes = () => {
       const daysToStart = Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       return daysToStart >= 0 && daysToStart <= 1 && c.status === "Planejada";
     });
-    
+
     if (startingSoon.length > 0) {
       notifications.push({
         type: "warning",
@@ -169,7 +169,7 @@ const Classes = () => {
         classes: startingSoon
       });
     }
-    
+
     // Turmas lotadas
     const fullClasses = classes.filter(c => c.enrolled >= c.capacity && c.status === "Ativo");
     if (fullClasses.length > 0) {
@@ -180,7 +180,7 @@ const Classes = () => {
         classes: fullClasses
       });
     }
-    
+
     // Turmas que terminam em breve
     const endingSoon = classes.filter(c => {
       if (!c.endDate) return false; // Ignorar se não tem data de término
@@ -188,7 +188,7 @@ const Classes = () => {
       const daysToEnd = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       return daysToEnd >= 0 && daysToEnd <= 7 && c.status === "Ativo";
     });
-    
+
     if (endingSoon.length > 0) {
       notifications.push({
         type: "success",
@@ -197,7 +197,7 @@ const Classes = () => {
         classes: endingSoon
       });
     }
-    
+
     return notifications;
   }, [classes]);
 
@@ -235,7 +235,7 @@ const Classes = () => {
       startDate: "",
       endDate: ""
     };
-    
+
     // Simular adição da turma duplicada
     toast({
       title: "Turma duplicada",
@@ -324,7 +324,7 @@ const Classes = () => {
               filename="relatorio-turmas"
               size="sm"
             />
-            <Button 
+            <Button
               onClick={() => setIsFormModalOpen(true)}
               className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
@@ -375,19 +375,17 @@ const Classes = () => {
       {showNotifications && notifications.length > 0 && (
         <div className="space-y-3">
           {notifications.map((notification, index) => (
-            <Card key={index} className={`border-l-4 ${
-              notification.type === "warning" ? "border-l-orange-500 bg-orange-50" :
-              notification.type === "info" ? "border-l-blue-500 bg-blue-50" :
-              "border-l-green-500 bg-green-50"
-            }`}>
+            <Card key={index} className={`border-l-4 ${notification.type === "warning" ? "border-l-orange-500 bg-orange-50" :
+                notification.type === "info" ? "border-l-blue-500 bg-blue-50" :
+                  "border-l-green-500 bg-green-50"
+              }`}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      notification.type === "warning" ? "bg-orange-500" :
-                      notification.type === "info" ? "bg-blue-500" :
-                      "bg-green-500"
-                    }`}></div>
+                    <div className={`w-3 h-3 rounded-full ${notification.type === "warning" ? "bg-orange-500" :
+                        notification.type === "info" ? "bg-blue-500" :
+                          "bg-green-500"
+                      }`}></div>
                     <div>
                       <h4 className="font-medium text-foreground">{notification.title}</h4>
                       <p className="text-sm text-muted-foreground">{notification.message}</p>
@@ -595,17 +593,17 @@ const Classes = () => {
                         {Math.round((classItem.enrolled / classItem.capacity) * 100)}%
                       </span>
                     </div>
-                    <Progress 
-                      value={(classItem.enrolled / classItem.capacity) * 100} 
+                    <Progress
+                      value={(classItem.enrolled / classItem.capacity) * 100}
                       className="h-2"
                     />
                   </div>
                   <p>Duração: {classItem.duration}</p>
                 </div>
 
-                <Button 
+                <Button
                   onClick={() => handleViewDetails(classItem)}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full gap-2"
                 >
                   <Eye className="h-4 w-4" />
@@ -620,38 +618,38 @@ const Classes = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort("name")}
                 >
                   Nome {sortField === "name" && (sortOrder === "asc" ? "↑" : "↓")}
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort("course")}
                 >
                   Curso {sortField === "course" && (sortOrder === "asc" ? "↑" : "↓")}
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort("instructor")}
                 >
                   Instrutor {sortField === "instructor" && (sortOrder === "asc" ? "↑" : "↓")}
                 </TableHead>
                 <TableHead>Turno</TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort("enrolled")}
                 >
                   Vagas {sortField === "enrolled" && (sortOrder === "asc" ? "↑" : "↓")}
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort("status")}
                 >
                   Status {sortField === "status" && (sortOrder === "asc" ? "↑" : "↓")}
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort("startDate")}
                 >
@@ -687,8 +685,8 @@ const Classes = () => {
                     <div className="flex items-center gap-2">
                       <span>{classItem.enrolled}/{classItem.capacity}</span>
                       <div className="w-16">
-                        <Progress 
-                          value={(classItem.enrolled / classItem.capacity) * 100} 
+                        <Progress
+                          value={(classItem.enrolled / classItem.capacity) * 100}
                           className="h-2"
                         />
                       </div>
@@ -721,7 +719,7 @@ const Classes = () => {
                           <MoreHorizontal className="h-4 w-4 mr-2" />
                           Arquivar
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => handleDeleteClass(classItem)}
                           className="text-red-600 focus:text-red-600"
                         >
@@ -755,7 +753,7 @@ const Classes = () => {
                 >
                   Anterior
                 </Button>
-                
+
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;
                   if (totalPages <= 5) {
@@ -767,7 +765,7 @@ const Classes = () => {
                   } else {
                     pageNum = currentPage - 2 + i;
                   }
-                  
+
                   return (
                     <Button
                       key={pageNum}
@@ -780,7 +778,7 @@ const Classes = () => {
                     </Button>
                   );
                 })}
-                
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -795,7 +793,7 @@ const Classes = () => {
         </Card>
       )}
 
-      <ClassDetailsModal 
+      <ClassDetailsModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         classData={selectedClass}

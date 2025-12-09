@@ -2,21 +2,30 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  AuthAPI, 
-  HealthAPI, 
-  CoursesAPI, 
-  StudentsAPI, 
-  EnrollmentsAPI 
+import {
+  AuthAPI,
+  HealthAPI,
+  CoursesAPI,
+  StudentsAPI,
+  EnrollmentsAPI
 } from '@/lib/api';
+import { getApiErrorMessage } from '@/lib/apiErrors';
+
+type ApiTestResult = {
+  success: boolean;
+  test: string;
+  data?: unknown;
+  error?: string;
+};
 
 export default function APITest() {
-  const [result, setResult] = useState<any>(null);
+
+  const [result, setResult] = useState<ApiTestResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('admin@teste.com');
   const [senha, setSenha] = useState('senha123');
 
-  const runTest = async (testFn: () => Promise<any>, testName: string) => {
+  const runTest = async (testFn: () => Promise<{ data?: unknown }>, testName: string) => {
     setLoading(true);
     setResult(null);
     try {
@@ -26,11 +35,11 @@ export default function APITest() {
         test: testName,
         data: response.data
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       setResult({
         success: false,
         test: testName,
-        error: error.response?.data || error.message
+        error: getApiErrorMessage(error, 'Falha não identificada')
       });
     } finally {
       setLoading(false);
@@ -47,7 +56,7 @@ export default function APITest() {
           <CardTitle>1. Health Check</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button 
+          <Button
             onClick={() => runTest(() => HealthAPI.check(), 'Health Check')}
             disabled={loading}
           >
@@ -74,7 +83,7 @@ export default function APITest() {
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
           />
-          <Button 
+          <Button
             onClick={() => runTest(
               () => AuthAPI.login({ email, senha }),
               'Login'
@@ -92,7 +101,7 @@ export default function APITest() {
           <CardTitle>3. Listar Cursos</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button 
+          <Button
             onClick={() => runTest(() => CoursesAPI.list(), 'Listar Cursos')}
             disabled={loading}
           >
@@ -107,7 +116,7 @@ export default function APITest() {
           <CardTitle>4. Listar Alunos</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button 
+          <Button
             onClick={() => runTest(() => StudentsAPI.list(), 'Listar Alunos')}
             disabled={loading}
           >
@@ -122,7 +131,7 @@ export default function APITest() {
           <CardTitle>5. Listar Matrículas</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button 
+          <Button
             onClick={() => runTest(() => EnrollmentsAPI.list(), 'Listar Matrículas')}
             disabled={loading}
           >

@@ -83,13 +83,30 @@ export const maskRG = (value: string): string => {
 };
 
 // Função para buscar endereço por CEP
-export const fetchAddressByCEP = async (cep: string): Promise<any> => {
+interface ViaCepResponse {
+  logradouro: string;
+  bairro: string;
+  localidade: string;
+  uf: string;
+  cep: string;
+  erro?: boolean;
+}
+
+export interface ViaCepAddress {
+  logradouro: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+}
+
+export const fetchAddressByCEP = async (cep: string): Promise<ViaCepAddress | null> => {
   try {
     const cleanCEP = cep.replace(/\D/g, '');
     if (cleanCEP.length !== 8) return null;
     
     const response = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
-    const data = await response.json();
+    const data = (await response.json()) as ViaCepResponse;
     
     if (data.erro) return null;
     
