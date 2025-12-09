@@ -82,7 +82,14 @@ export const bulkAttendanceSchema = z.object({
     status: z
       .enum(['PRESENTE', 'AUSENTE', 'JUSTIFICADO'], {
         message: 'Status deve ser PRESENTE, AUSENTE ou JUSTIFICADO'
-      })
+      }),
+    
+    motivo_justificacao: z
+      .string()
+      .optional()
+      .nullable()
+      .refine(val => !val || val.trim().length > 0, 'Motivo não pode ser vazio')
+      .refine(val => !val || val.trim().length <= 500, 'Motivo não pode ter mais de 500 caracteres')
   }))
   .min(1, 'Deve haver pelo menos um registro de presença')
 });

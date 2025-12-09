@@ -112,7 +112,17 @@ class AttendanceController {
     try {
       const data = bulkAttendanceSchema.parse(req.body);
       
-      const attendances = await AttendanceService.createBulk(data as any);
+      // Adicionar id_usuario do token JWT para cada registro
+      const userId = (req as any).user?.id;
+      const dataWithUser = {
+        ...data,
+        attendances: data.attendances.map(att => ({
+          ...att,
+          id_usuario: userId
+        }))
+      };
+      
+      const attendances = await AttendanceService.createBulk(dataWithUser as any);
       
       return res.status(201).json({
         message: 'Presenças registradas com sucesso',

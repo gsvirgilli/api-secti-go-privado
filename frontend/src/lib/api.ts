@@ -322,8 +322,8 @@ export const AttendanceAPI = {
     api.delete(`/attendances/${id}`),
   
   // Registrar presenças em lote
-  bulkCreate: (attendances: any[]) => 
-    api.post("/attendances/bulk", { attendances }),
+  bulkCreate: (data: { id_turma: number; data_chamada: string; attendances: any[] }) => 
+    api.post("/attendances/bulk", data),
 };
 
 // ======================================

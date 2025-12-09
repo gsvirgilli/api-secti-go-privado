@@ -112,18 +112,23 @@ const Frequencia = () => {
       const toCreate = attendances
         .filter(att => !att.id)
         .map(att => ({
-          ...att,
+          id_aluno: att.id_aluno,
+          status: att.status,
           motivo_justificacao: att.status === 'JUSTIFICADO' ? justificationReasons[att.id_aluno] : undefined
         }));
 
       const toUpdate = attendances.filter(att => att.id);
 
-      // Criar novas presenças
+      // Criar novas presenças (bulk)
       if (toCreate.length > 0) {
-        await AttendanceAPI.bulkCreate(toCreate);
+        await AttendanceAPI.bulkCreate({
+          id_turma: parseInt(selectedClass),
+          data_chamada: selectedDate,
+          attendances: toCreate
+        });
       }
 
-      // Atualizar presenças existentes
+      // Atualizar presenças existentes (individual)
       for (const att of toUpdate) {
         if (att.id) {
           await AttendanceAPI.update(att.id, {

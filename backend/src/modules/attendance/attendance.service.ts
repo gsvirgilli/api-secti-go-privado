@@ -35,6 +35,8 @@ interface BulkAttendanceData {
   attendances: Array<{
     id_aluno: number;
     status: 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADO';
+    motivo_justificacao?: string;
+    id_usuario?: number;
   }>;
 }
 
@@ -216,7 +218,11 @@ class AttendanceService {
 
         if (existing) {
           // Atualizar se já existe
-          await existing.update({ status: attendance.status }, { transaction });
+          await existing.update({ 
+            status: attendance.status,
+            motivo_justificacao: attendance.motivo_justificacao || null,
+            id_usuario: attendance.id_usuario || null
+          }, { transaction });
           createdAttendances.push(existing);
         } else {
           // Criar novo registro
@@ -224,7 +230,9 @@ class AttendanceService {
             id_aluno: attendance.id_aluno,
             id_turma: data.id_turma,
             data_chamada: data.data_chamada,
-            status: attendance.status
+            status: attendance.status,
+            motivo_justificacao: attendance.motivo_justificacao || null,
+            id_usuario: attendance.id_usuario || null
           }, { transaction });
           createdAttendances.push(newAttendance);
         }
