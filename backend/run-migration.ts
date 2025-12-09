@@ -12,13 +12,9 @@ async function runMigration() {
     await sequelize.authenticate();
     console.log('✅ Conexão estabelecida com sucesso!');
 
-    // Ler o arquivo de migração
     const migrationFile = path.join(__dirname, 'migrations', '20251208_add_attendance_fields.sql');
     const sql = fs.readFileSync(migrationFile, 'utf-8');
 
-    console.log('\n📝 Executando migração...\n');
-    
-    // Dividir por pontos e vírgulas e executar cada comando
     const commands = sql
       .split(';')
       .map(cmd => cmd.trim())
@@ -28,11 +24,11 @@ async function runMigration() {
       try {
         console.log(`⏳ Executando: ${command.substring(0, 60)}...`);
         await sequelize.query(command);
-        console.log(`✅ OK\n`);
+        console.log('✅ OK\n');
       } catch (error: any) {
-        // Ignorar erros de constraint já existente
-        if (error.message?.includes('Duplicate key') || error.message?.includes('already exists')) {
-          console.log(`⚠️  Já existe (ignorado)\n`);
+        const msg = error.message || '';
+        if (msg.includes('Duplicate') || msg.includes('already exists') || msg.includes('1060') || msg.includes('1061')) {
+          console.log('⚠️  Já existe (ignorado)\n');
         } else {
           throw error;
         }

@@ -3,11 +3,6 @@ import axios from "axios";
 // Configuração base da API - usar variável de ambiente ou fallback para localhost
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3333/api";
 
-// DEBUG: Log para verificar qual URL está sendo usada
-console.log('🔍 API_BASE_URL configurada:', API_BASE_URL);
-console.log('🔍 VITE_API_BASE_URL env var:', import.meta.env.VITE_API_BASE_URL);
-console.log('🔍 import.meta.env:', import.meta.env);
-
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -15,6 +10,24 @@ export const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+type ApiData = Record<string, unknown>;
+
+export interface StudentSummary {
+  id: number;
+  nome: string;
+  matricula?: string;
+}
+
+interface FileMap {
+  [key: string]: Blob | File | null | undefined;
+}
+
+interface AttendanceCreatePayload {
+  id_aluno: number;
+  status: "PRESENTE" | "AUSENTE" | "JUSTIFICADO";
+  motivo_justificacao?: string;
+}
 
 // Interceptor para adicionar token JWT em todas as requisições
 api.interceptors.request.use(
@@ -91,26 +104,29 @@ export const CandidatesAPI = {
   findById: (id: number) => 
     api.get(`/candidates/${id}`),
   
-  create: (data: any) => 
+  create: (data: ApiData) => 
     api.post("/candidates", data),
   
   // Candidatura pública (sem autenticação)
-  createPublic: (data: any, files?: any) => {
+  createPublic: (data: ApiData, files?: FileMap) => {
     // Se houver arquivos, usar FormData
     if (files && Object.keys(files).length > 0) {
       const formData = new FormData();
+      const appendField = (key: string, value: unknown) => {
+        if (value === null || value === undefined || value === "") return;
+        const normalized = value instanceof Blob ? value : String(value);
+        formData.append(key, normalized);
+      };
       
-      // Adicionar todos os campos de dados
-      Object.keys(data).forEach(key => {
-        if (data[key] !== null && data[key] !== undefined && data[key] !== '') {
-          formData.append(key, data[key]);
-        }
+      Object.keys(data).forEach((key) => {
+        const value = data[key];
+        appendField(key, value);
       });
       
-      // Adicionar todos os arquivos
-      Object.keys(files).forEach(key => {
-        if (files[key]) {
-          formData.append(key, files[key]);
+      Object.keys(files).forEach((key) => {
+        const fileValue = files[key];
+        if (fileValue) {
+          formData.append(key, fileValue);
         }
       });
       
@@ -120,7 +136,7 @@ export const CandidatesAPI = {
         },
       });
     }
-    
+
     // Se não houver arquivos, enviar JSON
     return axios.post(`${API_BASE_URL}/candidates/public`, data, {
       headers: {
@@ -129,7 +145,7 @@ export const CandidatesAPI = {
     });
   },
   
-  update: (id: number, data: any) => 
+  update: (id: number, data: ApiData) => 
     api.put(`/candidates/${id}`, data),
   
   delete: (id: number) => 
@@ -156,14 +172,17 @@ export const CandidatesAPI = {
 export const StudentsAPI = {
   list: (params?: { status?: string; turma_id?: number; page?: number; limit?: number }) => 
     api.get("/students", { params }),
+
+  listByClass: (classId: number) =>
+    api.get<StudentSummary[]>(`/students/class/${classId}`),
   
   findById: (id: number) => 
     api.get(`/students/${id}`),
   
-  create: (data: any) => 
+  create: (data: ApiData) => 
     api.post("/students", data),
   
-  update: (id: number, data: any) => 
+  update: (id: number, data: ApiData) => 
     api.put(`/students/${id}`, data),
   
   delete: (id: number) => 
@@ -196,7 +215,7 @@ export const CoursesAPI = {
   create: (data: { nome: string; descricao?: string; carga_horaria?: number; ativo?: boolean }) => 
     api.post("/courses", data),
   
-  update: (id: number, data: any) => 
+  update: (id: number, data: ApiData) => 
     api.put(`/courses/${id}`, data),
   
   delete: (id: number) => 
@@ -217,10 +236,10 @@ export const ClassesAPI = {
   findByCourseAndShift: (curso_id: number, turno: string) =>
     api.get("/classes", { params: { id_curso: curso_id, turno } }),
   
-  create: (data: any) => 
+  create: (data: ApiData) => 
     api.post("/classes", data),
   
-  update: (id: number, data: any) => 
+  update: (id: number, data: ApiData) => 
     api.put(`/classes/${id}`, data),
   updateStatus: (id: number, data: { status: string }) =>
     api.patch(`/classes/${id}/status`, data),
@@ -254,7 +273,7 @@ export const InstructorsAPI = {
   create: (data: { cpf: string; nome: string; email: string; especialidade?: string }) => 
     api.post("/instructors", data),
   
-  update: (id: number, data: any) => 
+  update: (id: number, data: ApiData) => 
     api.put(`/instructors/${id}`, data),
   
   delete: (id: number) => 
@@ -283,7 +302,7 @@ export const EnrollmentsAPI = {
   create: (data: { id_aluno: number; id_turma: number; observacoes?: string }) => 
     api.post("/enrollments", data),
   
-  update: (id_aluno: number, id_turma: number, data: any) => 
+  update: (id_aluno: number, id_turma: number, data: ApiData) => 
     api.put(`/enrollments/${id_aluno}/${id_turma}`, data),
   
   reactivate: (id_aluno: number, id_turma: number) => 
@@ -312,17 +331,17 @@ export const AttendanceAPI = {
   findById: (id: number) => 
     api.get(`/attendances/${id}`),
   
-  create: (data: any) => 
+  create: (data: ApiData) => 
     api.post("/attendances", data),
   
-  update: (id: number, data: any) => 
+  update: (id: number, data: ApiData) => 
     api.put(`/attendances/${id}`, data),
   
   delete: (id: number) => 
     api.delete(`/attendances/${id}`),
   
   // Registrar presenças em lote
-  bulkCreate: (data: { id_turma: number; data_chamada: string; attendances: any[] }) => 
+  bulkCreate: (data: { id_turma: number; data_chamada: string; attendances: AttendanceCreatePayload[] }) => 
     api.post("/attendances/bulk", data),
 };
 

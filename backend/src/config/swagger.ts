@@ -1,5 +1,17 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 
+const apiPatterns = ['./src/routes/*.ts', './src/modules/**/*.routes.ts'];
+
+const sanitizeApiPatterns = (patterns: unknown[]): string[] =>
+  patterns
+    .map((pattern) => {
+      if (typeof pattern === 'string') return pattern;
+      if (Array.isArray(pattern)) return sanitizeApiPatterns(pattern);
+      return null;
+    })
+    .flat()
+    .filter((value): value is string => typeof value === 'string');
+
 const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
@@ -416,9 +428,15 @@ const options: swaggerJsdoc.Options = {
       }
     ]
   },
-  apis: ['./src/routes/*.ts', './src/modules/**/*.routes.ts']
+  apis: sanitizeApiPatterns(apiPatterns)
 };
 
-const swaggerSpec = swaggerJsdoc(options);
+const shouldGenerateSwagger = process.env.NODE_ENV !== 'test';
 
+const swaggerSpec = shouldGenerateSwagger
+  ? swaggerJsdoc(options)
+  : {
+      ...options.definition,
+      paths: {}
+    };
 export default swaggerSpec;

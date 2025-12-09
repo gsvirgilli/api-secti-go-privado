@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2, XCircle, AlertCircle, Save, Trash2, Calendar, Info } from "lucide-react";
 import { useAppData } from "@/hooks/useAppData";
-import { AttendanceAPI } from "@/lib/api";
+import { AttendanceAPI, StudentSummary, StudentsAPI } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
 interface AttendanceRecord {
   id?: number;
@@ -25,12 +26,22 @@ const Frequencia = () => {
   const { classes } = useAppData();
   const { toast } = useToast();
 
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (axios.isAxiosError(error)) {
+      return error.response?.data?.message ?? fallback;
+    }
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return fallback;
+  };
+
   const [selectedClass, setSelectedClass] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [justificationReasons, setJustificationReasons] = useState<Record<number, string>>({});
-  const [classStudents, setClassStudents] = useState<any[]>([]);
+  const [classStudents, setClassStudents] = useState<StudentSummary[]>([]);
 
   // Carregar alunos da turma selecionada
   const loadClassStudents = async () => {
@@ -39,23 +50,17 @@ const Frequencia = () => {
       return;
     }
 
+    const classId = parseInt(selectedClass);
+    if (Number.isNaN(classId)) {
+      setClassStudents([]);
+      return;
+    }
+
     try {
-      const response = await AttendanceAPI.list({ id_turma: parseInt(selectedClass) });
-      // Extrair alunos únicos da resposta
-      const studentIds = new Set();
-      const students: any[] = [];
-
-      if (response.data?.data) {
-        response.data.data.forEach((att: any) => {
-          if (att.aluno && !studentIds.has(att.aluno.id)) {
-            studentIds.add(att.aluno.id);
-            students.push(att.aluno);
-          }
-        });
-      }
-
+      const response = await StudentsAPI.listByClass(classId);
+      const students = Array.isArray(response.data) ? response.data : [];
       setClassStudents(students);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erro ao carregar alunos:', error);
       toast({
         title: "Erro",
@@ -69,30 +74,32 @@ const Frequencia = () => {
   const loadAttendances = async () => {
     if (!selectedClass) return;
 
+    const classId = parseInt(selectedClass);
+    if (Number.isNaN(classId)) return;
+
     try {
       setLoading(true);
-      const classId = parseInt(selectedClass);
       const response = await AttendanceAPI.list({
         id_turma: classId,
         data: selectedDate
       });
 
-      // Inicializar com alunos da turma (todos os alunos devem ter registro)
-      const attendanceMap = new Map();
-      if (response.data?.data) {
-        response.data.data.forEach((att: AttendanceRecord) => {
-          attendanceMap.set(att.id_aluno, att);
-          // Carregar motivo já registrado se houver
-          if (att.motivo_justificacao) {
-            setJustificationReasons(prev => ({
-              ...prev,
-              [att.id_aluno]: att.motivo_justificacao
-            }));
-          }
-        });
-      }
+      const attendanceMap = new Map<number, AttendanceRecord>();
+      const reasons: Record<number, string> = {};
 
-      // Preencher com alunos que não têm registro
+      const fetchedAttendances = Array.isArray(response.data)
+        ? response.data
+        : response.data?.data ?? [];
+
+      fetchedAttendances.forEach((att: AttendanceRecord) => {
+        attendanceMap.set(att.id_aluno, att);
+        if (att.motivo_justificacao) {
+          reasons[att.id_aluno] = att.motivo_justificacao;
+        }
+      });
+
+      setJustificationReasons(reasons);
+
       const records = classStudents.map(student => {
         const existing = attendanceMap.get(student.id);
         if (existing) return existing;
@@ -108,10 +115,10 @@ const Frequencia = () => {
       setAttendances(records);
     } catch (error) {
       console.error('Erro ao carregar presenças:', error);
-      // Inicializar com alunos e status padrão
+      setJustificationReasons({});
       const records = classStudents.map(student => ({
         id_aluno: student.id,
-        id_turma: parseInt(selectedClass),
+        id_turma: classId,
         data_chamada: selectedDate,
         status: 'PRESENTE' as const
       }));
@@ -128,7 +135,7 @@ const Frequencia = () => {
   // Carregar presenças quando muda a data
   useEffect(() => {
     loadAttendances();
-  }, [selectedClass, selectedDate]);
+  }, [selectedClass, selectedDate, classStudents]);
 
   const updateAttendanceStatus = (studentId: number, status: 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADO') => {
     setAttendances(prev => prev.map(att =>
@@ -181,11 +188,11 @@ const Frequencia = () => {
       setJustificationReasons({});
       // Recarregar
       loadAttendances();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao salvar presenças:', error);
       toast({
         title: "Erro",
-        description: error.response?.data?.message || "Erro ao salvar presenças",
+        description: getErrorMessage(error, "Erro ao salvar presenças"),
         variant: "destructive"
       });
     } finally {
@@ -203,10 +210,10 @@ const Frequencia = () => {
         description: "Presença removida com sucesso!",
       });
       loadAttendances();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
-        description: error.response?.data?.message || "Erro ao remover presença",
+        description: getErrorMessage(error, "Erro ao remover presença"),
         variant: "destructive"
       });
     }
@@ -322,7 +329,7 @@ const Frequencia = () => {
             ) : (
               <div className="space-y-4 max-h-[700px] overflow-y-auto">
                 {attendances.map((att) => {
-                  const student = students.find(s => s.id === att.id_aluno);
+                  const student = classStudents.find(s => s.id === att.id_aluno);
                   return (
                     <div
                       key={`${att.id_aluno}-${att.id}`}
@@ -332,7 +339,7 @@ const Frequencia = () => {
                         {/* Cabeçalho com dados do aluno */}
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex-1">
-                            <p className="font-medium text-foreground">{student?.name}</p>
+                            <p className="font-medium text-foreground">{student?.nome}</p>
                             <p className="text-sm text-muted-foreground">
                               Matrícula: {student?.matricula || 'N/A'}
                             </p>

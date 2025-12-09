@@ -8,6 +8,7 @@ import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import StudentDetailsModal from "./StudentDetailsModal";
 import ClassFormModal from "./ClassFormModal";
 import { useAppData } from "@/hooks/useAppData";
+import type { Student } from "@/contexts/AppContext";
 
 interface ClassDetailsModalProps {
   isOpen: boolean;
@@ -24,11 +25,7 @@ interface ClassDetailsModalProps {
     status: string;
     startDate: string;
     endDate: string;
-    students: Array<{
-      id: number;
-      name: string;
-      status: string;
-    }>;
+    students: Array<{ id: number; name: string; status: string }>;
   } | null;
 }
 
@@ -36,7 +33,7 @@ const ClassDetailsModal = ({ isOpen, onClose, classData }: ClassDetailsModalProp
   const { toast } = useToast();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
 
   const { deleteClass } = useAppData();
@@ -47,21 +44,26 @@ const ClassDetailsModal = ({ isOpen, onClose, classData }: ClassDetailsModalProp
     setIsEditModalOpen(true);
   };
 
-  const handleStudentDetails = (student: any) => {
-    // Create full student object for the modal
-    const fullStudent = {
-      id: student.id,
-      name: student.name,
+  const handleStudentDetails = (student: { id: number; name: string; status: string }) => {
+    const createStudentDetails = (summary: { id: number; name: string; status: string }): Student => ({
+      id: summary.id,
+      matricula: `MAT-${summary.id}`,
+      name: summary.name,
       cpf: "000.000.000-00",
+      email: `${summary.name.toLowerCase().replace(/\s+/g, '.')}@email.com`,
       phone: "(00) 00000-0000",
-      email: `${student.name.toLowerCase().replace(/\s+/g, '.')}@email.com`,
       birthDate: "01/01/2000",
       address: "Endereço não informado",
+      enrollmentDate: new Date().toLocaleDateString('pt-BR'),
+      status: summary.status,
+      course: classData?.course || '',
+      class: classData?.name || '',
+      progress: 0,
       attendance: 85,
-      performance: 8.5,
-      status: student.status
-    };
-    setSelectedStudent(fullStudent);
+      grades: 0
+    });
+    // Create full student object for the modal
+    setSelectedStudent(createStudentDetails(student));
     setIsStudentModalOpen(true);
   };
 
@@ -80,11 +82,12 @@ const ClassDetailsModal = ({ isOpen, onClose, classData }: ClassDetailsModalProp
       });
       setIsDeleteModalOpen(false);
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro ao excluir turma (UI):', err);
+      const errorMessage = err instanceof Error ? err.message : 'Não foi possível excluir a turma';
       toast({
         title: "Erro ao excluir",
-        description: err.message || 'Não foi possível excluir a turma',
+        description: errorMessage,
         variant: 'destructive'
       });
     }
@@ -141,15 +144,15 @@ const ClassDetailsModal = ({ isOpen, onClose, classData }: ClassDetailsModalProp
             </div>
 
             <div className="space-y-3 pt-4">
-              <Button 
+              <Button
                 onClick={handleEditClass}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 Editar Turma
               </Button>
-              <Button 
+              <Button
                 onClick={handleDeleteClass}
-                variant="destructive" 
+                variant="destructive"
                 className="w-full"
               >
                 Excluir Turma
@@ -169,9 +172,9 @@ const ClassDetailsModal = ({ isOpen, onClose, classData }: ClassDetailsModalProp
                     </div>
                     <span className="font-medium">{student.name}</span>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="gap-2"
                     onClick={() => handleStudentDetails(student)}
                   >

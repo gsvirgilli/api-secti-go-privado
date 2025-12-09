@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import type { Location } from "react-router-dom";
 
 const menuItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
@@ -64,7 +65,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   );
 };
 
-const SidebarContent = ({ location, onClose, handleLogout }: { location: any; onClose: () => void; handleLogout: () => void }) => {
+const SidebarContent = ({ location, onClose, handleLogout }: { location: Location; onClose: () => void; handleLogout: () => void }) => {
   // O Sidebar só aparece dentro do Layout, que é usado apenas em rotas protegidas
   // Portanto, o botão "Processo Seletivo" sempre aparecerá quando o Sidebar estiver visível
 

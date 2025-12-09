@@ -5,28 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Edit, FileText, Trash2 } from "lucide-react";
+import type { Student } from "@/contexts/AppContext";
 
 interface StudentDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  student: {
-    id: number;
-    matricula: string;
-    name: string;
-    cpf: string;
-    email: string;
-    phone: string;
-    birthDate: string;
-    address: string;
-    enrollmentDate: string;
-    status: string;
-    course: string;
-    class: string;
-    progress: number;
-    attendance: number;
-    grades: number;
-  } | null;
-  onEdit?: (student: any) => void;
+  student: Student | null;
+  onEdit?: (student: Student) => void;
   onDelete?: (studentId: number) => void;
 }
 
@@ -54,7 +39,7 @@ const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: Stu
       description: `Relatório individual de ${student.name} gerado com sucesso`,
       className: "bg-green-100 text-green-800 border-green-200",
     });
-    
+
     // Simular download do relatório
     const link = document.createElement('a');
     link.href = '#';
@@ -167,24 +152,24 @@ const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: Stu
             <div>
               <h3 className="text-lg font-semibold text-foreground mb-3">Configurações</h3>
               <div className="space-y-3">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full justify-start text-primary hover:text-primary"
                   onClick={handleEdit}
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Editar informações
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full justify-start text-primary hover:text-primary"
                   onClick={handleGenerateReport}
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   Gerar relatório individual
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full justify-start text-destructive hover:text-destructive"
                   onClick={handleDelete}
                 >
