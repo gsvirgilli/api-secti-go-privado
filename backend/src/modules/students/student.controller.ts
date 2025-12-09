@@ -61,6 +61,25 @@ class StudentController {
   }
 
   /**
+   * Lista alunos de uma turma específica (para frequência)
+   * GET /api/students/class/:classId
+   */
+  async findByClassId(req: Request, res: Response) {
+    try {
+      const { classId } = req.params;
+      
+      const students = await StudentService.findByClassId(Number(classId));
+      
+      return res.status(200).json(students);
+    } catch (error) {
+      console.error('Erro ao listar alunos da turma:', error);
+      return res.status(500).json({
+        error: 'Erro ao listar alunos da turma'
+      });
+    }
+  }
+
+  /**
    * Busca um aluno por CPF
    * GET /api/students/cpf/:cpf
    */

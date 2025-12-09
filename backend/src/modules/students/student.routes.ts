@@ -53,6 +53,55 @@ router.get(
  *     summary: Buscar aluno por CPF
  *     tags: [Students]
  *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: cpf
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Aluno encontrado
+ *       404:
+ *         description: Aluno não encontrado
+ *       401:
+ *         description: Não autenticado
+ */
+
+/**
+ * @swagger
+ * /api/students/class/{classId}:
+ *   get:
+ *     summary: Listar alunos de uma turma (para frequência)
+ *     tags: [Students]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: classId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Lista de alunos da turma
+ *       500:
+ *         description: Erro interno
+ */
+router.get(
+  '/class/:classId',
+  isAuthenticated,
+  StudentController.findByClassId
+);
+
+/**
+ * @swagger
+ * /api/students/cpf/{cpf}:
+ *   get:
+ *     summary: Buscar aluno por CPF
+ *     tags: [Students]
+ *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path

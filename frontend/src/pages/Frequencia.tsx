@@ -22,7 +22,7 @@ interface AttendanceRecord {
 }
 
 const Frequencia = () => {
-  const { classes, students } = useAppData();
+  const { classes } = useAppData();
   const { toast } = useToast();
 
   const [selectedClass, setSelectedClass] = useState<string>('');
@@ -30,11 +30,40 @@ const Frequencia = () => {
   const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [justificationReasons, setJustificationReasons] = useState<Record<number, string>>({});
+  const [classStudents, setClassStudents] = useState<any[]>([]);
 
-  // Filtrar alunos da turma selecionada
-  const classStudents = selectedClass
-    ? students.filter(s => s.class === classes.find(c => c.id.toString() === selectedClass)?.name)
-    : [];
+  // Carregar alunos da turma selecionada
+  const loadClassStudents = async () => {
+    if (!selectedClass) {
+      setClassStudents([]);
+      return;
+    }
+
+    try {
+      const response = await AttendanceAPI.list({ id_turma: parseInt(selectedClass) });
+      // Extrair alunos únicos da resposta
+      const studentIds = new Set();
+      const students: any[] = [];
+
+      if (response.data?.data) {
+        response.data.data.forEach((att: any) => {
+          if (att.aluno && !studentIds.has(att.aluno.id)) {
+            studentIds.add(att.aluno.id);
+            students.push(att.aluno);
+          }
+        });
+      }
+
+      setClassStudents(students);
+    } catch (error) {
+      console.error('Erro ao carregar alunos:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar alunos da turma",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Carregar presenças quando seleciona turma ou data
   const loadAttendances = async () => {
@@ -92,6 +121,11 @@ const Frequencia = () => {
     }
   };
 
+  useEffect(() => {
+    loadClassStudents();
+  }, [selectedClass]);
+
+  // Carregar presenças quando muda a data
   useEffect(() => {
     loadAttendances();
   }, [selectedClass, selectedDate]);
