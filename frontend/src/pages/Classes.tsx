@@ -56,7 +56,7 @@ const Classes = () => {
   const uniqueCourses = useMemo(() => {
     const courses = [...new Set(classes.map(c => c.course))];
     return courses.sort();
-  }, [classes, selectedClass]);
+  }, [classes]);
 
   const uniqueInstructors = useMemo(() => {
     const instructors = [...new Set(classes.map(c => c.instructor))];
@@ -214,7 +214,7 @@ const Classes = () => {
     if (updated) {
       setSelectedClass(updated);
     }
-  }, [classes]);
+  }, [classes, selectedClass]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -376,15 +376,15 @@ const Classes = () => {
         <div className="space-y-3">
           {notifications.map((notification, index) => (
             <Card key={index} className={`border-l-4 ${notification.type === "warning" ? "border-l-orange-500 bg-orange-50" :
-                notification.type === "info" ? "border-l-blue-500 bg-blue-50" :
-                  "border-l-green-500 bg-green-50"
+              notification.type === "info" ? "border-l-blue-500 bg-blue-50" :
+                "border-l-green-500 bg-green-50"
               }`}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${notification.type === "warning" ? "bg-orange-500" :
-                        notification.type === "info" ? "bg-blue-500" :
-                          "bg-green-500"
+                      notification.type === "info" ? "bg-blue-500" :
+                        "bg-green-500"
                       }`}></div>
                     <div>
                       <h4 className="font-medium text-foreground">{notification.title}</h4>

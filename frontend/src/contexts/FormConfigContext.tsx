@@ -1,26 +1,5 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-interface FieldConfig {
-  id: string;
-  label: string;
-  type: 'text' | 'email' | 'tel' | 'date' | 'select' | 'file' | 'checkbox' | 'textarea';
-  required: boolean;
-  visible: boolean;
-  placeholder?: string;
-  options?: string[];
-  section: string;
-  order: number;
-}
-
-interface FormConfig {
-  welcomeText: string;
-  instructionsText: string;
-  whatsapp: string;
-  email: string;
-  maxVagas: number;
-  inscricoesAbertas: boolean;
-  fields: FieldConfig[];
-}
+import { useState, useEffect, ReactNode } from 'react';
+import { FormConfig, FormConfigContext } from './formConfigCore';
 
 const DEFAULT_CONFIG: FormConfig = {
   welcomeText: "Bem-vindo ao CRC Sukatech! Preencha os dados a seguir e tenha em mãos cópias dos seus documentos pessoais e comprovante de residência.",
@@ -42,7 +21,7 @@ const DEFAULT_CONFIG: FormConfig = {
     { id: 'telefone', label: 'Telefone', type: 'tel', required: true, visible: true, section: 'pessoais', order: 9 },
     { id: 'telefone2', label: 'Telefone 2 (opcional)', type: 'tel', required: false, visible: true, section: 'pessoais', order: 10 },
     { id: 'nome_mae', label: 'Nome da mãe', type: 'text', required: true, visible: true, section: 'pessoais', order: 11 },
-    
+
     // Endereço
     { id: 'cep', label: 'CEP', type: 'text', required: false, visible: true, section: 'endereco', order: 1 },
     { id: 'rua', label: 'Rua', type: 'text', required: false, visible: true, section: 'endereco', order: 2 },
@@ -51,7 +30,7 @@ const DEFAULT_CONFIG: FormConfig = {
     { id: 'bairro', label: 'Bairro', type: 'text', required: false, visible: true, section: 'endereco', order: 5 },
     { id: 'cidade', label: 'Cidade', type: 'text', required: false, visible: true, section: 'endereco', order: 6 },
     { id: 'estado', label: 'Estado (UF)', type: 'text', required: false, visible: true, section: 'endereco', order: 7 },
-    
+
     // Documentos
     { id: 'rg_frente', label: 'Identidade do aluno (frente)', type: 'file', required: true, visible: true, section: 'documentos', order: 1 },
     { id: 'rg_verso', label: 'Identidade do aluno (verso)', type: 'file', required: true, visible: true, section: 'documentos', order: 2 },
@@ -61,15 +40,6 @@ const DEFAULT_CONFIG: FormConfig = {
     { id: 'comprovante_escolaridade', label: 'Comprovante de Escolaridade', type: 'file', required: false, visible: true, section: 'documentos', order: 6 },
   ]
 };
-
-interface FormConfigContextType {
-  config: FormConfig;
-  updateConfig: (newConfig: Partial<FormConfig>) => void;
-  resetConfig: () => void;
-  isConfigLoaded: boolean;
-}
-
-const FormConfigContext = createContext<FormConfigContextType | undefined>(undefined);
 
 export const FormConfigProvider = ({ children }: { children: ReactNode }) => {
   const [config, setConfig] = useState<FormConfig>(DEFAULT_CONFIG);
@@ -133,7 +103,7 @@ export const FormConfigProvider = ({ children }: { children: ReactNode }) => {
     const updated = { ...config, ...newConfig };
     setConfig(updated);
     localStorage.setItem('@sukatech:formConfig', JSON.stringify(updated));
-    
+
     // Disparar evento customizado para sincronização imediata
     window.dispatchEvent(new CustomEvent('formConfigUpdated', { detail: updated }));
     console.log('✅ Configuração atualizada:', newConfig);
@@ -151,13 +121,5 @@ export const FormConfigProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </FormConfigContext.Provider>
   );
-};
-
-export const useFormConfig = () => {
-  const context = useContext(FormConfigContext);
-  if (!context) {
-    throw new Error('useFormConfig deve ser usado dentro de FormConfigProvider');
-  }
-  return context;
 };
 

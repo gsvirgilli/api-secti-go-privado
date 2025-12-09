@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { AuthAPI } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/apiErrors";
+import { notifyAuthChange } from "@/lib/authEvents";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -55,6 +56,7 @@ const Login = () => {
       if (response.data.token) {
         localStorage.setItem('@sukatech:token', response.data.token);
         localStorage.setItem('@sukatech:user', JSON.stringify(response.data.usuario || response.data.user));
+        notifyAuthChange();
       }
 
       toast({

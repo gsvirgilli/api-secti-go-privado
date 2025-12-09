@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +44,7 @@ const Frequencia = () => {
   const [classStudents, setClassStudents] = useState<StudentSummary[]>([]);
 
   // Carregar alunos da turma selecionada
-  const loadClassStudents = async () => {
+  const loadClassStudents = useCallback(async () => {
     if (!selectedClass) {
       setClassStudents([]);
       return;
@@ -68,10 +68,10 @@ const Frequencia = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [selectedClass, toast]);
 
   // Carregar presenças quando seleciona turma ou data
-  const loadAttendances = async () => {
+  const loadAttendances = useCallback(async () => {
     if (!selectedClass) return;
 
     const classId = parseInt(selectedClass);
@@ -126,16 +126,16 @@ const Frequencia = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedClass, selectedDate, classStudents]);
 
   useEffect(() => {
     loadClassStudents();
-  }, [selectedClass]);
+  }, [loadClassStudents]);
 
   // Carregar presenças quando muda a data
   useEffect(() => {
     loadAttendances();
-  }, [selectedClass, selectedDate, classStudents]);
+  }, [loadAttendances]);
 
   const updateAttendanceStatus = (studentId: number, status: 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADO') => {
     setAttendances(prev => prev.map(att =>

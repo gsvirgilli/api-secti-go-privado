@@ -1,30 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-// Tipos de perfil de usuário
-export type UserRole = 'admin' | 'professor';
-
-// Interface do usuário
-export interface User {
-  id?: number;
-  name?: string;
-  email?: string;
-  role: UserRole;
-}
-
-// Interface do contexto
-interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  userRole: UserRole | null;
-  login: (email: string, password: string, role: UserRole) => void;
-  logout: () => void;
-  isAdmin: () => boolean;
-  isProfessor: () => boolean;
-  hasAccess: (requiredRole: UserRole | UserRole[]) => boolean;
-}
-
-// Criar o contexto
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import React, { useState, useEffect, ReactNode } from 'react';
+import { AuthContext, AuthContextType, UserRole, User } from './authContextCore';
+import { notifyAuthChange } from '@/lib/authEvents';
 
 // Provider do contexto
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -57,7 +33,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Os dados já foram salvos no localStorage pela página de Login
     // Aqui apenas atualizamos o estado do contexto
     const storedUser = localStorage.getItem('@sukatech:user');
-    
+
     if (storedUser) {
       const userData = JSON.parse(storedUser);
       setUser({
@@ -65,9 +41,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         role
       });
       setIsAuthenticated(true);
-      
+
       // Salvar o perfil no localStorage
       localStorage.setItem('@sukatech:role', role);
+      notifyAuthChange();
     }
   };
 
@@ -78,6 +55,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('@sukatech:role');
     setUser(null);
     setIsAuthenticated(false);
+    notifyAuthChange();
   };
 
   // Verificar se é admin
@@ -93,15 +71,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Verificar se tem acesso baseado no perfil
   const hasAccess = (requiredRole: UserRole | UserRole[]): boolean => {
     if (!user) return false;
-    
+
     // Admin sempre tem acesso a tudo
     if (user.role === 'admin') return true;
-    
+
     // Verificar se o perfil do usuário está na lista de perfis permitidos
     if (Array.isArray(requiredRole)) {
       return requiredRole.includes(user.role);
     }
-    
+
     return user.role === requiredRole;
   };
 
@@ -119,12 +97,5 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Hook personalizado para usar o contexto
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
-  }
-  return context;
-};
+// (hook moved to a dedicated file)
 

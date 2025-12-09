@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Search, Users, Clock, CheckCircle, XCircle, Eye,
   FileText, Calendar, Mail, Phone, MapPin, GraduationCap, BookOpen,
@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CandidatesAPI, CoursesAPI, ClassesAPI, StudentsAPI } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { useFormConfig } from "@/contexts/FormConfigContext";
+import { useFormConfig } from "@/contexts/useFormConfig";
 import { isAxiosError } from "axios";
 import { getApiErrorMessage } from "@/lib/apiErrors";
 
@@ -155,13 +155,6 @@ const ProcessoSeletivo = () => {
     loadCandidates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
-
-  // Carregar cursos quando abrir o modal de configuração
-  useEffect(() => {
-    if (isConfigModalOpen) {
-      loadCourses();
-    }
-  }, [isConfigModalOpen]);
 
   const loadCandidates = async () => {
     try {
@@ -570,7 +563,7 @@ const ProcessoSeletivo = () => {
   };
 
   // Carregar cursos
-  const loadCourses = async () => {
+  const loadCourses = useCallback(async () => {
     setIsLoadingCourses(true);
     try {
       console.log('🔄 Carregando cursos...');
@@ -606,7 +599,13 @@ const ProcessoSeletivo = () => {
     } finally {
       setIsLoadingCourses(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (isConfigModalOpen) {
+      loadCourses();
+    }
+  }, [isConfigModalOpen, loadCourses]);
 
   // Alternar status ativo/inativo do curso
   const handleToggleCourseStatus = async (courseId: number, currentStatus: string) => {

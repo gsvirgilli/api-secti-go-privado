@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { useAuth, UserRole } from '@/contexts/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProtectedRouteProps {

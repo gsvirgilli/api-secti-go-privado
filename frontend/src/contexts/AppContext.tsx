@@ -1,6 +1,9 @@
 import { useState, useEffect, ReactNode } from 'react';
+import { isAxiosError } from 'axios';
 import { StudentsAPI, CoursesAPI, ClassesAPI, InstructorsAPI, CandidatesAPI } from '@/lib/api';
+import { AUTH_CHANGE_EVENT } from '@/lib/authEvents';
 import { AppContext, AppContextType, unwrapNestedArray, getApiErrorMessage } from '@/contexts/appContextCore';
+import type { Student, Course, Class, Instructor, Candidate } from '@/types/appContext';
 
 interface BackendStudent {
   id?: number;
@@ -104,6 +107,204 @@ type InstructorPayload = {
 
 type InstructorUpdatePayload = Partial<InstructorPayload>;
 
+const COURSE_LEVEL_LABELS: Record<string, string> = {
+  INICIANTE: 'Iniciante',
+  INTERMEDIARIO: 'Intermediário',
+  AVANCADO: 'Avançado'
+};
+
+const COURSE_LEVEL_VALUES: Record<string, string> = {
+  Iniciante: 'INICIANTE',
+  'Intermediário': 'INTERMEDIARIO',
+  Avançado: 'AVANCADO'
+};
+
+const COURSE_STATUS_LABELS: Record<string, string> = {
+  ATIVO: 'Ativo',
+  INATIVO: 'Inativo',
+  EM_DESENVOLVIMENTO: 'Em Desenvolvimento'
+};
+
+const COURSE_STATUS_VALUES: Record<string, string> = {
+  Ativo: 'ATIVO',
+  Inativo: 'INATIVO',
+  'Em Desenvolvimento': 'EM_DESENVOLVIMENTO'
+};
+
+const CLASS_STATUS_LABELS: Record<string, string> = {
+  ATIVA: 'Ativo',
+  PLANEJADA: 'Planejada',
+  ENCERRADA: 'Concluída',
+  CANCELADA: 'Cancelada'
+};
+
+const CLASS_STATUS_VALUES: Record<string, string> = {
+  Ativo: 'ATIVA',
+  Planejada: 'PLANEJADA',
+  'Concluída': 'ENCERRADA',
+  Cancelada: 'CANCELADA'
+};
+
+const SHIFT_LABELS: Record<string, string> = {
+  MANHA: 'Matutino',
+  TARDE: 'Vespertino',
+  NOITE: 'Noturno',
+  INTEGRAL: 'Integral'
+};
+
+const SHIFT_VALUES: Record<string, string> = {
+  Matutino: 'MANHA',
+  'Manhã': 'MANHA',
+  Vespertino: 'TARDE',
+  Tarde: 'TARDE',
+  Noturno: 'NOITE',
+  Noite: 'NOITE',
+  Integral: 'INTEGRAL'
+};
+
+const formatDate = (value?: string | null) => {
+  if (!value) return '';
+  if (value.includes('/')) return value;
+  const isoPortion = value.split('T')[0];
+  const [year, month, day] = isoPortion.split('-');
+  if (year && month && day) {
+    return `${day}/${month}/${year}`;
+  }
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) {
+    return `${String(parsed.getDate()).padStart(2, '0')}/${String(parsed.getMonth() + 1).padStart(2, '0')}/${parsed.getFullYear()}`;
+  }
+  return '';
+};
+
+const normalizeStatus = (status?: string, fallback = 'Ativo') => {
+  if (!status) return fallback;
+  const normalized = status.toLowerCase();
+  return `${normalized.charAt(0).toUpperCase()}${normalized.slice(1)}`;
+};
+
+const getClassScheduleLabel = (turno?: string) => SHIFT_LABELS[turno ?? ''] || (turno || '');
+
+const getClassStatusLabel = (status?: string) => CLASS_STATUS_LABELS[status ?? ''] || 'Planejada';
+
+const mapCourseLevel = (nivel?: string) => COURSE_LEVEL_LABELS[nivel ?? ''] || 'Intermediário';
+
+const mapCourseStatus = (status?: string) => COURSE_STATUS_LABELS[status ?? ''] || 'Ativo';
+
+const backendCourseLevelValue = (label?: string) => COURSE_LEVEL_VALUES[label ?? ''] || 'INTERMEDIARIO';
+
+const backendCourseStatusValue = (label?: string) => COURSE_STATUS_VALUES[label ?? ''] || 'ATIVO';
+
+const backendClassStatusValue = (label?: string) => CLASS_STATUS_VALUES[label ?? ''] || 'ATIVA';
+
+const backendScheduleValue = (label?: string) => SHIFT_VALUES[label ?? ''] || 'MANHA';
+
+const buildStudentClassName = (turma?: BackendStudent['turma']) => {
+  if (!turma?.nome) return 'Sem turma';
+  const turnoLabel = getClassScheduleLabel(turma.turno);
+  return turnoLabel ? `${turma.nome} - ${turnoLabel}` : turma.nome;
+};
+
+const mapBackendStudent = (student: BackendStudent): Student => ({
+  id: student.id ?? 0,
+  matricula: student.matricula || '',
+  name: student.nome || '',
+  cpf: student.cpf || '',
+  email: student.email || '',
+  phone: student.telefone || '',
+  birthDate: formatDate(student.data_nascimento),
+  address: student.endereco || '',
+  enrollmentDate: formatDate(student.createdAt),
+  status: normalizeStatus(student.status),
+  course: student.turma?.curso?.nome || '',
+  class: buildStudentClassName(student.turma),
+  progress: 0,
+  attendance: 0,
+  grades: 0
+});
+
+const countCourseStudents = (turmas?: BackendCourseTurma[]) => {
+  if (!turmas) return 0;
+  return turmas.reduce((sum, turma) => sum + (turma.alunos?.length ?? 0), 0);
+};
+
+const mapBackendCourse = (course: BackendCourse): Course => ({
+  id: course.id ?? 0,
+  title: course.nome || '',
+  description: course.descricao || '',
+  duration: `${course.carga_horaria ?? 0}h`,
+  students: countCourseStudents(course.turmas),
+  level: mapCourseLevel(course.nivel),
+  status: mapCourseStatus(course.status),
+  color: 'bg-blue-500'
+});
+
+const mapClassStudents = (alunos?: BackendClass['alunos']) =>
+  (alunos || []).map(aluno => ({
+    id: aluno.id ?? 0,
+    name: aluno.nome || '',
+    status: normalizeStatus(aluno.status, '')
+  }));
+
+const mapBackendClass = (classData: BackendClass): Class => {
+  const instructor = classData.instrutores && classData.instrutores.length > 0
+    ? classData.instrutores[0]
+    : undefined;
+
+  return {
+    id: classData.id ?? 0,
+    name: classData.nome || '',
+    course: classData.curso?.nome || (classData.id_curso?.toString() || ''),
+    instructor: instructor?.nome || 'A definir',
+    instructorId: instructor?.id,
+    capacity: classData.vagas || 0,
+    enrolled: (classData.alunos?.length ?? 0),
+    schedule: getClassScheduleLabel(classData.turno),
+    duration: '6 meses',
+    status: getClassStatusLabel(classData.status),
+    startDate: formatDate(classData.data_inicio),
+    endDate: formatDate(classData.data_fim),
+    students: mapClassStudents(classData.alunos)
+  };
+};
+
+const mapBackendInstructor = (instructor: BackendInstructor): Instructor => ({
+  id: instructor.id ?? 0,
+  name: instructor.nome || '',
+  cpf: instructor.cpf || '',
+  email: instructor.email || '',
+  phone: instructor.telefone || '',
+  birthDate: formatDate(instructor.data_nascimento),
+  address: instructor.endereco || '',
+  specialization: instructor.especialidade || '',
+  experience: instructor.experiencia || '',
+  status: normalizeStatus(instructor.status),
+  classes: (instructor.turmas || []).map(turma => ({
+    id: turma.id ?? 0,
+    name: turma.nome || '',
+    course: turma.curso?.nome || ''
+  }))
+});
+
+const parseDateInput = (value?: string) => {
+  if (!value) return null;
+  const parts = value.split('/');
+  if (parts.length !== 3) return null;
+  return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+};
+
+const logAxiosError = (error: unknown) => {
+  if (isAxiosError(error)) {
+    console.error('Detalhes do erro na API:', error.response?.data);
+  }
+};
+
+const buildErrorMessage = (error: unknown, message: string) => {
+  console.error(message, error);
+  logAxiosError(error);
+  return getApiErrorMessage(error, message);
+};
+
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -112,65 +313,85 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authReloadTrigger, setAuthReloadTrigger] = useState(0);
 
-  // Carregar dados da API ao montar o componente
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleAuthChange = () => {
+      setAuthReloadTrigger(prev => prev + 1);
+    };
+
+    window.addEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
+    return () => window.removeEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
+  }, []);
+
+  // Carregar dados da API sempre que o estado de autenticação mudar
   useEffect(() => {
     async function loadData() {
-      // Não carregar dados se estiver em páginas públicas
       const publicPaths = ['/login', '/register', '/reset-password', '/new-password'];
-      const isPublicPath = publicPaths.some(path => window.location.pathname.includes(path));
+      const isPublicPath = typeof window === 'undefined'
+        ? false
+        : publicPaths.some(path => window.location.pathname.includes(path));
 
       if (isPublicPath) {
+        setStudents([]);
+        setCourses([]);
+        setClasses([]);
+        setInstructors([]);
+        setCandidates([]);
         setLoading(false);
         return;
       }
 
-      // Verificar se há token antes de tentar carregar dados
-      const token = localStorage.getItem("@sukatech:token");
+      const token = typeof window === 'undefined'
+        ? null
+        : localStorage.getItem('@sukatech:token');
       if (!token) {
+        setStudents([]);
+        setCourses([]);
+        setClasses([]);
+        setInstructors([]);
+        setCandidates([]);
         setLoading(false);
         return;
       }
+
+      const loadAllCourses = async () => {
+        const seenIds = new Set<number | undefined>();
+        let uniqueCourses: BackendCourse[] = [];
+        let currentPage = 1;
+        let hasMore = true;
+
+        while (hasMore && currentPage <= 10) {
+          const response = await CoursesAPI.list({ page: currentPage, limit: 100 });
+          const pageData = unwrapNestedArray<BackendCourse>(response.data);
+          const pagination = response.data?.data?.pagination;
+
+          const newCourses = pageData.filter((course) => {
+            if (seenIds.has(course.id)) {
+              return false;
+            }
+            seenIds.add(course.id);
+            return true;
+          });
+
+          uniqueCourses = [...uniqueCourses, ...newCourses];
+
+          if (newCourses.length === 0) {
+            break;
+          }
+
+          hasMore = pagination?.hasNextPage || false;
+          currentPage++;
+        }
+
+        return { data: { data: { data: uniqueCourses } } };
+      };
 
       try {
         setLoading(true);
 
-        // Função para carregar todos os cursos (backend limita a 10 por página)
-        const loadAllCourses = async () => {
-          const seenIds = new Set();
-          let uniqueCourses: BackendCourse[] = [];
-          let currentPage = 1;
-          let hasMore = true;
-
-          while (hasMore && currentPage <= 10) {
-            const response = await CoursesAPI.list({ page: currentPage, limit: 100 });
-            const pageData = unwrapNestedArray<BackendCourse>(response.data);
-            const pagination = response.data?.data?.pagination;
-
-            // Filtrar apenas cursos novos (não duplicados)
-            const newCourses = pageData.filter((course) => {
-              if (seenIds.has(course.id)) {
-                return false; // Duplicado
-              }
-              seenIds.add(course.id);
-              return true;
-            });
-
-            uniqueCourses = [...uniqueCourses, ...newCourses];
-
-            // Se não teve cursos novos, parar (backend não suporta paginação)
-            if (newCourses.length === 0) {
-              break;
-            }
-
-            hasMore = pagination?.hasNextPage || false;
-            currentPage++;
-          }
-
-          return { data: { data: { data: uniqueCourses } } };
-        };
-
-        // Carregar dados (com limit maior para pegar todos)
         const [studentsRes, coursesRes, classesRes, instructorsRes, candidatesRes] = await Promise.all([
           StudentsAPI.list({ limit: 100, page: 1 }).catch(() => ({ data: [] })),
           loadAllCourses().catch(() => ({ data: { data: { data: [] } } })),
@@ -179,216 +400,44 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           CandidatesAPI.list({ limit: 100, page: 1 }).catch(() => ({ data: [] }))
         ]);
 
-        // Garantir que students seja um array e transformar do backend para frontend
         const backendStudents = unwrapNestedArray<BackendStudent>(studentsRes.data);
+        setStudents(backendStudents.map(mapBackendStudent));
 
-        // Transformar students do backend para formato frontend
-        const frontendStudents: Student[] = backendStudents.map((bs) => {
-          const formatDate = (date: string | null) => {
-            if (!date) return '';
-            const d = new Date(date);
-            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-          };
-
-          // Converter status do backend (minúsculo) para frontend (primeira letra maiúscula)
-          const formatStatus = (status: string) => {
-            if (!status) return 'Ativo';
-            return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-          };
-
-          return {
-            id: bs.id,
-            matricula: bs.matricula || '',
-            name: bs.nome || '',
-            cpf: bs.cpf || '',
-            email: bs.email || '',
-            phone: bs.telefone || '',
-            birthDate: formatDate(bs.data_nascimento),
-            address: bs.endereco || '',
-            enrollmentDate: formatDate(bs.createdAt),
-            status: formatStatus(bs.status),
-            course: bs.turma?.curso?.nome || '', // Curso vem através da turma
-            class: bs.turma?.nome || '',
-            progress: 0,
-            attendance: 0,
-            grades: 0
-          };
-        });
-
-        setStudents(frontendStudents);
-
-        // Transform backend courses to frontend format
-        // Backend retorna { success, data: { data: [...], pagination: {...} }, message }
         const backendCourses = unwrapNestedArray<BackendCourse>(coursesRes.data);
+        setCourses(backendCourses.map(mapBackendCourse));
 
-        const frontendCourses: Course[] = backendCourses.map((bc) => {
-          // Contar alunos de todas as turmas deste curso
-          const totalStudents = bc.turmas?.reduce((sum, turma) => {
-            return sum + (turma.alunos ? turma.alunos.length : 0);
-          }, 0) ?? 0;
-
-          return {
-            id: bc.id,
-            title: bc.nome,
-            description: bc.descricao || '',
-            duration: `${bc.carga_horaria}h`,
-            students: totalStudents,
-            level: ((): string => {
-              const map: Record<string, string> = {
-                'INICIANTE': 'Iniciante',
-                'INTERMEDIARIO': 'Intermediário',
-                'AVANCADO': 'Avançado'
-              };
-              return bc.nivel ? (map[bc.nivel] || 'Intermediário') : 'Intermediário';
-            })(),
-            status: ((): string => {
-              const map: Record<string, string> = {
-                'ATIVO': 'Ativo',
-                'INATIVO': 'Inativo',
-                'EM_DESENVOLVIMENTO': 'Em Desenvolvimento'
-              };
-              return bc.status ? (map[bc.status] || 'Ativo') : 'Ativo';
-            })(),
-            color: 'bg-blue-500'
-          };
-        });
-
-        setCourses(frontendCourses);
-
-        // Garantir que classes seja um array e transformar do backend para frontend
         const backendClasses = unwrapNestedArray<BackendClass>(classesRes.data);
+        setClasses(backendClasses.map(mapBackendClass));
 
-        // Transformar classes do backend para formato frontend
-        const frontendClasses: Class[] = backendClasses.map((bc) => {
-          const formatDate = (date: string | null) => {
-            if (!date) return '';
-            // Se já está em formato dd/mm/yyyy, retorna direto
-            if (date.includes('/')) return date;
-            // Se está em formato yyyy-MM-dd, converte sem usar new Date para evitar problema de timezone
-            const parts = date.split('T')[0].split('-'); // Remove hora se tiver e separa
-            if (parts.length === 3) {
-              return `${parts[2]}/${parts[1]}/${parts[0]}`; // dd/mm/yyyy
-            }
-            return date;
-          };
-
-          // Transformar alunos da turma
-          const students = (bc.alunos || []).map((aluno) => ({
-            id: aluno.id,
-            name: aluno.nome,
-            matricula: aluno.matricula,
-            email: aluno.email,
-            status: aluno.status
-          }));
-
-          // Pegar primeiro instrutor (se houver)
-          const instructor = bc.instrutores && bc.instrutores.length > 0
-            ? bc.instrutores[0].nome
-            : 'A definir';
-          const instructorId = bc.instrutores && bc.instrutores.length > 0
-            ? bc.instrutores[0].id
-            : undefined;
-
-          // Mapear status do backend para frontend
-          const statusMap: Record<string, string> = {
-            'ATIVA': 'Ativo',
-            'PLANEJADA': 'Planejada',
-            'ENCERRADA': 'Concluída',
-            'CANCELADA': 'Cancelada'
-          };
-          const frontendStatus = bc.status ? (statusMap[bc.status] || 'Planejada') : 'Planejada';
-
-          // Mapear turno do backend para formato amigável
-          const turnoMap: Record<string, string> = {
-            'MANHA': 'Matutino',
-            'TARDE': 'Vespertino',
-            'NOITE': 'Noturno',
-            'INTEGRAL': 'Integral'
-          };
-          const frontendSchedule = bc.turno ? (turnoMap[bc.turno] || bc.turno) : '';
-
-          return {
-            id: bc.id,
-            name: bc.nome || '',
-            course: bc.curso?.nome || bc.id_curso?.toString() || '',
-            instructor: instructor,
-            instructorId: instructorId,
-            capacity: bc.vagas || 0,
-            enrolled: students.length,
-            schedule: frontendSchedule,
-            duration: '6 meses',
-            status: frontendStatus,
-            startDate: formatDate(bc.data_inicio),
-            endDate: formatDate(bc.data_fim),
-            students: students
-          };
-        });
-
-        console.log('✅ Classes no loadData:', frontendClasses);
-        setClasses(frontendClasses);
-
-        // Transformar instructors do backend para formato frontend
         const backendInstructors = unwrapNestedArray<BackendInstructor>(instructorsRes.data);
+        setInstructors(backendInstructors.map(mapBackendInstructor));
 
-        const frontendInstructors: Instructor[] = backendInstructors.map((bi) => {
-          const formatDate = (date: string | null) => {
-            if (!date) return '';
-            const d = new Date(date);
-            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-          };
-
-          // Mapear turmas associadas
-          const classes = (bi.turmas || []).map((turma) => ({
-            id: turma.id,
-            name: turma.nome,
-            status: turma.status,
-            courseName: turma.curso?.nome || ''
-          }));
-
-          return {
-            id: bi.id,
-            name: bi.nome || '',
-            cpf: bi.cpf || '',
-            email: bi.email || '',
-            phone: bi.telefone || '',
-            birthDate: formatDate(bi.data_nascimento),
-            address: bi.endereco || '',
-            specialization: bi.especialidade || '',
-            experience: bi.experiencia || '',
-            status: bi.status ? (bi.status.charAt(0).toUpperCase() + bi.status.slice(1).toLowerCase()) : 'Ativo',
-            classes: classes
-          };
-        });
-
-        console.log('✅ Instrutores carregados:', frontendInstructors);
-        setInstructors(frontendInstructors);
-
-        // Transformar candidates do backend para formato frontend
         const backendCandidates = unwrapNestedArray<BackendCandidate>(candidatesRes.data);
-
-        console.log('✅ Candidatos carregados:', backendCandidates);
         setCandidates(backendCandidates);
+        setError(null);
       } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        // Em caso de erro, usar arrays vazios ao invés de dados mockados
+        const errorMessage = buildErrorMessage(error, 'Erro ao carregar dados');
+        setError(errorMessage);
         setStudents([]);
         setCourses([]);
         setClasses([]);
         setInstructors([]);
+        setCandidates([]);
       } finally {
         setLoading(false);
       }
     }
 
     loadData();
-  }, []);
+  }, [authReloadTrigger]);
 
   // Adicionar listener para detectar quando o token é adicionado/removido
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === '@sukatech:token') {
-        // Token foi adicionado ou removido, recarregar dados
-        window.location.reload();
+        setAuthReloadTrigger(prev => prev + 1);
       }
     };
 
@@ -400,64 +449,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const refreshStudents = async () => {
     try {
       const response = await StudentsAPI.list({ limit: 100, page: 1 });
-
       const backendStudents = unwrapNestedArray<BackendStudent>(response.data);
-
-      const frontendStudents: Student[] = backendStudents.map(bs => {
-        const formatDate = (date: string | null) => {
-          if (!date) return '';
-          const d = new Date(date);
-          return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-        };
-
-        const formatStatus = (status: string | undefined) => {
-          if (!status) return 'Ativo';
-          return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-        };
-
-        const formatTurno = (turno?: string) => {
-          const turnoMap: Record<string, string> = {
-            'MANHA': 'Matutino',
-            'TARDE': 'Vespertino',
-            'NOITE': 'Noturno',
-            'INTEGRAL': 'Integral'
-          };
-          if (!turno) return '';
-          return turnoMap[turno] || turno;
-        };
-
-        let className = '';
-        if (bs.turma?.nome) {
-          className = bs.turma.nome;
-          if (bs.turma.turno) {
-            className += ` - ${formatTurno(bs.turma.turno)}`;
-          }
-        }
-
-        return {
-          id: bs.id,
-          matricula: bs.matricula || '',
-          name: bs.nome || '',
-          cpf: bs.cpf || '',
-          email: bs.email || '',
-          phone: bs.telefone || '',
-          birthDate: formatDate(bs.data_nascimento),
-          address: bs.endereco || '',
-          enrollmentDate: formatDate(bs.createdAt),
-          status: formatStatus(bs.status),
-          course: bs.turma?.curso?.nome || '',
-          class: className || 'Sem turma',
-          progress: 0,
-          attendance: 0,
-          grades: 0
-        };
-      });
-
-      setStudents(frontendStudents);
+      setStudents(backendStudents.map(mapBackendStudent));
       setError(null);
     } catch (err: unknown) {
-      console.error('Erro ao carregar alunos:', err);
-      setError(getApiErrorMessage(err, 'Erro ao carregar alunos'));
+      const errorMessage = buildErrorMessage(err, 'Erro ao carregar alunos');
+      setError(errorMessage);
     }
   };
 
@@ -465,93 +462,32 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addStudent = async (studentData: Omit<Student, 'id'>): Promise<Student> => {
     try {
       setError(null);
+      const selectedCourse = courses.find(c => c.title === studentData.course);
+      const selectedClass = classes.find(c => c.name === studentData.class);
 
-      console.log('➕ Criando aluno:', studentData);
-
-      // Buscar id_curso baseado no nome do curso selecionado
-      let id_curso = null;
-      if (studentData.course) {
-        const selectedCourse = courses.find(c => c.title === studentData.course);
-        id_curso = selectedCourse ? selectedCourse.id : null;
-      }
-
-      // Buscar id_turma baseado no nome da turma selecionada
-      let id_turma = null;
-      if (studentData.class) {
-        const selectedClass = classes.find(c => c.name === studentData.class);
-        id_turma = selectedClass ? selectedClass.id : null;
-      }
-
-      // Transform frontend format to backend format
       const backendData = {
         nome: studentData.name,
-        cpf: studentData.cpf.replace(/\D/g, ''), // Remove formatação
+        cpf: studentData.cpf.replace(/\D/g, ''),
         email: studentData.email,
         telefone: studentData.phone || null,
-        data_nascimento: studentData.birthDate || null, // Backend aceita DD/MM/YYYY e MM/DD/YYYY
+        data_nascimento: studentData.birthDate || null,
         endereco: studentData.address || null,
-        id_curso: id_curso,
-        id_turma: id_turma,
+        id_curso: selectedCourse?.id ?? null,
+        id_turma: selectedClass?.id ?? null,
         status: 'ativo'
       };
 
-      console.log('➕ Dados para backend:', backendData);
-
       const response = await StudentsAPI.create(backendData);
-      console.log('➕ Resposta do backend:', response);
+      const backendStudent = response.data.data;
+      const newStudent = mapBackendStudent(backendStudent);
 
-      const backendStudent = response.data.data; // Backend returns {success, data, message}
-      console.log('➕ Backend student:', backendStudent);
-
-      // Transform backend format to frontend format
-      const formatDate = (date: string | null) => {
-        if (!date) return '';
-        const d = new Date(date);
-        return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-      };
-
-      // Converter status do backend (minúsculo) para frontend (primeira letra maiúscula)
-      const formatStatus = (status: string) => {
-        if (!status) return 'Ativo';
-        return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-      };
-
-      const newStudent: Student = {
-        id: backendStudent.id,
-        name: backendStudent.nome,
-        cpf: backendStudent.cpf,
-        email: backendStudent.email,
-        phone: backendStudent.telefone || '',
-        birthDate: formatDate(backendStudent.data_nascimento),
-        address: backendStudent.endereco || '',
-        enrollmentDate: formatDate(backendStudent.createdAt),
-        status: formatStatus(backendStudent.status),
-        course: backendStudent.turma?.curso?.nome || '', // Curso vem através da turma
-        class: backendStudent.turma?.nome || '',
-        progress: 0,
-        attendance: 0,
-        grades: 0
-      };
-
-      console.log('➕ Novo aluno transformado:', newStudent);
-
-      setStudents(prev => {
-        const updated = [...prev, newStudent];
-        console.log('➕ Alunos após adicionar:', updated);
-        return updated;
-      });
-
-      // Refresh related data
+      setStudents(prev => [...prev, newStudent]);
       await refreshClasses();
       await refreshCourses();
 
       return newStudent;
     } catch (err: unknown) {
-      console.error('Erro ao criar aluno:', err);
-      if (isAxiosError(err)) {
-        console.error('Detalhes do erro:', err.response?.data);
-      }
-      const errorMessage = getApiErrorMessage(err, 'Erro ao criar aluno');
+      const errorMessage = buildErrorMessage(err, 'Erro ao criar aluno');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -561,19 +497,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
       setError(null);
 
-      console.log('✏️ Atualizando aluno:', id, studentData);
-
-      // Transform frontend format to backend format
-      // IMPORTANTE: Enviar APENAS os campos que o backend aceita (nome, email, telefone, turma_id, status)
       const backendData: Record<string, unknown> = {};
       if (studentData.name !== undefined) backendData.nome = studentData.name;
       if (studentData.email !== undefined) backendData.email = studentData.email;
       if (studentData.phone !== undefined) backendData.telefone = studentData.phone;
 
-      // Buscar turma_id se turma foi alterada
       if (studentData.class !== undefined) {
-        if (studentData.class === "" || studentData.class === null) {
-          backendData.turma_id = null; // Remover da turma
+        if (studentData.class === '' || studentData.class === null) {
+          backendData.turma_id = null;
         } else {
           const turma = classes.find(c => c.name === studentData.class);
           if (turma) {
@@ -583,35 +514,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (studentData.status !== undefined) {
-        console.log('🔍 Status enviado:', studentData.status);
-        backendData.status = studentData.status; // Backend vai converter automaticamente
+        backendData.status = studentData.status;
       }
 
-      console.log('✏️ Dados para backend:', backendData);
-      console.log('✏️ Dados em JSON:', JSON.stringify(backendData, null, 2));
-
-      // Verificar se há dados para enviar
       if (Object.keys(backendData).length === 0) {
-        console.warn('⚠️ Nenhum dado para atualizar');
         return;
       }
 
-      const response = await StudentsAPI.update(id, backendData);
-      console.log('✅ Resposta do backend:', response.data);
-
-      // Recarregar a lista de alunos do backend para garantir sincronização
+      await StudentsAPI.update(id, backendData);
       await refreshStudents();
-
-      // Refresh related data
       await refreshClasses();
-
     } catch (err: unknown) {
-      console.error('❌ Erro completo ao atualizar aluno:', err);
-      if (isAxiosError(err)) {
-        console.error('❌ Resposta do servidor:', err.response?.data);
-        console.error('❌ Detalhes da validação:', JSON.stringify(err.response?.data?.details, null, 2));
-      }
-      const errorMessage = getApiErrorMessage(err, 'Erro ao atualizar aluno');
+      const errorMessage = buildErrorMessage(err, 'Erro ao atualizar aluno');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -629,11 +543,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       await refreshCourses();
 
     } catch (err: unknown) {
-      console.error('Erro ao deletar aluno:', err);
-      if (isAxiosError(err)) {
-        console.error('Detalhes do erro:', err.response?.data);
-      }
-      const errorMessage = getApiErrorMessage(err, 'Erro ao deletar aluno');
+      const errorMessage = buildErrorMessage(err, 'Erro ao deletar aluno');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -652,11 +562,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       await refreshCourses();
 
     } catch (err: unknown) {
-      console.error('Erro ao transferir aluno para lista de espera:', err);
-      if (isAxiosError(err)) {
-        console.error('Detalhes do erro:', err.response?.data);
-      }
-      const errorMessage = getApiErrorMessage(err, 'Erro ao transferir aluno para lista de espera');
+      const errorMessage = buildErrorMessage(err, 'Erro ao transferir aluno para lista de espera');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -667,53 +573,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const refreshCourses = async () => {
     try {
       const response = await CoursesAPI.list({ limit: 100 });
-      console.log('🔍 Response completa:', response);
-      console.log('🔍 response.data:', response.data);
-
       const backendCourses = unwrapNestedArray<BackendCourse>(response.data);
-      console.log('🔍 Backend courses:', backendCourses);
-      console.log('🔍 É array?', Array.isArray(backendCourses));
-
-      const frontendCourses: Course[] = backendCourses.map(bc => {
-        let totalStudents = 0;
-        if (bc.turmas && Array.isArray(bc.turmas)) {
-          totalStudents = bc.turmas.reduce((sum: number, turma) => {
-            return sum + (turma.alunos ? turma.alunos.length : 0);
-          }, 0);
-        }
-
-        return {
-          id: bc.id,
-          title: bc.nome,
-          description: bc.descricao || '',
-          duration: `${bc.carga_horaria}h`,
-          students: totalStudents,
-          level: ((): string => {
-            const map: Record<string, string> = {
-              'INICIANTE': 'Iniciante',
-              'INTERMEDIARIO': 'Intermediário',
-              'AVANCADO': 'Avançado'
-            };
-            return bc.nivel ? (map[bc.nivel] || 'Intermediário') : 'Intermediário';
-          })(),
-          status: ((): string => {
-            const map: Record<string, string> = {
-              'ATIVO': 'Ativo',
-              'INATIVO': 'Inativo',
-              'EM_DESENVOLVIMENTO': 'Em Desenvolvimento'
-            };
-            return bc.status ? (map[bc.status] || 'Ativo') : 'Ativo';
-          })(),
-          color: 'bg-blue-500'
-        };
-      });
-
-      console.log('🔍 Frontend courses transformados:', frontendCourses);
-      setCourses(frontendCourses);
+      setCourses(backendCourses.map(mapBackendCourse));
       setError(null);
     } catch (err: unknown) {
-      console.error('Erro ao carregar cursos:', err);
-      setError(getApiErrorMessage(err, 'Erro ao carregar cursos'));
+      const errorMessage = buildErrorMessage(err, 'Erro ao carregar cursos');
+      setError(errorMessage);
     }
   };
 
@@ -722,82 +587,28 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
       setError(null);
 
-      console.log('➕ Criando curso:', courseData);
-
-      // Transform frontend format to backend format
       const backendData: CourseCreatePayload = {
         nome: courseData.title,
         carga_horaria: parseInt(courseData.duration.replace(/\D/g, '')) || 0,
         descricao: courseData.description || undefined
       };
-      // Map level to backend enum if provided
+
       if (courseData.level) {
-        const mapToBackend: Record<string, string> = {
-          'Iniciante': 'INICIANTE',
-          'Intermediário': 'INTERMEDIARIO',
-          'Avançado': 'AVANCADO'
-        };
-        backendData.nivel = mapToBackend[courseData.level] || 'INTERMEDIARIO';
-      }
-      // Map status to backend enum if provided
-      if (courseData.status) {
-        const mapToBackend: Record<string, string> = {
-          'Ativo': 'ATIVO',
-          'Inativo': 'INATIVO',
-          'Em Desenvolvimento': 'EM_DESENVOLVIMENTO'
-        };
-        backendData.status = mapToBackend[courseData.status] || 'ATIVO';
+        backendData.nivel = backendCourseLevelValue(courseData.level);
       }
 
-      console.log('➕ Dados para backend:', backendData);
+      if (courseData.status) {
+        backendData.status = backendCourseStatusValue(courseData.status);
+      }
 
       const response = await CoursesAPI.create(backendData);
-      console.log('➕ Resposta do backend:', response);
-      console.log('➕ response.data:', response.data);
-
-      const backendCourse = response.data.data; // Backend returns {success, data, message}
-      console.log('➕ Backend course:', backendCourse);
-
-      // Transform backend format to frontend format
-      const newCourse: Course = {
-        id: backendCourse.id,
-        title: backendCourse.nome,
-        description: backendCourse.descricao || '',
-        duration: `${backendCourse.carga_horaria}h`,
-        students: 0,
-        level: ((): string => {
-          const map: Record<string, string> = {
-            'INICIANTE': 'Iniciante',
-            'INTERMEDIARIO': 'Intermediário',
-            'AVANCADO': 'Avançado'
-          };
-          return backendCourse.nivel ? (map[backendCourse.nivel] || 'Intermediário') : 'Intermediário';
-        })(),
-        status: ((): string => {
-          const map: Record<string, string> = {
-            'ATIVO': 'Ativo',
-            'INATIVO': 'Inativo',
-            'EM_DESENVOLVIMENTO': 'Em Desenvolvimento'
-          };
-          return backendCourse.status ? (map[backendCourse.status] || 'Ativo') : 'Ativo';
-        })(),
-        color: 'bg-blue-500'
-      };
-
-      console.log('➕ Novo curso transformado:', newCourse);
-      setCourses(prev => {
-        const updated = [...prev, newCourse];
-        console.log('➕ Cursos após adicionar:', updated);
-        return updated;
-      });
+      const backendCourse = response.data.data;
+      const newCourse = mapBackendCourse(backendCourse);
+      setCourses(prev => [...prev, newCourse]);
 
       return newCourse;
     } catch (err: unknown) {
-      console.error('Erro ao criar curso:', err);
-      if (isAxiosError(err)) {
-        console.error('Detalhes do erro:', err.response?.data);
-      }
-      const errorMessage = getApiErrorMessage(err, 'Erro ao criar curso');
+      const errorMessage = buildErrorMessage(err, 'Erro ao criar curso');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -807,48 +618,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
       setError(null);
 
-      console.log('🔧 Atualizando curso:', id, courseData);
-
-      // Transform frontend format to backend format
       const backendData: CourseUpdatePayload = {};
       if (courseData.title) backendData.nome = courseData.title;
       if (courseData.duration) backendData.carga_horaria = parseInt(courseData.duration.replace(/\D/g, '')) || 0;
       if (courseData.description !== undefined) backendData.descricao = courseData.description || undefined;
-      if (courseData.level) {
-        const mapToBackend: Record<string, string> = {
-          'Iniciante': 'INICIANTE',
-          'Intermediário': 'INTERMEDIARIO',
-          'Avançado': 'AVANCADO'
-        };
-        backendData.nivel = mapToBackend[courseData.level] || 'INTERMEDIARIO';
-      }
-      if (courseData.status) {
-        const mapToBackend: Record<string, string> = {
-          'Ativo': 'ATIVO',
-          'Inativo': 'INATIVO',
-          'Em Desenvolvimento': 'EM_DESENVOLVIMENTO'
-        };
-        backendData.status = mapToBackend[courseData.status] || 'ATIVO';
+      if (courseData.level) backendData.nivel = backendCourseLevelValue(courseData.level);
+      if (courseData.status) backendData.status = backendCourseStatusValue(courseData.status);
+
+      if (Object.keys(backendData).length > 0) {
+        await CoursesAPI.update(id, backendData);
       }
 
-      console.log('🔧 Dados backend:', backendData);
-
-      const response = await CoursesAPI.update(id, backendData);
-      console.log('🔧 Resposta do update:', response);
-
-      // Ao invés de atualizar manualmente, recarregar do backend para garantir consistência
       await refreshCourses();
-
-      // Refresh related data
       await refreshClasses();
       await refreshStudents();
-
     } catch (err: unknown) {
-      console.error('❌ Erro ao atualizar curso:', err);
-      if (isAxiosError(err)) {
-        console.error('Detalhes do erro:', err.response?.data);
-      }
-      const errorMessage = getApiErrorMessage(err, 'Erro ao atualizar curso');
+      const errorMessage = buildErrorMessage(err, 'Erro ao atualizar curso');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -865,11 +650,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       await refreshClasses();
 
     } catch (err: unknown) {
-      console.error('Erro ao deletar curso:', err);
-      if (isAxiosError(err)) {
-        console.error('Detalhes do erro:', err.response?.data);
-      }
-      const errorMessage = getApiErrorMessage(err, 'Erro ao deletar curso');
+      const errorMessage = buildErrorMessage(err, 'Erro ao deletar curso');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -880,81 +661,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const refreshClasses = async () => {
     try {
       const response = await ClassesAPI.list({ limit: 100 });
-
       const backendClasses = unwrapNestedArray<BackendClass>(response.data);
-
-      const frontendClasses: Class[] = backendClasses.map(bc => {
-        const formatDate = (date: string | null) => {
-          if (!date) return '';
-          // Se já está em formato dd/mm/yyyy, retorna direto
-          if (date.includes('/')) return date;
-          // Se está em formato yyyy-MM-dd, converte sem usar new Date para evitar problema de timezone
-          const parts = date.split('T')[0].split('-'); // Remove hora se tiver e separa
-          if (parts.length === 3) {
-            return `${parts[2]}/${parts[1]}/${parts[0]}`; // dd/mm/yyyy
-          }
-          return date;
-        };
-        // Transformar alunos da turma (se houver) e ajustar contador
-        const students = (bc.alunos || []).map(aluno => ({
-          id: aluno.id,
-          name: aluno.nome,
-          matricula: aluno.matricula,
-          email: aluno.email,
-          status: aluno.status
-        }));
-
-        // Pegar primeiro instrutor (se houver)
-        const instructor = bc.instrutores && bc.instrutores.length > 0
-          ? bc.instrutores[0].nome
-          : 'A definir';
-        const instructorId = bc.instrutores && bc.instrutores.length > 0
-          ? bc.instrutores[0].id
-          : undefined;
-
-        // Mapear status do backend para frontend
-        const statusMap: Record<string, string> = {
-          'ATIVA': 'Ativo',
-          'PLANEJADA': 'Planejada',
-          'ENCERRADA': 'Concluída',
-          'CANCELADA': 'Cancelada'
-        };
-        const frontendStatus = bc.status ? (statusMap[bc.status] || 'Planejada') : 'Planejada';
-
-        // Mapear turno do backend para formato amigável
-        const turnoMap: Record<string, string> = {
-          'MANHA': 'Matutino',
-          'TARDE': 'Vespertino',
-          'NOITE': 'Noturno',
-          'INTEGRAL': 'Integral'
-        };
-        const frontendSchedule = bc.turno ? (turnoMap[bc.turno] || bc.turno) : '';
-
-        return {
-          id: bc.id,
-          name: bc.nome || '',
-          course: bc.curso?.nome || bc.id_curso?.toString() || '',
-          instructor: instructor,
-          instructorId: instructorId,
-          capacity: bc.vagas || 0,
-          enrolled: students.length,
-          schedule: frontendSchedule,
-          duration: '6 meses',
-          status: frontendStatus,
-          startDate: formatDate(bc.data_inicio),
-          endDate: formatDate(bc.data_fim),
-          students: students
-        };
-      });
-
-      setClasses(frontendClasses);
+      setClasses(backendClasses.map(mapBackendClass));
       setError(null);
     } catch (err: unknown) {
-      console.error('Erro ao carregar turmas:', err);
-      if (isAxiosError(err)) {
-        console.error('Detalhes do erro:', err.response?.data);
-      }
-      setError(getApiErrorMessage(err, 'Erro ao carregar turmas'));
+      const errorMessage = buildErrorMessage(err, 'Erro ao carregar turmas');
+      setError(errorMessage);
     }
   };
 
@@ -962,29 +674,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addClass = async (classData: Omit<Class, 'id'>): Promise<Class> => {
     try {
       setError(null);
-
-      // Mapear campos do frontend para o backend
-      const scheduleMap: Record<string, string> = {
-        'Matutino': 'MANHA',
-        'Manhã': 'MANHA',
-        'Vespertino': 'TARDE',
-        'Tarde': 'TARDE',
-        'Noturno': 'NOITE',
-        'Noite': 'NOITE',
-        'Integral': 'INTEGRAL'
-      };
-
-      const parseDate = (dateStr?: string) => {
-        if (!dateStr || dateStr.trim() === '') return null;
-        const parts = dateStr.split('/');
-        if (parts.length === 3) {
-          return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-        }
-        return null;
-      };
-
-      const startDate = parseDate(classData.startDate);
-      const endDate = parseDate(classData.endDate);
 
       const course = courses.find(c => c.title === classData.course);
       if (!course) {
@@ -994,44 +683,28 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const backendData: ClassCreatePayload = {
         nome: classData.name,
         vagas: classData.capacity || 0,
-        status: classData.status === 'Ativo' ? 'ATIVA' :
-          classData.status === 'Concluída' ? 'ENCERRADA' :
-            classData.status === 'Cancelada' ? 'CANCELADA' :
-              'ATIVA',
-        turno: scheduleMap[classData.schedule] || 'MANHA',
+        status: backendClassStatusValue(classData.status),
+        turno: backendScheduleValue(classData.schedule),
         id_curso: course.id,
-        data_inicio: startDate,
-        data_fim: endDate
+        data_inicio: parseDateInput(classData.startDate),
+        data_fim: parseDateInput(classData.endDate)
       };
-
-      console.log('📤 Enviando dados para backend:', backendData);
 
       const response = await ClassesAPI.create(backendData);
       const newClass = response.data;
 
-      // Associate instructor if provided
       if (classData.instructorId && newClass.id) {
         try {
           await ClassesAPI.addInstructor(newClass.id, classData.instructorId);
-          console.log(`✅ Instrutor ${classData.instructorId} associado à turma ${newClass.id}`);
         } catch (error) {
-          console.error('Erro ao associar instrutor:', error);
-          // Don't throw - allow class creation to succeed
+          logAxiosError(error);
         }
       }
 
-      setClasses(prev => [...prev, newClass]);
-
-      // Refresh to get updated data with instructor
       await refreshClasses();
-
-      return newClass;
+      return mapBackendClass(newClass);
     } catch (err: unknown) {
-      console.error('Erro ao criar turma:', err);
-      if (isAxiosError(err)) {
-        console.error('Detalhes do erro:', err.response?.data);
-      }
-      const errorMessage = getApiErrorMessage(err, 'Erro ao criar turma');
+      const errorMessage = buildErrorMessage(err, 'Erro ao criar turma');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -1040,121 +713,57 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const updateClass = async (id: number, classData: Partial<Class>): Promise<void> => {
     try {
       setError(null);
-      // Map frontend fields to backend fields
+      const currentClass = classes.find(c => c.id === id);
+      if (!currentClass) throw new Error('Turma não encontrada');
+
       const backendData: ClassUpdatePayload = {};
 
       if (classData.name) backendData.nome = classData.name;
-      // Converter datas no formato dd/mm/yyyy para ISO
-      const parseDate = (d?: string) => {
-        if (!d || d.trim() === '') return null; // Retorna null para campo vazio
-        const parts = d.split('/');
-        if (parts.length !== 3) return null;
-        const iso = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-        return iso;
-      };
 
-      const dataInicio = parseDate(classData.startDate as string | undefined);
-      const dataFim = parseDate(classData.endDate as string | undefined);
-      // Sempre envia as datas (null limpa o campo no backend)
-      if (dataInicio !== undefined) backendData.data_inicio = dataInicio;
-      if (dataFim !== undefined) backendData.data_fim = dataFim;
-
-      // Map course title to id_curso if possível
       if (classData.course) {
         const selectedCourse = courses.find(c => c.title === classData.course);
         if (selectedCourse) backendData.id_curso = selectedCourse.id;
       }
 
-      // Map capacity to vagas
       if (typeof classData.capacity === 'number') backendData.vagas = classData.capacity;
 
-      // Map schedule to turno
-      if (classData.schedule) {
-        const scheduleMap: Record<string, string> = {
-          'Matutino': 'MANHA',
-          'Manhã': 'MANHA',
-          'Vespertino': 'TARDE',
-          'Tarde': 'TARDE',
-          'Noturno': 'NOITE',
-          'Noite': 'NOITE',
-          'Integral': 'INTEGRAL'
-        };
-        backendData.turno = scheduleMap[classData.schedule] || 'MANHA';
-      }
+      if (classData.schedule) backendData.turno = backendScheduleValue(classData.schedule);
 
-      // Only call update if we have backend-updatable fields
+      if (classData.startDate !== undefined) backendData.data_inicio = parseDateInput(classData.startDate);
+      if (classData.endDate !== undefined) backendData.data_fim = parseDateInput(classData.endDate);
+
       if (Object.keys(backendData).length > 0) {
-        console.log('🔄 Atualizando campos da turma:', backendData);
         await ClassesAPI.update(id, backendData);
       }
 
-      // Handle status separately via dedicated endpoint
       if (classData.status) {
-        // Map frontend display status to backend enum
-        const statusMap: Record<string, string> = {
-          'Ativo': 'ATIVA',
-          'Planejada': 'PLANEJADA',
-          'Concluída': 'ENCERRADA',
-          'Cancelada': 'CANCELADA'
-        };
-        const mapped = statusMap[classData.status];
+        const mappedStatus = backendClassStatusValue(classData.status);
+        const currentStatus = backendClassStatusValue(currentClass.status);
 
-        // Get current class to check if status actually changed
-        const currentClass = classes.find(c => c.id === id);
-        const currentBackendStatus = currentClass ? statusMap[currentClass.status] : undefined;
-
-        if (mapped && mapped !== currentBackendStatus) {
-          console.log('🔄 Atualizando status da turma:', { id, from: currentBackendStatus, to: mapped });
+        if (mappedStatus !== currentStatus) {
           try {
-            await ClassesAPI.updateStatus(id, { status: mapped });
-            console.log('✅ Status atualizado com sucesso');
+            await ClassesAPI.updateStatus(id, { status: mappedStatus });
           } catch (statusError) {
-            console.error('❌ Erro ao atualizar status da turma:', statusError);
-            if (isAxiosError(statusError)) {
-              console.error('❌ Detalhes do status:', statusError.response?.data);
-            }
-            // Don't throw - continue with other updates
+            logAxiosError(statusError);
           }
         }
       }
 
-      // Handle instructor association if instructorId is provided
-      if (classData.instructorId) {
-        // Get current class to check if instructor changed
-        const currentClass = classes.find(c => c.id === id);
-
-        // If instructor changed, update association
-        if (!currentClass || currentClass.instructorId !== classData.instructorId) {
-          try {
-            // Remove old instructor if exists
-            if (currentClass?.instructorId) {
-              await ClassesAPI.removeInstructor(id, currentClass.instructorId);
-            }
-            // Add new instructor
-            await ClassesAPI.addInstructor(id, classData.instructorId);
-            console.log(`✅ Instrutor ${classData.instructorId} associado à turma ${id}`);
-          } catch (error) {
-            console.error('Erro ao atualizar instrutor da turma:', error);
-            // Don't throw - allow other updates to succeed
-          }
+      if (classData.instructorId !== undefined && classData.instructorId !== currentClass.instructorId) {
+        if (currentClass.instructorId) {
+          await ClassesAPI.removeInstructor(id, currentClass.instructorId).catch(logAxiosError);
         }
+        await ClassesAPI.addInstructor(id, classData.instructorId).catch(logAxiosError);
       }
 
-      // Update local state: merge changes (keep students etc.)
       setClasses(prev => prev.map(cls =>
         cls.id === id ? { ...cls, ...classData } : cls
       ));
 
-      // Refresh related data
       await refreshStudents();
       await refreshClasses();
-
     } catch (err: unknown) {
-      console.error('Erro ao atualizar turma:', err);
-      if (isAxiosError(err)) {
-        console.error('Detalhes do erro:', err.response?.data);
-      }
-      const errorMessage = getApiErrorMessage(err, 'Erro ao atualizar turma');
+      const errorMessage = buildErrorMessage(err, 'Erro ao atualizar turma');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -1171,11 +780,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       await refreshStudents();
 
     } catch (err: unknown) {
-      console.error('Erro ao deletar turma:', err);
-      if (isAxiosError(err)) {
-        console.error('Detalhes do erro:', err.response?.data);
-      }
-      const errorMessage = getApiErrorMessage(err, 'Erro ao deletar turma');
+      const errorMessage = buildErrorMessage(err, 'Erro ao deletar turma');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -1193,6 +798,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const getClassesByCourse = (courseName: string) =>
     classes.filter(c => c.course === courseName);
 
+  const refreshInstructors = async () => {
+    try {
+      const response = await InstructorsAPI.list();
+      const backendInstructors = unwrapNestedArray<BackendInstructor>(response.data);
+      setInstructors(backendInstructors.map(mapBackendInstructor));
+      setError(null);
+    } catch (err: unknown) {
+      const errorMessage = buildErrorMessage(err, 'Erro ao carregar instrutores');
+      setError(errorMessage);
+    }
+  };
+
   // Instructor actions
   const addInstructor = async (instructorData: Omit<Instructor, 'id'>): Promise<void> => {
     try {
@@ -1200,7 +817,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       const backendData: InstructorPayload = {
         nome: instructorData.name,
-        cpf: instructorData.cpf.replace(/\D/g, ''), // Remove formatação
+        cpf: instructorData.cpf.replace(/\D/g, ''),
         email: instructorData.email,
         data_nascimento: instructorData.birthDate || null,
         endereco: instructorData.address,
@@ -1210,34 +827,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       };
 
       await InstructorsAPI.create(backendData);
-
-      // Recarregar instrutores
-      const response = await InstructorsAPI.list();
-      const backendInstructors = unwrapNestedArray<BackendInstructor>(response.data);
-
-      const frontendInstructors: Instructor[] = backendInstructors.map(bi => {
-        return {
-          id: bi.id,
-          name: bi.nome || '',
-          cpf: bi.cpf || '',
-          email: bi.email || '',
-          phone: '',
-          birthDate: bi.data_nascimento || '',
-          address: bi.endereco || '',
-          specialization: bi.especialidade || '',
-          experience: bi.experiencia || '',
-          status: bi.status || 'Ativo',
-          classes: []
-        };
-      });
-
-      setInstructors(frontendInstructors);
+      await refreshInstructors();
     } catch (err: unknown) {
-      console.error('Erro ao criar instrutor:', err);
-      if (isAxiosError(err)) {
-        console.error('Detalhes do erro:', err.response?.data);
-      }
-      const errorMessage = getApiErrorMessage(err, 'Erro ao criar instrutor');
+      const errorMessage = buildErrorMessage(err, 'Erro ao criar instrutor');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -1257,39 +849,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (instructorData.experience !== undefined) backendData.experiencia = instructorData.experience;
       if (instructorData.status !== undefined) backendData.status = instructorData.status;
 
-      console.log('🔄 Atualizando instrutor ID:', id);
-      console.log('📤 Dados enviados:', backendData);
-
-      const updateResponse = await InstructorsAPI.update(id, backendData);
-      console.log('✅ Resposta da API:', updateResponse.data);
-
-      // Recarregar instrutores
-      const response = await InstructorsAPI.list();
-      const backendInstructors = unwrapNestedArray<BackendInstructor>(response.data);
-
-      const frontendInstructors: Instructor[] = backendInstructors.map(bi => {
-        return {
-          id: bi.id,
-          name: bi.nome || '',
-          cpf: bi.cpf || '',
-          email: bi.email || '',
-          phone: '',
-          birthDate: bi.data_nascimento || '',
-          address: bi.endereco || '',
-          specialization: bi.especialidade || '',
-          experience: bi.experiencia || '',
-          status: bi.status || 'Ativo',
-          classes: []
-        };
-      });
-
-      setInstructors(frontendInstructors);
-    } catch (err: unknown) {
-      console.error('Erro ao atualizar instrutor:', err);
-      if (isAxiosError(err)) {
-        console.error('Detalhes do erro:', err.response?.data);
+      if (Object.keys(backendData).length > 0) {
+        await InstructorsAPI.update(id, backendData);
+        await refreshInstructors();
       }
-      const errorMessage = getApiErrorMessage(err, 'Erro ao atualizar instrutor');
+    } catch (err: unknown) {
+      const errorMessage = buildErrorMessage(err, 'Erro ao atualizar instrutor');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -1300,13 +865,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setError(null);
       await InstructorsAPI.delete(id);
 
-      setInstructors(prev => prev.filter(i => i.id !== id));
+      await refreshInstructors();
+
     } catch (err: unknown) {
-      console.error('Erro ao deletar instrutor:', err);
-      if (isAxiosError(err)) {
-        console.error('Detalhes do erro:', err.response?.data);
-      }
-      const errorMessage = getApiErrorMessage(err, 'Erro ao deletar instrutor');
+      const errorMessage = buildErrorMessage(err, 'Erro ao deletar instrutor');
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -1317,27 +879,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const refreshCandidates = async () => {
     try {
       const response = await CandidatesAPI.list({ limit: 100, page: 1 });
-
-      // Extrair e transformar candidatos
-      let backendCandidates = [];
-      if (response.data && typeof response.data === 'object') {
-        if (Array.isArray(response.data)) {
-          backendCandidates = response.data;
-        } else if (response.data.data && Array.isArray(response.data.data.data)) {
-          backendCandidates = response.data.data.data;
-        } else if (Array.isArray(response.data.data)) {
-          backendCandidates = response.data.data;
-        }
-      }
-
+      const backendCandidates = unwrapNestedArray<BackendCandidate>(response.data);
       setCandidates(backendCandidates);
       setError(null);
     } catch (err: unknown) {
-      console.error('Erro ao carregar candidatos:', err);
-      if (isAxiosError(err)) {
-        console.error('Detalhes do erro:', err.response?.data);
-      }
-      setError(getApiErrorMessage(err, 'Erro ao carregar candidatos'));
+      const errorMessage = buildErrorMessage(err, 'Erro ao carregar candidatos');
+      setError(errorMessage);
     }
   };
 

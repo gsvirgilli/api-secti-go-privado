@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, CheckCircle2, AlertCircle, MapPin, User, Mail, Phone, Calendar, GraduationCap, Clock, ArrowLeft, Home, FileText, Upload, X, File } from "lucide-react";
-import { useFormConfig } from "@/contexts/FormConfigContext";
+import { useFormConfig } from "@/contexts/useFormConfig";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -136,11 +136,6 @@ const Inscricao = () => {
     return field?.required === true;
   };
 
-  // Carregar cursos ao montar o componente
-  useEffect(() => {
-    loadCourses();
-  }, []);
-
   // Pular automaticamente a etapa 3 se não for menor de idade
   useEffect(() => {
     if (currentStep === 3 && !formData.menor_idade) {
@@ -148,7 +143,7 @@ const Inscricao = () => {
     }
   }, [formData.menor_idade, currentStep]);
 
-  const loadCourses = async () => {
+  const loadCourses = useCallback(async () => {
     setIsLoadingCourses(true);
     try {
       console.log('🔄 [PÚBLICO] Carregando cursos...');
@@ -181,7 +176,11 @@ const Inscricao = () => {
     } finally {
       setIsLoadingCourses(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadCourses();
+  }, [loadCourses]);
 
   // Buscar endereço por CEP
   const handleCEPChange = async (cep: string) => {
