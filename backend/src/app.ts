@@ -4,6 +4,7 @@ import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swagger.js';
 import router from './routes/index.js';
+import migrationRouter from './routes/migration.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 const app = express();
@@ -70,6 +71,7 @@ app.get('/api/health', (req, res) => {
 
 // Rotas da API
 app.use('/api', router);
+app.use('/api/admin', migrationRouter);
 
 // Handler para rotas não encontradas (404)
 app.use((req, res) => {
