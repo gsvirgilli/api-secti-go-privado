@@ -23,7 +23,21 @@ export const createAttendanceSchema = z.object({
   status: z
     .enum(['PRESENTE', 'AUSENTE', 'JUSTIFICADO'], {
       message: 'Status deve ser PRESENTE, AUSENTE ou JUSTIFICADO'
-    })
+    }),
+
+  motivo_justificacao: z
+    .string()
+    .optional()
+    .nullable()
+    .refine(val => !val || val.trim().length > 0, 'Motivo não pode ser vazio')
+    .refine(val => !val || val.trim().length <= 500, 'Motivo não pode ter mais de 500 caracteres'),
+
+  id_usuario: z
+    .number()
+    .int('ID do usuário deve ser um número inteiro')
+    .positive('ID do usuário deve ser um número positivo')
+    .optional()
+    .nullable()
 });
 
 /**
@@ -34,6 +48,14 @@ export const updateAttendanceSchema = z.object({
     .enum(['PRESENTE', 'AUSENTE', 'JUSTIFICADO'], {
       message: 'Status deve ser PRESENTE, AUSENTE ou JUSTIFICADO'
     })
+    .optional(),
+
+  motivo_justificacao: z
+    .string()
+    .optional()
+    .nullable()
+    .refine(val => !val || val.trim().length > 0, 'Motivo não pode ser vazio')
+    .refine(val => !val || val.trim().length <= 500, 'Motivo não pode ter mais de 500 caracteres')
 });
 
 /**

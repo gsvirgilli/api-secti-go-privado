@@ -9,8 +9,10 @@ class Attendance extends Model {
   declare id: number;
   declare id_aluno: number;
   declare id_turma: number;
+  declare id_usuario?: number;
   declare data_chamada: Date;
   declare status: 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADO';
+  declare motivo_justificacao?: string;
   declare createdAt: Date;
   declare updatedAt: Date;
 }
@@ -68,6 +70,20 @@ Attendance.init({
         msg: 'Status deve ser PRESENTE, AUSENTE ou JUSTIFICADO'
       }
     }
+  },
+  motivo_justificacao: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Motivo da justificação (quando status é JUSTIFICADO)'
+  },
+  id_usuario: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'usuarios',
+      key: 'id'
+    },
+    comment: 'ID do usuário (instrutor ou admin) que registrou a frequência'
   }
 }, {
   sequelize,
@@ -94,6 +110,7 @@ Attendance.init({
 // Importações para associações (após a definição do model para evitar circular dependency)
 import Student from '../students/student.model.js';
 import Class from '../classes/class.model.js';
+import User from '../users/user.model.js';
 
 // Associações
 Attendance.belongsTo(Student, {
@@ -104,6 +121,11 @@ Attendance.belongsTo(Student, {
 Attendance.belongsTo(Class, {
   foreignKey: 'id_turma',
   as: 'turma'
+});
+
+Attendance.belongsTo(User, {
+  foreignKey: 'id_usuario',
+  as: 'usuario'
 });
 
 export default Attendance;

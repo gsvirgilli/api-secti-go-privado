@@ -64,7 +64,14 @@ class AttendanceController {
     try {
       const data = createAttendanceSchema.parse(req.body);
       
-      const attendance = await AttendanceService.create(data as any);
+      // Adicionar id_usuario do token JWT
+      const userId = (req as any).user?.id;
+      const dataWithUser = {
+        ...data,
+        id_usuario: userId
+      };
+      
+      const attendance = await AttendanceService.create(dataWithUser as any);
       
       return res.status(201).json({
         message: 'Presença registrada com sucesso',

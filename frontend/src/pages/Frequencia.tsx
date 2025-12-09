@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle2, XCircle, AlertCircle, Plus, Save, Trash2, Calendar } from "lucide-react";
+import { CheckCircle2, XCircle, AlertCircle, Save, Trash2, Calendar, Info } from "lucide-react";
 import { useAppData } from "@/hooks/useAppData";
 import { AttendanceAPI } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +15,10 @@ interface AttendanceRecord {
   id_turma: number;
   data_chamada: string;
   status: 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADO';
+  motivo_justificacao?: string;
+  id_usuario?: number;
   student?: { nome: string };
+  usuario?: { nome: string; email: string };
 }
 
 const Frequencia = () => {
@@ -26,6 +29,7 @@ const Frequencia = () => {
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [justificationReasons, setJustificationReasons] = useState<Record<number, string>>({});
 
   // Filtrar alunos da turma selecionada
   const classStudents = selectedClass
@@ -49,6 +53,13 @@ const Frequencia = () => {
       if (response.data?.data) {
         response.data.data.forEach((att: AttendanceRecord) => {
           attendanceMap.set(att.id_aluno, att);
+          // Carregar motivo já registrado se houver
+          if (att.motivo_justificacao) {
+            setJustificationReasons(prev => ({
+              ...prev,
+              [att.id_aluno]: att.motivo_justificacao
+            }));
+          }
         });
       }
 
@@ -98,7 +109,13 @@ const Frequencia = () => {
       setLoading(true);
 
       // Dividir em novo e atualizado
-      const toCreate = attendances.filter(att => !att.id);
+      const toCreate = attendances
+        .filter(att => !att.id)
+        .map(att => ({
+          ...att,
+          motivo_justificacao: att.status === 'JUSTIFICADO' ? justificationReasons[att.id_aluno] : undefined
+        }));
+
       const toUpdate = attendances.filter(att => att.id);
 
       // Criar novas presenças
@@ -110,7 +127,8 @@ const Frequencia = () => {
       for (const att of toUpdate) {
         if (att.id) {
           await AttendanceAPI.update(att.id, {
-            status: att.status
+            status: att.status,
+            motivo_justificacao: att.status === 'JUSTIFICADO' ? justificationReasons[att.id_aluno] : undefined
           });
         }
       }
@@ -120,6 +138,8 @@ const Frequencia = () => {
         description: `${attendances.length} presenças registradas com sucesso!`,
       });
 
+      // Limpar justificações
+      setJustificationReasons({});
       // Recarregar
       loadAttendances();
     } catch (error: any) {
@@ -186,6 +206,16 @@ const Frequencia = () => {
         <p className="text-muted-foreground mt-2">Gerencie e registre a frequência dos alunos nas aulas</p>
       </div>
 
+      {/* Info Banner */}
+      <Card className="border-amber-200 bg-amber-50">
+        <CardContent className="pt-6 flex gap-3">
+          <Info className="w-5 h-5 text-amber-600 flex-shrink-0" />
+          <div className="text-sm text-amber-800">
+            <strong>Dica:</strong> Quando marcar como "Justificado", adicione o motivo da justificação. O sistema registrará automaticamente quem está registrando a frequência.
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Filtros */}
       <Card className="border-0 shadow-md">
         <CardHeader className="pb-4">
@@ -251,7 +281,7 @@ const Frequencia = () => {
                 Nenhum aluno nesta turma
               </div>
             ) : (
-              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+              <div className="space-y-4 max-h-[700px] overflow-y-auto">
                 {attendances.map((att) => {
                   const student = students.find(s => s.id === att.id_aluno);
                   return (
@@ -259,61 +289,99 @@ const Frequencia = () => {
                       key={`${att.id_aluno}-${att.id}`}
                       className={`p-4 border rounded-lg ${getStatusColor(att.status)}`}
                     >
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1">
-                          <p className="font-medium text-foreground">{student?.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Matrícula: {student?.matricula || 'N/A'}
-                          </p>
+                      <div className="space-y-3">
+                        {/* Cabeçalho com dados do aluno */}
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <p className="font-medium text-foreground">{student?.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Matrícula: {student?.matricula || 'N/A'}
+                            </p>
+                          </div>
+
+                          {/* Badges de informação */}
+                          <div className="flex gap-2 items-center flex-wrap justify-end">
+                            {getStatusBadge(att.status)}
+                            {att.usuario && (
+                              <div className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded font-medium">
+                                ✓ {att.usuario.nome}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant={att.status === 'PRESENTE' ? 'default' : 'outline'}
-                              onClick={() => updateAttendanceStatus(att.id_aluno, 'PRESENTE')}
-                              className="gap-2"
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                              Presente
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={att.status === 'AUSENTE' ? 'destructive' : 'outline'}
-                              onClick={() => updateAttendanceStatus(att.id_aluno, 'AUSENTE')}
-                              className="gap-2"
-                            >
-                              <XCircle className="w-4 h-4" />
-                              Ausente
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={att.status === 'JUSTIFICADO' ? 'secondary' : 'outline'}
-                              onClick={() => updateAttendanceStatus(att.id_aluno, 'JUSTIFICADO')}
-                              className="gap-2"
-                            >
-                              <AlertCircle className="w-4 h-4" />
-                              Justificado
-                            </Button>
-                          </div>
+                        {/* Botões de status */}
+                        <div className="flex gap-2 flex-wrap">
+                          <Button
+                            size="sm"
+                            variant={att.status === 'PRESENTE' ? 'default' : 'outline'}
+                            onClick={() => updateAttendanceStatus(att.id_aluno, 'PRESENTE')}
+                            className="gap-2"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            Presente
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={att.status === 'AUSENTE' ? 'destructive' : 'outline'}
+                            onClick={() => updateAttendanceStatus(att.id_aluno, 'AUSENTE')}
+                            className="gap-2"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            Ausente
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={att.status === 'JUSTIFICADO' ? 'secondary' : 'outline'}
+                            onClick={() => updateAttendanceStatus(att.id_aluno, 'JUSTIFICADO')}
+                            className="gap-2"
+                          >
+                            <AlertCircle className="w-4 h-4" />
+                            Justificado
+                          </Button>
 
                           {att.id && (
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="text-red-500 hover:text-red-700"
+                              className="text-red-500 hover:text-red-700 ml-auto"
                               onClick={() => deleteAttendance(att.id)}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           )}
                         </div>
-                      </div>
 
-                      {/* Status Badge */}
-                      <div className="mt-2">
-                        {getStatusBadge(att.status)}
+                        {/* Campo de motivo de justificação */}
+                        {att.status === 'JUSTIFICADO' && (
+                          <div className="mt-3 pt-3 border-t">
+                            <label className="text-sm font-medium block mb-2">
+                              Motivo da Justificação *
+                            </label>
+                            <textarea
+                              value={justificationReasons[att.id_aluno] || ''}
+                              onChange={(e) => setJustificationReasons(prev => ({
+                                ...prev,
+                                [att.id_aluno]: e.target.value
+                              }))}
+                              placeholder="Descreva o motivo da justificação... (atestado, doença, atraso, etc)"
+                              className="w-full p-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                              rows={2}
+                              maxLength={500}
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {(justificationReasons[att.id_aluno] || '').length}/500 caracteres
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Exibir motivo existente */}
+                        {att.status === 'JUSTIFICADO' && att.motivo_justificacao && !justificationReasons[att.id_aluno] && (
+                          <div className="mt-2 pt-2 border-t bg-yellow-50 p-3 rounded text-sm">
+                            <p className="font-medium text-yellow-900 mb-1">Motivo registrado:</p>
+                            <p className="text-yellow-800">{att.motivo_justificacao}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
