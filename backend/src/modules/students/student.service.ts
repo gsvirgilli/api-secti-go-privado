@@ -154,10 +154,11 @@ class StudentService {
       throw new Error('Email já cadastrado');
     }
     
-    // Gerar matrícula única
+    // Gerar matrícula única - usar timestamp + random ao invés de COUNT
     const year = new Date().getFullYear();
-    const count = await Student.count();
-    const matricula = `${year}${String(count + 1).padStart(6, '0')}`;
+    const timestamp = Date.now().toString().slice(-4);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(4, '0');
+    const matricula = `${year}${timestamp}${random}`;
     
     // Converter data_nascimento se fornecida
     let parsedDate = null;
