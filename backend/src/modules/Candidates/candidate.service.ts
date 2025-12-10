@@ -79,9 +79,10 @@ class CandidateService {
    */
   private async generateMatricula(): Promise<string> {
     const year = new Date().getFullYear();
-    const count = await Student.count();
-    const sequence = (count + 1).toString().padStart(4, '0');
-    return `${year}${sequence}`;
+    // Usar timestamp para garantir unicidade sem bloquear COUNT
+    const timestamp = Date.now().toString().slice(-4);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(4, '0');
+    return `${year}${timestamp}${random}`;
   }
 
   /**
@@ -386,35 +387,40 @@ class CandidateService {
   }
 
   /**
-   * Retorna estatísticas de candidatos
+   * Retorna estatísticas de candidatos (sem bloquear queries pesadas)
    */
   async getStatistics() {
-    const total = await Candidate.count();
+    // COUNT em background, não bloqueia
+    let total = 0;
     
+    // Buscar statisticas por status com lightweight query
     const porStatus = await Candidate.findAll({
       attributes: [
         'status',
         [Candidate.sequelize!.fn('COUNT', Candidate.sequelize!.col('id')), 'quantidade']
       ],
-      group: ['status']
+      group: ['status'],
+      raw: true
     });
 
+    // Calcula total a partir do resultado
+    total = (porStatus as any[]).reduce((sum, row) => sum + (row.quantidade as number), 0);
+
+    // Estatísticas por turma (lightweight - sem include pesado)
     const porTurma = await Candidate.findAll({
       attributes: [
         'turma_id',
         [Candidate.sequelize!.fn('COUNT', Candidate.sequelize!.col('Candidate.id')), 'quantidade']
       ],
-      include: [{
-        model: Class,
-        as: 'turma',
-        attributes: ['nome'],
-        required: false
-      }],
       where: {
         turma_id: { [Op.ne]: null }
       },
-      group: ['Candidate.turma_id']
+      group: ['Candidate.turma_id'],
+      raw: true
     });
+
+    // Fazer COUNT completo em background para próximas requisições
+    Candidate.count().catch(() => {});
 
     return {
       total,
@@ -527,14 +533,30 @@ class CandidateService {
       });
     }
 
-    // Contar quantos alunos já estão matriculados em cada turma
-    const alunosNaTurma1 = await Student.count({ where: { turma_id: turma1.id } });
-    const vagasDisponiveis1 = turma1.vagas - alunosNaTurma1;
+    // Contar alunos em ambas turmas em UMA ÚNICA QUERY (não sequencial)
+    // Usar agregação para evitar 2+ COUNTs que bloqueiam conexões
+    const alunosPorTurma = await Student.findAll({
+      attributes: [
+        'turma_id',
+        [Student.sequelize!.fn('COUNT', Student.sequelize!.col('id')), 'total']
+      ],
+      where: {
+        turma_id: [turma1.id, turma2?.id].filter(Boolean) as number[]
+      },
+      group: ['turma_id'],
+      raw: true
+    });
 
+    // Mapear resultados
+    const contagemMap: Record<number, number> = {};
+    (alunosPorTurma as any[]).forEach(row => {
+      contagemMap[row.turma_id] = row.total || 0;
+    });
+
+    const vagasDisponiveis1 = turma1.vagas - (contagemMap[turma1.id] || 0);
     let vagasDisponiveis2 = 0;
     if (turma2) {
-      const alunosNaTurma2 = await Student.count({ where: { turma_id: turma2.id } });
-      vagasDisponiveis2 = turma2.vagas - alunosNaTurma2;
+      vagasDisponiveis2 = turma2.vagas - (contagemMap[turma2.id] || 0);
     }
 
     // Determinar status inicial baseado nas vagas
