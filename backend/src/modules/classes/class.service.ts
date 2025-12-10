@@ -175,16 +175,17 @@ class ClassService {
     }
 
     // Se a include não retornou alunos, buscar manualmente por turma_id
-    if (!turma.alunos || turma.alunos.length === 0) {
+    const turmaData = turma.toJSON() as any;
+    if (!turmaData.alunos || turmaData.alunos.length === 0) {
       const alunos = await Student.findAll({
         where: { turma_id: id },
         attributes: ['id', 'matricula', 'nome', 'email', 'status', 'telefone'],
         order: [['nome', 'ASC']]
       });
-      turma.alunos = alunos as any;
+      turmaData.alunos = alunos;
     }
 
-    return turma;
+    return turmaData;
   }
 
   /**
