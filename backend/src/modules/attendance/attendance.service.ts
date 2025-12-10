@@ -175,6 +175,8 @@ class AttendanceService {
     const transaction = await sequelize.transaction();
 
     try {
+      console.log('📊 createBulk data received:', JSON.stringify(data, null, 2));
+      
       // Validar se a turma existe
       const turma = await Class.findByPk(data.id_turma, { transaction });
       if (!turma) {

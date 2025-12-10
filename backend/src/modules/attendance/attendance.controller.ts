@@ -111,6 +111,8 @@ class AttendanceController {
   async createBulk(req: Request, res: Response, next: NextFunction) {
     try {
       console.log('📝 Bulk request body:', JSON.stringify(req.body, null, 2));
+      console.log('📝 Content-Type:', req.headers['content-type']);
+      console.log('📝 Tipo de data_chamada:', typeof req.body?.data_chamada, 'Valor:', req.body?.data_chamada);
       
       const data = bulkAttendanceSchema.parse(req.body);
       
@@ -138,9 +140,14 @@ class AttendanceController {
       
       if (error instanceof z.ZodError) {
         console.error('❌ Erro de validação Zod:', JSON.stringify(error.issues, null, 2));
+        const details = error.issues.map(issue => ({
+          path: issue.path.join('.'),
+          message: issue.message,
+          code: issue.code
+        }));
         return res.status(400).json({
           error: 'Erro de validação',
-          details: error.issues
+          details
         });
       }
 

@@ -299,10 +299,8 @@ class StudentService {
       throw new Error('Aluno não encontrado');
     }
 
-    // Atualizar aluno
-    await student.update(data);
-
-    return student;
+    // Atualizar aluno (método update já atualiza e retorna o objeto)
+    return await student.update(data);
   }
 
   /**

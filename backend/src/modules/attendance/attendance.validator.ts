@@ -68,10 +68,11 @@ export const bulkAttendanceSchema = z.object({
     .positive('ID da turma deve ser um número positivo'),
 
   data_chamada: z
-    .union([
-      z.string().transform(val => new Date(val)),
-      z.date()
-    ]),
+    .string({ message: 'Data é obrigatória' })
+    .refine(
+      (val) => !isNaN(new Date(val).getTime()),
+      'Data inválida'
+    ),
 
   attendances: z.array(z.object({
     id_aluno: z
