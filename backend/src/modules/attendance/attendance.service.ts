@@ -137,14 +137,30 @@ class AttendanceService {
     }
 
     // Validar se o aluno está matriculado na turma
-    const enrollment = await Enrollment.findOne({
-      where: {
-        id_aluno: data.id_aluno,
-        id_turma: data.id_turma
-      }
-    });
+    // Aceita DUAS formas de matrícula:
+    // 1. Campo turma_id direto no Student
+    // 2. Registro na tabela Enrollment (matriculas)
+    let isEnrolled = false;
 
-    if (!enrollment) {
+    // Opção 1: Verificar se student tem turma_id que bate
+    if (student.turma_id === data.id_turma) {
+      isEnrolled = true;
+    }
+
+    // Opção 2: Verificar na tabela de matrículas
+    if (!isEnrolled) {
+      const enrollment = await Enrollment.findOne({
+        where: {
+          id_aluno: data.id_aluno,
+          id_turma: data.id_turma
+        }
+      });
+      if (enrollment) {
+        isEnrolled = true;
+      }
+    }
+
+    if (!isEnrolled) {
       throw new Error('Aluno não está matriculado nesta turma');
     }
 
@@ -193,15 +209,31 @@ class AttendanceService {
         }
 
         // Validar se o aluno está matriculado
-        const enrollment = await Enrollment.findOne({
-          where: {
-            id_aluno: attendance.id_aluno,
-            id_turma: data.id_turma
-          },
-          transaction
-        });
+        // Aceita DUAS formas de matrícula:
+        // 1. Campo turma_id direto no Student
+        // 2. Registro na tabela Enrollment (matriculas)
+        let isEnrolled = false;
 
-        if (!enrollment) {
+        // Opção 1: Verificar se student tem turma_id que bate
+        if (student.turma_id === data.id_turma) {
+          isEnrolled = true;
+        }
+
+        // Opção 2: Verificar na tabela de matrículas
+        if (!isEnrolled) {
+          const enrollment = await Enrollment.findOne({
+            where: {
+              id_aluno: attendance.id_aluno,
+              id_turma: data.id_turma
+            },
+            transaction
+          });
+          if (enrollment) {
+            isEnrolled = true;
+          }
+        }
+
+        if (!isEnrolled) {
           throw new Error(`Aluno ${student.nome} não está matriculado nesta turma`);
         }
 
@@ -217,7 +249,7 @@ class AttendanceService {
 
         if (existing) {
           // Atualizar se já existe
-          await existing.update({ 
+          await existing.update({
             status: attendance.status,
             motivo_justificacao: attendance.motivo_justificacao || null,
             id_usuario: attendance.id_usuario || null
