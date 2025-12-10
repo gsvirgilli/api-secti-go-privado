@@ -7,7 +7,10 @@ export class AuthService {
   public async register(userData: RegisterBody) {
     const { email, senha, role } = userData;
 
-    const existingUser = await User.findOne({ where: { email } });
+    const existingUser = await User.findOne({ 
+      where: { email },
+      attributes: ['id'] // Apenas verificar se existe
+    });
     if (existingUser) {
       throw new (await import('../../utils/AppError.js')).AppError('Este email já está em uso.', 409);
     }
@@ -21,19 +24,33 @@ export class AuthService {
       role: userData.role || 'INSTRUTOR',
     });
 
-    const { senha_hash: _omit, ...safeUser } = (newUser.toJSON?.() ?? newUser) as any;
+    const safeUser = newUser.toJSON ? (newUser.toJSON() as any) : (newUser as any);
+    delete safeUser.senha_hash;
     return safeUser;
   }
 
   public async login(loginData: LoginBody) {
     const { email, senha } = loginData;
 
-    const user = await User.findOne({ where: { email } });
+    const loginStart = Date.now();
+    
+    // Buscar usuário pelo email (com índice otimizado)
+    const userSearchStart = Date.now();
+    const user = await User.findOne({ 
+      where: { email },
+      attributes: { exclude: ['createdAt', 'updatedAt'] } // Remover timestamps desnecessários
+    });
+    const userSearchTime = Date.now() - userSearchStart;
+    
     if (!user) {
       throw new (await import('../../utils/AppError.js')).AppError('Email ou senha inválidos.', 401);
     }
 
+    // Validar senha
+    const passwordStart = Date.now();
     const isPasswordCorrect = await bcrypt.compare(senha, user.senha_hash);
+    const passwordTime = Date.now() - passwordStart;
+    
     if (!isPasswordCorrect) {
       throw new (await import('../../utils/AppError.js')).AppError('Email ou senha inválidos.', 401);
     }
@@ -43,9 +60,17 @@ export class AuthService {
       throw new (await import('../../utils/AppError.js')).AppError('Erro interno: ID do usuário não encontrado.', 500);
     }
 
+    // Gerar token
+    const tokenStart = Date.now();
     const token = signJwt({ sub: String(user.id), role: user.role });
+    const tokenTime = Date.now() - tokenStart;
 
-    const { senha_hash: _omit, ...safeUser } = (user.toJSON?.() ?? user) as any;
+    const safeUser = user.toJSON ? (user.toJSON() as any) : (user as any);
+    delete safeUser.senha_hash;
+    
+    const totalTime = Date.now() - loginStart;
+    console.log(`[LOGIN PERF] Email search: ${userSearchTime}ms | Password check: ${passwordTime}ms | Token gen: ${tokenTime}ms | Total: ${totalTime}ms`);
+
     return { user: safeUser, token };
   }
 }

@@ -58,6 +58,12 @@ User.init({
   sequelize,
   tableName: 'usuarios',
   timestamps: true,
+  indexes: [
+    {
+      fields: ['email'],
+      name: 'idx_usuarios_email'
+    }
+  ]
 });
 
 export default User;
