@@ -43,8 +43,8 @@ router.post('/run-migration', async (req, res) => {
           command: command.substring(0, 60),
           status: 'success'
         });
-      } catch (error: any) {
-        const msg = error.message || '';
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
         // Ignorar erros de coluna já existente ou constraint já existente
         if (msg.includes('Duplicate column') || 
             msg.includes('already exists') ||
@@ -70,13 +70,15 @@ router.post('/run-migration', async (req, res) => {
       commandsExecuted: results.length,
       details: results
     });
-  } catch (error: any) {
-    console.error('❌ Erro ao executar migração:', error.message);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : '';
+    console.error('❌ Erro ao executar migração:', errorMsg);
     
     return res.status(500).json({
       success: false,
-      error: error.message,
-      details: error.stack
+      error: errorMsg,
+      details: errorStack
     });
   }
 });

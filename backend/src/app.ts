@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import helmet from 'helmet';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swagger.js';
 import router from './routes/index.js';
@@ -11,6 +14,36 @@ const app = express();
 
 // Configurar Express para confiar em proxy reverso (Render, Vercel, etc)
 app.set('trust proxy', 1);
+
+// 🛡️ Adicionar headers de segurança HTTP
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+    }
+  },
+  frameguard: { action: 'deny' },
+  noSniff: true,
+  xssFilter: true,
+  hsts: { maxAge: 31536000, includeSubDomains: true }
+}));
+
+// 📦 Comprimir respostas gzip
+app.use(compression());
+
+// 🔒 Rate limiting global (100 requisições por 15 minutos por IP)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Muitas requisições. Tente novamente mais tarde.' },
+  skip: (req) => req.path === '/api/health' // Não limitar health checks
+});
+app.use('/api/', globalLimiter);
 
 // CORS configurado com segurança - aceitar múltiplas origens
 const allowedOrigins = [
