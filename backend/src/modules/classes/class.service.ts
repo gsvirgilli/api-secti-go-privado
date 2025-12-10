@@ -174,16 +174,22 @@ class ClassService {
       throw new Error('Turma não encontrada');
     }
 
-    // Se a include não retornou alunos, buscar manualmente por turma_id
+    // Converter para JSON plain object
     const turmaData = turma.toJSON() as any;
-    if (!turmaData.alunos || turmaData.alunos.length === 0) {
-      const alunos = await Student.findAll({
-        where: { turma_id: id },
-        attributes: ['id', 'matricula', 'nome', 'email', 'status', 'telefone'],
-        order: [['nome', 'ASC']]
-      });
-      turmaData.alunos = alunos;
-    }
+    
+    console.log('🔍 Turma encontrada:', turmaData.id, turmaData.nome);
+    console.log('🔍 Alunos na include:', turmaData.alunos?.length || 0);
+
+    // SEMPRE buscar alunos por turma_id (schema simplificado)
+    const alunos = await Student.findAll({
+      where: { turma_id: id },
+      attributes: ['id', 'matricula', 'nome', 'email', 'status', 'telefone'],
+      order: [['nome', 'ASC']]
+    });
+    
+    console.log('🔍 Alunos encontrados por turma_id:', alunos.length);
+    
+    turmaData.alunos = alunos;
 
     return turmaData;
   }
