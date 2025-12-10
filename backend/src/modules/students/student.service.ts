@@ -125,25 +125,10 @@ class StudentService {
    * Lista alunos de uma turma específica (para frequência)
    */
   async findByClassId(classId: number) {
-    const Class = (await import('../classes/class.model.js')).default;
-    const Curso = (await import('../courses/course.model.js')).default;
-
+    // Query otimizada para frequência - sem JOINs pesados
     const students = await Student.findAll({
       where: { turma_id: classId },
-      include: [
-        {
-          model: Class,
-          as: 'turma',
-          attributes: ['id', 'nome', 'turno'],
-          include: [
-            {
-              model: Curso,
-              as: 'curso',
-              attributes: ['id', 'nome']
-            }
-          ]
-        }
-      ],
+      attributes: ['id', 'nome', 'cpf', 'matricula', 'email'],
       order: [['nome', 'ASC']]
     });
 
