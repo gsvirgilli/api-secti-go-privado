@@ -46,9 +46,9 @@ interface BulkAttendanceData {
  */
 class AttendanceService {
   /**
-   * Lista presenças com filtros opcionais
+   * Lista presenças com filtros opcionais (com paginação)
    */
-  async list(filters: AttendanceFilters = {}) {
+  async list(filters: AttendanceFilters & { page?: number; limit?: number } = {}) {
     const where: any = {};
 
     // Filtro por aluno
@@ -77,21 +77,18 @@ class AttendanceService {
       where.status = filters.status;
     }
 
+    // Paginação simples (padrão: 50 registros)
+    const limit = Math.min(filters.limit || 50, 100);
+    const page = Math.max(filters.page || 1, 1);
+    const offset = (page - 1) * limit;
+
+    // Skip includes para performance, retornar apenas IDs
     const attendances = await Attendance.findAll({
       where,
-      include: [
-        {
-          model: Student,
-          as: 'aluno',
-          attributes: ['id', 'nome', 'email', 'matricula']
-        },
-        {
-          model: Class,
-          as: 'turma',
-          attributes: ['id', 'nome', 'turno']
-        }
-      ],
-      order: [['data_chamada', 'DESC'], ['id_aluno', 'ASC']]
+      attributes: ['id', 'id_aluno', 'id_turma', 'data_chamada', 'status', 'motivo_justificacao', 'id_usuario', 'createdAt', 'updatedAt'],
+      order: [['data_chamada', 'DESC'], ['id_aluno', 'ASC']],
+      limit,
+      offset
     });
 
     return attendances;
@@ -240,12 +237,18 @@ class AttendanceService {
 
       await transaction.commit();
 
-      // Retornar registros criados com dados completos
-      return await this.list({
-        id_turma: data.id_turma,
-        data_inicio: data.data_chamada,
-        data_fim: data.data_chamada
-      });
+      // Retornar apenas os registros criados (sem includes pesados)
+      return createdAttendances.slice(0, 50).map(att => ({
+        id: att.id,
+        id_aluno: att.id_aluno,
+        id_turma: att.id_turma,
+        data_chamada: att.data_chamada,
+        status: att.status,
+        motivo_justificacao: att.motivo_justificacao,
+        id_usuario: att.id_usuario,
+        createdAt: att.createdAt,
+        updatedAt: att.updatedAt
+      }));
     } catch (error) {
       await transaction.rollback();
       throw error;
