@@ -95,10 +95,27 @@ class CourseService {
   }
 
   /**
-   * Buscar curso por ID
+   * Buscar curso por ID com turmas e alunos
    */
   async findById(id: number): Promise<Course> {
-    const course = await Course.findByPk(id);
+    const course = await Course.findByPk(id, {
+      include: [
+        {
+          model: Class,
+          as: 'turmas',
+          attributes: ['id', 'nome', 'turno', 'vagas', 'status'],
+          include: [
+            {
+              model: Student,
+              as: 'alunos',
+              attributes: ['id', 'nome', 'matricula', 'email', 'status'],
+              required: false
+            }
+          ],
+          required: false
+        }
+      ]
+    });
     
     if (!course) {
       throw new AppError('Curso não encontrado', 404);
