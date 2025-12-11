@@ -247,16 +247,17 @@ const mapClassStudents = (alunos?: BackendClass['alunos']) =>
   }));
 
 const mapBackendClass = (classData: BackendClass): Class => {
-  const instructor = classData.instrutores && classData.instrutores.length > 0
-    ? classData.instrutores[0]
-    : undefined;
+  const instructors = classData.instrutores || [];
+  const firstInstructor = instructors.length > 0 ? instructors[0] : undefined;
 
   return {
     id: classData.id ?? 0,
     name: classData.nome || '',
     course: classData.curso?.nome || (classData.id_curso?.toString() || ''),
-    instructor: instructor?.nome || 'A definir',
-    instructorId: instructor?.id,
+    instructor: firstInstructor?.nome || 'A definir',
+    instructorId: firstInstructor?.id,
+    instructors: instructors.map(i => ({ id: i.id, name: i.nome })),
+    instructorIds: instructors.map(i => i.id),
     capacity: classData.vagas || 0,
     enrolled: (classData.alunos?.length ?? 0),
     schedule: getClassScheduleLabel(classData.turno),
@@ -751,12 +752,34 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      if (classData.instructorId !== undefined && classData.instructorId !== currentClass.instructorId) {
-        // Remover instrutor anterior se existia
+      if (classData.instructorIds !== undefined) {
+        const oldInstructorIds = currentClass.instructorIds || [];
+        const newInstructorIds = classData.instructorIds || [];
+
+        // Encontrar instrutores a remover
+        const instructorsToRemove = oldInstructorIds.filter(
+          id => !newInstructorIds.includes(id) && id > 0
+        );
+
+        // Encontrar instrutores a adicionar
+        const instructorsToAdd = newInstructorIds.filter(
+          id => !oldInstructorIds.includes(id) && id > 0
+        );
+
+        // Remover instrutores antigos
+        for (const instructorId of instructorsToRemove) {
+          await ClassesAPI.removeInstructor(id, instructorId).catch(logAxiosError);
+        }
+
+        // Adicionar novos instrutores
+        for (const instructorId of instructorsToAdd) {
+          await ClassesAPI.addInstructor(id, instructorId).catch(logAxiosError);
+        }
+      } else if (classData.instructorId !== undefined && classData.instructorId !== currentClass.instructorId) {
+        // Fallback para compatibilidade com código antigo (um único instrutor)
         if (currentClass.instructorId && currentClass.instructorId > 0) {
           await ClassesAPI.removeInstructor(id, currentClass.instructorId).catch(logAxiosError);
         }
-        // Adicionar novo instrutor apenas se ID for válido (> 0)
         if (classData.instructorId && classData.instructorId > 0) {
           await ClassesAPI.addInstructor(id, classData.instructorId).catch(logAxiosError);
         }

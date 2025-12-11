@@ -31,8 +31,10 @@ export interface Class {
   id: number;
   name: string;
   course: string;
-  instructor: string;
-  instructorId?: number;
+  instructor: string; // Nome do primeiro instrutor (compatibilidade)
+  instructorId?: number; // ID do primeiro instrutor (compatibilidade)
+  instructors?: Array<{ id: number; name: string }>; // Múltiplos instrutores
+  instructorIds?: number[]; // IDs dos instrutores
   capacity: number;
   enrolled: number;
   schedule: string;

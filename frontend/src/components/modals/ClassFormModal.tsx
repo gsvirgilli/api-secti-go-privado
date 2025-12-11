@@ -51,7 +51,7 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
     name: classData?.name || "",
     course: classData?.course || "",
     instructor: classData?.instructor || "",
-    instructorId: classData?.instructorId || 0, // ID do instrutor selecionado
+    instructorIds: classData?.instructorIds || [], // Múltiplos IDs de instrutores
     capacity: classData?.capacity || 0,
     schedule: classData?.schedule || "",
     duration: classData?.duration || "",
@@ -69,7 +69,7 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
         name: classData.name || "",
         course: classData.course || "",
         instructor: classData.instructor || "",
-        instructorId: classData.instructorId || 0,
+        instructorIds: classData.instructorIds || [],
         capacity: classData.capacity || 0,
         schedule: classData.schedule || "",
         duration: classData.duration || "",
@@ -85,7 +85,7 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
         name: "",
         course: "",
         instructor: "",
-        instructorId: 0,
+        instructorIds: [],
         capacity: 0,
         schedule: "",
         duration: "",
@@ -115,10 +115,10 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
     }
 
     // Validar se status é ATIVA, deve ter instrutor
-    if (formData.status === "Ativo" && (!formData.instructorId || formData.instructorId === 0)) {
+    if (formData.status === "Ativo" && (!formData.instructorIds || formData.instructorIds.length === 0)) {
       toast({
         title: "Instrutor obrigatório",
-        description: "Turmas ativas devem ter um instrutor cadastrado",
+        description: "Turmas ativas devem ter pelo menos um instrutor cadastrado",
         variant: "destructive"
       });
       return;
@@ -192,33 +192,45 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="instructor">Instrutor *</Label>
-              <Select
-                value={formData.instructorId > 0 ? formData.instructorId.toString() : ""}
-                onValueChange={(value) => {
-                  const instructorId = parseInt(value);
-                  const instructor = instructors.find(i => i.id === instructorId);
-                  handleInputChange("instructorId", instructorId);
-                  handleInputChange("instructor", instructor?.name || "");
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o instrutor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {instructors.length === 0 ? (
-                    <SelectItem key="no-instructor" value="0" disabled>Nenhum instrutor cadastrado</SelectItem>
-                  ) : (
-                    instructors.map((instructor) => (
-                      <SelectItem key={instructor.id} value={instructor.id.toString()}>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Instrutores *</Label>
+              <div className="border rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
+                {instructors.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum instrutor cadastrado</p>
+                ) : (
+                  instructors.map((instructor) => (
+                    <div key={instructor.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`instructor-${instructor.id}`}
+                        checked={formData.instructorIds.includes(instructor.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            const newIds = [...formData.instructorIds, instructor.id];
+                            handleInputChange("instructorIds", newIds);
+                            // Atualizar instructor (nome do primeiro)
+                            const firstInstructor = instructors.find(i => i.id === newIds[0]);
+                            handleInputChange("instructor", firstInstructor?.name || "");
+                          } else {
+                            const newIds = formData.instructorIds.filter(id => id !== instructor.id);
+                            handleInputChange("instructorIds", newIds);
+                            // Atualizar instructor (nome do novo primeiro ou vazio)
+                            const firstInstructor = newIds.length > 0 ? instructors.find(i => i.id === newIds[0]) : undefined;
+                            handleInputChange("instructor", firstInstructor?.name || "");
+                          }
+                        }}
+                        className="rounded"
+                      />
+                      <label htmlFor={`instructor-${instructor.id}`} className="text-sm cursor-pointer">
                         {instructor.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                      </label>
+                    </div>
+                  ))
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Selecionados: {formData.instructorIds.length} instrutor(es)
+              </p>
             </div>
 
             <div className="space-y-2">
