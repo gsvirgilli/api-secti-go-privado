@@ -111,9 +111,19 @@ const ClassDetailsModal = ({ isOpen, onClose, classData }: ClassDetailsModalProp
                 <span className="text-muted-foreground">Curso:</span>
                 <span className="font-medium">{classData.course}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Instrutor:</span>
-                <span className="font-medium">{classData.instructor}</span>
+              <div className="flex justify-between items-start">
+                <span className="text-muted-foreground">Instrutor(es):</span>
+                <div className="flex flex-col items-end gap-1">
+                  {classData.instructors && classData.instructors.length > 0 ? (
+                    classData.instructors.map((inst, idx) => (
+                      <span key={idx} className="font-medium bg-primary/10 px-2 py-1 rounded text-sm">
+                        {inst.name}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="font-medium">{classData.instructor || 'Não definido'}</span>
+                  )}
+                </div>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Turno:</span>

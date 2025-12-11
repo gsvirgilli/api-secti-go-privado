@@ -679,7 +679,19 @@ const Classes = () => {
                     </div>
                   </TableCell>
                   <TableCell>{classItem.course}</TableCell>
-                  <TableCell>{classItem.instructor}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      {classItem.instructors && classItem.instructors.length > 0 ? (
+                        classItem.instructors.map((inst, idx) => (
+                          <span key={idx} className="text-sm bg-primary/10 px-2 py-0.5 rounded w-fit">
+                            {inst.name}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm">{classItem.instructor}</span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>{classItem.schedule || 'Não definido'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
