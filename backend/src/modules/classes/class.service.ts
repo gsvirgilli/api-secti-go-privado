@@ -501,18 +501,40 @@ class ClassService {
    * Associa um instrutor a uma turma
    */
   async addInstructor(classId: number, instructorId: number) {
-    const turma = await this.findById(classId);
-    const instructor = await Instructor.findByPk(instructorId);
+    try {
+      const turma = await Class.findByPk(classId);
+      if (!turma) {
+        throw new Error('Turma não encontrada');
+      }
 
-    if (!instructor) {
-      throw new Error('Instrutor não encontrado');
+      const instructor = await Instructor.findByPk(instructorId);
+      if (!instructor) {
+        throw new Error('Instrutor não encontrado');
+      }
+
+      // Verificar se já está associado
+      const existingAssociation = await InstructorClass.findOne({
+        where: {
+          id_turma: classId,
+          id_instrutor: instructorId
+        }
+      });
+
+      if (existingAssociation) {
+        throw new Error('Este instrutor já está associado a esta turma');
+      }
+
+      // @ts-ignore - Sequelize association method (addInstrutores é gerado automaticamente pelo belongsToMany)
+      await turma.addInstrutores(instructor);
+
+      // Retornar turma atualizada com instrutores
+      return await this.findById(classId);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error(`Erro ao associar instrutor: ${error}`);
     }
-
-    // @ts-ignore - Sequelize association method (addInstrutores é gerado automaticamente pelo belongsToMany)
-    await turma.addInstrutores(instructor);
-
-    // Retornar turma atualizada com instrutores
-    return await this.findById(classId);
   }
 
   /**

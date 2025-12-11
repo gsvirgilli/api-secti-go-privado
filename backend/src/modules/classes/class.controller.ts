@@ -282,13 +282,18 @@ class ClassController {
         data: result
       });
     } catch (error) {
+      console.error('Erro ao associar instrutor:', {
+        classId: req.params.id,
+        instructorId: req.params.instructorId,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      
       if (error instanceof Error) {
         return res.status(400).json({
           error: error.message
         });
       }
 
-      console.error('Erro ao associar instrutor:', error);
       return res.status(500).json({
         error: 'Erro ao associar instrutor'
       });
