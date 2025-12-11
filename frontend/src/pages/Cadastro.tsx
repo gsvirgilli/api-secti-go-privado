@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { validateRequired, validateCPF, validateEmail, validatePhone, validateAge } from "@/lib/validation";
 
 const Cadastro = () => {
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
@@ -251,7 +252,7 @@ const Cadastro = () => {
 
   const handleStudentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateStudentForm()) {
       toast({
         title: "Erro de validação",
@@ -262,19 +263,19 @@ const Cadastro = () => {
     }
 
     setIsLoading(true);
-    
+
     // Simular envio para API
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     setIsLoading(false);
     setIsSuccess(true);
-    
+
     toast({
       title: "✅ ALUNO CADASTRADO COM SUCESSO!",
       description: "Os dados foram salvos no sistema",
       className: "bg-emerald-100 text-emerald-800 border-emerald-200",
     });
-    
+
     setTimeout(() => {
       setIsStudentModalOpen(false);
       clearStudentForm();
@@ -284,7 +285,7 @@ const Cadastro = () => {
 
   const handleClassSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateClassForm()) {
       toast({
         title: "Erro de validação",
@@ -295,19 +296,19 @@ const Cadastro = () => {
     }
 
     setIsLoading(true);
-    
+
     // Simular envio para API
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     setIsLoading(false);
     setIsSuccess(true);
-    
+
     toast({
       title: "✅ TURMA CADASTRADA COM SUCESSO!",
       description: "A turma foi criada no sistema",
       className: "bg-emerald-100 text-emerald-800 border-emerald-200",
     });
-    
+
     setTimeout(() => {
       setIsClassModalOpen(false);
       clearClassForm();
@@ -317,7 +318,7 @@ const Cadastro = () => {
 
   const handleInstructorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateInstructorForm()) {
       toast({
         title: "Erro de validação",
@@ -328,19 +329,19 @@ const Cadastro = () => {
     }
 
     setIsLoading(true);
-    
+
     // Simular envio para API
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     setIsLoading(false);
     setIsSuccess(true);
-    
+
     toast({
       title: "✅ INSTRUTOR CADASTRADO COM SUCESSO!",
       description: "Os dados foram salvos no sistema",
       className: "bg-emerald-100 text-emerald-800 border-emerald-200",
     });
-    
+
     setTimeout(() => {
       setIsInstructorModalOpen(false);
       clearInstructorForm();

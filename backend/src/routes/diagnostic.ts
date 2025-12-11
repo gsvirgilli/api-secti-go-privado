@@ -3,7 +3,7 @@ import Student from '../modules/students/student.model.js';
 import Class from '../modules/classes/class.model.js';
 import Enrollment from '../modules/enrollments/enrollment.model.js';
 import { sequelize } from '../config/database.js';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 
 const diagnosticRouter = Router();
 
@@ -85,45 +85,74 @@ diagnosticRouter.get('/data-sync', async (req, res) => {
 });
 
 /**
- * Fix rápido: Sincronizar turma_id dos alunos com a tabela matriculas
+ * Fix rápido: Sincronizar turma_id dos alunos com a tabela matriculas E candidatos
  */
 diagnosticRouter.post('/fix-turma-sync', async (req, res) => {
   try {
-    console.log('🔧 Iniciando sincronização...');
+    console.log('🔧 Iniciando sincronização de alunos com turmas...');
 
-    // 1. Para cada aluno, buscar sua turma_id da tabela matriculas
-    const students = await Student.findAll({
-      where: { turma_id: null },
-      attributes: ['id']
-    });
+    // 1. Alunos sem turma_id mas com matriculas
+    const result1 = await sequelize.query(`
+      UPDATE alunos a
+      SET turma_id = (
+        SELECT id_turma 
+        FROM matriculas m 
+        WHERE m.id_aluno = a.id 
+        LIMIT 1
+      )
+      WHERE turma_id IS NULL 
+        AND EXISTS (
+          SELECT 1 FROM matriculas m WHERE m.id_aluno = a.id
+        )
+    `);
 
-    console.log(`Found ${students.length} students with turma_id = NULL`);
+    console.log('✓ Sincronização via matriculas completa');
 
-    let updated = 0;
-    for (const student of students) {
-      const enrollment = await Enrollment.findOne({
-        where: { id_aluno: student.id },
-        attributes: ['id_turma'],
-        order: [['createdAt', 'ASC']]
-      });
+    // 2. Alunos sem turma_id mas com candidato que tem turma_id
+    const result2 = await sequelize.query(`
+      UPDATE alunos a
+      SET turma_id = (
+        SELECT turma_id 
+        FROM candidatos c 
+        WHERE c.id = a.candidato_id
+        LIMIT 1
+      )
+      WHERE turma_id IS NULL 
+        AND candidato_id IS NOT NULL
+        AND EXISTS (
+          SELECT 1 FROM candidatos c 
+          WHERE c.id = a.candidato_id AND c.turma_id IS NOT NULL
+        )
+    `);
 
-      if (enrollment) {
-        await student.update({ turma_id: enrollment.id_turma });
-        updated++;
-        console.log(`✓ Student ${student.id} updated with turma_id ${enrollment.id_turma}`);
-      }
-    }
+    console.log('✓ Sincronização via candidatos completa');
 
-    // 2. Recount
+    // 3. Recount
     const studentsWithTurmaId = await Student.count({
       where: { turma_id: { [Op.not]: null } }
     });
 
+    const studentsWithoutTurmaId = await Student.count({
+      where: { turma_id: null }
+    });
+
+    // 4. Detalhar por turma
+    const studentsByClass = await sequelize.query(`
+      SELECT t.id, t.nome, COUNT(a.id) as total_alunos
+      FROM turmas t
+      LEFT JOIN alunos a ON a.turma_id = t.id
+      GROUP BY t.id, t.nome
+      ORDER BY t.id
+    `, { type: QueryTypes.SELECT });
+
     return res.json({
       success: true,
-      updated,
-      totalWithTurmaId: studentsWithTurmaId,
-      message: `${updated} alunos sincronizados com sucesso`
+      summary: {
+        totalWithTurmaId: studentsWithTurmaId,
+        totalWithoutTurmaId: studentsWithoutTurmaId
+      },
+      studentsByClass,
+      message: 'Sincronização completada com sucesso'
     });
   } catch (error) {
     console.error('Erro ao sincronizar:', error);
