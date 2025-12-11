@@ -94,6 +94,15 @@ class InstructorService {
     const data = await Instructor.findAll({
       where,
       attributes: ['id', 'cpf', 'nome', 'email', 'endereco', 'data_nascimento', 'especialidade', 'experiencia', 'status', 'createdAt', 'updatedAt'],
+      include: [
+        {
+          model: Class,
+          as: 'turmas',
+          attributes: ['id', 'nome', 'status'],
+          required: false,
+          through: { attributes: [] }
+        }
+      ],
       order: [['nome', 'ASC']],
       limit,
       offset: calculateOffset(page, limit)
