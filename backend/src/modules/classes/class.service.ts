@@ -163,7 +163,6 @@ class ClassService {
           model: Student,
           as: 'alunos',
           attributes: ['id', 'matricula', 'nome', 'email', 'status', 'telefone'],
-          where: { turma_id: id },
           required: false,
           order: [['nome', 'ASC']]
         },
@@ -182,6 +181,11 @@ class ClassService {
 
     // Converter para JSON plain object
     const turmaData = turma.toJSON() as any;
+
+    // Filtrar alunos da turma (apenas os com turma_id igual a esta classe)
+    if (turmaData.alunos && Array.isArray(turmaData.alunos)) {
+      turmaData.alunos = turmaData.alunos.filter((a: any) => a.turma_id === id);
+    }
 
     return turmaData;
   }
