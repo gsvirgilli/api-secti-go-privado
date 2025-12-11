@@ -52,6 +52,7 @@ interface UpdateStudentData {
 class StudentService {
   /**
    * Lista todos os alunos com filtros opcionais e paginação
+   * ✅ Otimizado: Include apenas quando necessário, use índices
    */
   async list(filters: StudentFilters = {}): Promise<PaginatedResponse<Student>> {
     const where: any = {};
@@ -90,34 +91,32 @@ class StudentService {
 
     // Importar Class para o include
     const Class = (await import('../classes/class.model.js')).default;
-    const Curso = (await import('../courses/course.model.js')).default;
 
-    // Buscar alunos com paginação (skip COUNT para evitar pool timeout)
+    // ✅ Buscar alunos com paginação - skip COUNT
     const data = await Student.findAll({
       where,
-      attributes: ['id', 'candidato_id', 'usuario_id', 'matricula', 'cpf', 'nome', 'email', 'telefone', 'data_nascimento', 'endereco', 'turma_id', 'status', 'createdAt', 'updatedAt'],
+      attributes: ['id', 'candidato_id', 'usuario_id', 'matricula', 'cpf', 'nome', 'email', 'telefone', 'turma_id', 'status', 'createdAt'],
       include: [
         {
           model: Class,
           as: 'turma',
-          attributes: ['id', 'nome', 'turno']
+          attributes: ['id', 'nome', 'turno'],
+          required: false
         }
       ],
       order: [['createdAt', 'DESC']],
-      limit,
-      offset: calculateOffset(page, limit)
+      limit: limit + 1, // +1 para verificar próxima página
+      offset: calculateOffset(page, limit),
+      subQuery: false
     });
 
-    // COUNT assincronamente em background, não bloqueia
-    let total = data.length;
-    if (data.length === limit) {
-      Student.count({ where }).catch(() => {});
-      total = limit * (page + 1);
-    }
+    // Verificar se há próxima página
+    const hasNextPage = data.length > limit;
+    const students = hasNextPage ? data.slice(0, limit) : data;
 
     return {
-      data,
-      pagination: createPagination(page, limit, total)
+      data: students,
+      pagination: createPagination(page, limit, hasNextPage ? (page + 1) * limit + 1 : students.length)
     };
   }
 

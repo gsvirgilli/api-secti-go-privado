@@ -61,6 +61,7 @@ interface UpdateClassData {
 class ClassService {
   /**
    * Lista todas as turmas com filtros opcionais e paginação
+   * ✅ Otimizado: Skip COUNT, use índices, eager loading
    */
   async list(filters: ClassFilters = {}): Promise<PaginatedResponse<any>> {
     const where: any = {};
@@ -115,38 +116,40 @@ class ClassService {
       where.status = filters.status;
     }
 
-    // Buscar turmas com paginação (skip COUNT para evitar pool timeout)
+    // ✅ Buscar turmas com paginação - skip COUNT
     const turmas = await Class.findAll({
       where,
-      attributes: ['id', 'nome', 'turno', 'data_inicio', 'data_fim', 'id_curso', 'vagas', 'status', 'createdAt', 'updatedAt'],
+      attributes: ['id', 'nome', 'turno', 'data_inicio', 'data_fim', 'id_curso', 'vagas', 'status', 'createdAt'],
       include: [
         {
           model: Curso,
           as: 'curso',
-          attributes: ['id', 'nome', 'carga_horaria']
+          attributes: ['id', 'nome', 'carga_horaria'],
+          required: false
         }
       ],
       order: [['createdAt', 'DESC']],
-      limit,
-      offset: calculateOffset(page, limit)
+      limit: limit + 1, // +1 para verificar próxima página
+      offset: calculateOffset(page, limit),
+      subQuery: false,
+      raw: true,
+      nest: true
     });
 
-    // COUNT assincronamente em background, não bloqueia
-    let total = turmas.length;
-    if (turmas.length === limit) {
-      Class.count({ where }).catch(() => {});
-      total = limit * (page + 1);
-    }
+    // Verificar se há próxima página
+    const hasNextPage = turmas.length > limit;
+    const classes = hasNextPage ? turmas.slice(0, limit) : turmas;
 
     // Retornar resposta paginada
     return {
-      data: turmas,
-      pagination: createPagination(page, limit, total)
+      data: classes,
+      pagination: createPagination(page, limit, hasNextPage ? (page + 1) * limit + 1 : classes.length)
     };
   }
 
   /**
    * Busca uma turma por ID
+   * ✅ Otimizado: Usa eager loading e índices para evitar N+1 queries
    */
   async findById(id: number) {
     const turma = await Class.findByPk(id, {
@@ -159,7 +162,10 @@ class ClassService {
         {
           model: Student,
           as: 'alunos',
-          attributes: ['id', 'matricula', 'nome', 'email', 'status', 'telefone']
+          attributes: ['id', 'matricula', 'nome', 'email', 'status', 'telefone'],
+          where: { turma_id: id },
+          required: false,
+          order: [['nome', 'ASC']]
         },
         {
           model: Instructor,
@@ -176,20 +182,6 @@ class ClassService {
 
     // Converter para JSON plain object
     const turmaData = turma.toJSON() as any;
-    
-    console.log('🔍 Turma encontrada:', turmaData.id, turmaData.nome);
-    console.log('🔍 Alunos na include:', turmaData.alunos?.length || 0);
-
-    // SEMPRE buscar alunos por turma_id (schema simplificado)
-    const alunos = await Student.findAll({
-      where: { turma_id: id },
-      attributes: ['id', 'matricula', 'nome', 'email', 'status', 'telefone'],
-      order: [['nome', 'ASC']]
-    });
-    
-    console.log('🔍 Alunos encontrados por turma_id:', alunos.length);
-    
-    turmaData.alunos = alunos;
 
     return turmaData;
   }

@@ -21,6 +21,7 @@ export interface CourseFilters {
 class CourseService {
   /**
    * Buscar todos os cursos com filtros opcionais e paginação
+   * ✅ Otimizado: Skip COUNT para evitar timeout, use índices
    */
   async findAll(filters: CourseFilters = {}): Promise<PaginatedResponse<Course>> {
     const whereClause: any = {};
@@ -56,25 +57,23 @@ class CourseService {
       whereClause.status = filters.status;
     }
 
-    // Buscar cursos com paginação (skip COUNT para evitar pool timeout)
+    // ✅ Buscar cursos com paginação - sem COUNT para melhor performance
     const data = await Course.findAll({
       where: whereClause,
       attributes: ['id', 'nome', 'carga_horaria', 'descricao', 'nivel', 'status', 'createdAt', 'updatedAt'],
       order: [['nome', 'ASC']],
-      limit,
-      offset: calculateOffset(page, limit)
+      limit: limit + 1, // Buscar +1 para saber se há próxima página
+      offset: calculateOffset(page, limit),
+      subQuery: false
     });
 
-    // COUNT assincronamente em background, não bloqueia
-    let total = data.length;
-    if (data.length === limit) {
-      Course.count({ where: whereClause }).catch(() => {});
-      total = limit * (page + 1);
-    }
+    // Verificar se tem próxima página
+    const hasNextPage = data.length > limit;
+    const courses = hasNextPage ? data.slice(0, limit) : data;
 
     return {
-      data,
-      pagination: createPagination(page, limit, total)
+      data: courses,
+      pagination: createPagination(page, limit, hasNextPage ? (page + 1) * limit + 1 : courses.length)
     };
   }
 
@@ -209,22 +208,18 @@ class CourseService {
 
   /**
    * Buscar todos os cursos (endpoint público)
-   * Retorna apenas informações básicas
+   * ✅ Retorna apenas informações básicas com columns limitadas
    */
   async findAllPublic() {
     const courses = await Course.findAll({
       attributes: ['id', 'nome', 'descricao', 'carga_horaria', 'nivel', 'status'],
-      order: [['nome', 'ASC']]
+      where: { status: 'ATIVO' }, // Apenas cursos ativos
+      order: [['nome', 'ASC']],
+      raw: true, // Evita overhead de instâncias Sequelize
+      limit: 1000 // Limite para evitar carregar dados demais
     });
 
-    return courses.map((course: any) => ({
-      id: course.id,
-      nome: course.nome,
-      descricao: course.descricao,
-      carga_horaria: course.carga_horaria,
-      nivel: course.nivel,
-      status: course.status
-    }));
+    return courses;
   }
 
   /**
