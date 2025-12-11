@@ -5,11 +5,35 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3333
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 30000, // Aumentado de 10s para 30s (Render pode ser lento ao acordar)
   headers: {
     "Content-Type": "application/json",
   },
 });
+
+// Interceptor de retry automático para timeouts
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error.config;
+
+    // Se for timeout e ainda não tentou retry, tenta novamente
+    if (
+      error.code === 'ECONNABORTED' &&
+      config.timeout === 30000 &&
+      (!config.__retryCount || config.__retryCount < 2)
+    ) {
+      config.__retryCount = (config.__retryCount || 0) + 1;
+      console.log(`🔄 Tentando novamente (${config.__retryCount}/2)...`);
+      
+      // Esperar 1 segundo antes de retry
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return api(config);
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 type ApiData = Record<string, unknown>;
 

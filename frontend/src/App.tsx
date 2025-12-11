@@ -1,10 +1,12 @@
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
 import { FormConfigProvider } from "@/contexts/FormConfigContext";
+import { useEffect } from "react";
+import { startKeepAlive } from "@/lib/keepAlive";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
@@ -30,45 +32,52 @@ import HomeRedirect from "./components/HomeRedirect";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AppProvider>
-      <FormConfigProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<HomeRedirect />} />
-              <Route path="/sobre" element={<Sobre />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/new-password" element={<NewPassword />} />
-              <Route path="/inscricao" element={<Inscricao />} />
-              <Route path="/processo-seletivo" element={<Inscricao />} />
-              <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-              <Route path="/alunos" element={<Layout><Students /></Layout>} />
-              <Route path="/turmas" element={<Layout><Classes /></Layout>} />
-              <Route path="/cursos" element={<Layout><Courses /></Layout>} />
-              <Route path="/instrutores" element={<Layout><Instructors /></Layout>} />
-              <Route path="/frequencia" element={<Layout><Frequencia /></Layout>} />
-              <Route path="/relatorios" element={<Layout><Reports /></Layout>} />
-              <Route path="/admin" element={<Layout><Dashboard /></Layout>} />
-              <Route path="/perfil" element={<Layout><Profile /></Layout>} />
-              <Route path="/cadastro" element={<Layout><Cadastro /></Layout>} />
-              <Route path="/processo-seletivo-admin" element={<Layout><ProcessoSeletivo /></Layout>} />
-              <Route path="/notificacoes" element={<Layout><Notifications /></Layout>} />
-              <Route path="/calendario" element={<Layout><CalendarPage /></Layout>} />
-              <Route path="/api-test" element={<Layout><APITest /></Layout>} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </FormConfigProvider>
-    </AppProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Iniciar keep-alive quando a app monta
+  useEffect(() => {
+    startKeepAlive();
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppProvider>
+        <FormConfigProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<HomeRedirect />} />
+                <Route path="/sobre" element={<Sobre />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/new-password" element={<NewPassword />} />
+                <Route path="/inscricao" element={<Inscricao />} />
+                <Route path="/processo-seletivo" element={<Inscricao />} />
+                <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+                <Route path="/alunos" element={<Layout><Students /></Layout>} />
+                <Route path="/turmas" element={<Layout><Classes /></Layout>} />
+                <Route path="/cursos" element={<Layout><Courses /></Layout>} />
+                <Route path="/instrutores" element={<Layout><Instructors /></Layout>} />
+                <Route path="/frequencia" element={<Layout><Frequencia /></Layout>} />
+                <Route path="/relatorios" element={<Layout><Reports /></Layout>} />
+                <Route path="/admin" element={<Layout><Dashboard /></Layout>} />
+                <Route path="/perfil" element={<Layout><Profile /></Layout>} />
+                <Route path="/cadastro" element={<Layout><Cadastro /></Layout>} />
+                <Route path="/processo-seletivo-admin" element={<Layout><ProcessoSeletivo /></Layout>} />
+                <Route path="/notificacoes" element={<Layout><Notifications /></Layout>} />
+                <Route path="/calendario" element={<Layout><CalendarPage /></Layout>} />
+                <Route path="/api-test" element={<Layout><APITest /></Layout>} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </FormConfigProvider>
+      </AppProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
