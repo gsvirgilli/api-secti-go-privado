@@ -125,6 +125,31 @@ app.get('/api/test/students-count', async (req, res) => {
   }
 });
 
+// ✅ Endpoint PÚBLICO - Turmas com alunos (sem autenticação)
+app.get('/api/test/classes-with-students', async (req, res) => {
+  try {
+    const { sequelize } = await import('./config/database.js');
+    
+    const [result] = await sequelize.query(`
+      SELECT 
+        t.id,
+        t.nome,
+        COUNT(a.id) as qtd_alunos,
+        GROUP_CONCAT(CONCAT(a.nome, ' (', a.matricula, ')') SEPARATOR ' | ') as alunos
+      FROM turmas t
+      LEFT JOIN alunos a ON t.id = a.turma_id
+      GROUP BY t.id, t.nome
+      ORDER BY t.id
+    `) as any;
+    
+    return res.json({
+      turmas: result
+    });
+  } catch (error) {
+    return res.status(500).json({ error: String(error) });
+  }
+});
+
 // ✅ Endpoint PÚBLICO de diagnóstico - sem autenticação
 app.get('/api/diagnose/students', async (req, res) => {
   try {
