@@ -756,6 +756,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const oldInstructorIds = currentClass.instructorIds || [];
         const newInstructorIds = classData.instructorIds || [];
 
+        console.log('🔄 Atualizando instrutores:', { oldInstructorIds, newInstructorIds });
+
         // Encontrar instrutores a remover
         const instructorsToRemove = oldInstructorIds.filter(
           id => !newInstructorIds.includes(id) && id > 0
@@ -766,13 +768,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           id => !oldInstructorIds.includes(id) && id > 0
         );
 
+        console.log('➕ Adicionando:', instructorsToAdd, '➖ Removendo:', instructorsToRemove);
+
         // Remover instrutores antigos
         for (const instructorId of instructorsToRemove) {
+          console.log(`Removendo instrutor ${instructorId} da turma ${id}`);
           await ClassesAPI.removeInstructor(id, instructorId).catch(logAxiosError);
         }
 
         // Adicionar novos instrutores
         for (const instructorId of instructorsToAdd) {
+          console.log(`Adicionando instrutor ${instructorId} à turma ${id}`);
           await ClassesAPI.addInstructor(id, instructorId).catch(logAxiosError);
         }
       } else if (classData.instructorId !== undefined && classData.instructorId !== currentClass.instructorId) {

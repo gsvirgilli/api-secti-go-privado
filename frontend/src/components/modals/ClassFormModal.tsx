@@ -132,9 +132,12 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
         endDate: formData.endDate ? convertToDisplayFormat(formData.endDate) : ""
       };
 
+      console.log('📋 Dados a enviar:', { formData, dataToSend });
+
       if (mode === "create") {
         await addClass(dataToSend);
       } else if (classData) {
+        console.log('🔄 Atualizando turma', classData.id, 'com instrutorIds:', dataToSend.instructorIds);
         await updateClass(classData.id, dataToSend);
       }
 
