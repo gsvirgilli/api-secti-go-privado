@@ -8,7 +8,7 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333/api';
 const KEEP_ALIVE_INTERVAL = 4 * 60 * 1000; // 4 minutos (antes do timeout de 15 min do Render)
 
-let keepAliveInterval: NodeJS.Timeout | null = null;
+let keepAliveInterval: ReturnType<typeof setInterval> | null = null;
 
 export const startKeepAlive = () => {
   if (keepAliveInterval) return; // Já está rodando
