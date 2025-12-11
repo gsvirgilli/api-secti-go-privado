@@ -834,9 +834,9 @@ const ProcessoSeletivo = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="pendente">Pendente</SelectItem>
-                <SelectItem value="aprovado">Aprovado</SelectItem>
-                <SelectItem value="reprovado">Reprovado</SelectItem>
+                <SelectItem value="PENDENTE">Pendente</SelectItem>
+                <SelectItem value="APROVADO">Aprovado</SelectItem>
+                <SelectItem value="REPROVADO">Reprovado</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -891,19 +891,19 @@ const ProcessoSeletivo = () => {
                               </div>
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="pendente">
+                              <SelectItem value="PENDENTE">
                                 <div className="flex items-center gap-2">
                                   <Clock className="h-4 w-4 text-amber-600" />
                                   Pendente
                                 </div>
                               </SelectItem>
-                              <SelectItem value="aprovado">
+                              <SelectItem value="APROVADO">
                                 <div className="flex items-center gap-2">
                                   <CheckCircle className="h-4 w-4 text-emerald-600" />
                                   Aprovado
                                 </div>
                               </SelectItem>
-                              <SelectItem value="reprovado">
+                              <SelectItem value="REPROVADO">
                                 <div className="flex items-center gap-2">
                                   <XCircle className="h-4 w-4 text-red-600" />
                                   Reprovado
