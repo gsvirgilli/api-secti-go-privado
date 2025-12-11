@@ -11,12 +11,16 @@ import instructorsRouter from '../modules/instructors/instructor.routes.js';
 import notificationsRouter from '../modules/notifications/notification.routes.js';
 import reportsRouter from '../modules/reports/report.routes.js';
 import auditLogsRouter from '../modules/audit/audit-log.routes.js';
+import diagnosticRouter from './diagnostic.js';
 import { isAuthenticated } from '../middlewares/isAuthenticated.js';
 
 const router = Router();
 
 // Rotas de autenticação (público)
 router.use('/auth', authRouter);
+
+// Rotas de diagnóstico (para debug)
+router.use('/diagnostic', diagnosticRouter);
 
 // Rotas protegidas por autenticação
 router.use('/users', usersRouter);
