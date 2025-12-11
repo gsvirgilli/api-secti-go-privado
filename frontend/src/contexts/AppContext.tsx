@@ -501,6 +501,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (studentData.name !== undefined) backendData.nome = studentData.name;
       if (studentData.email !== undefined) backendData.email = studentData.email;
       if (studentData.phone !== undefined) backendData.telefone = studentData.phone;
+      if (studentData.birthDate !== undefined) backendData.data_nascimento = studentData.birthDate;
+      if (studentData.address !== undefined) backendData.endereco = studentData.address;
 
       if (studentData.class !== undefined) {
         if (studentData.class === '' || studentData.class === null) {
