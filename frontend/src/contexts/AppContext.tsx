@@ -752,10 +752,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (classData.instructorId !== undefined && classData.instructorId !== currentClass.instructorId) {
-        if (currentClass.instructorId) {
+        // Remover instrutor anterior se existia
+        if (currentClass.instructorId && currentClass.instructorId > 0) {
           await ClassesAPI.removeInstructor(id, currentClass.instructorId).catch(logAxiosError);
         }
-        await ClassesAPI.addInstructor(id, classData.instructorId).catch(logAxiosError);
+        // Adicionar novo instrutor apenas se ID for válido (> 0)
+        if (classData.instructorId && classData.instructorId > 0) {
+          await ClassesAPI.addInstructor(id, classData.instructorId).catch(logAxiosError);
+        }
       }
 
       setClasses(prev => prev.map(cls =>
