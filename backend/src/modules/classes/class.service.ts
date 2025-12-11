@@ -52,6 +52,7 @@ interface UpdateClassData {
   data_inicio?: Date;
   data_fim?: Date;
   id_curso?: number;
+  status?: 'ATIVA' | 'PLANEJADA' | 'ENCERRADA' | 'CANCELADA';
 }
 
 /**
