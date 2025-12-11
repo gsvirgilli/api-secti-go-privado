@@ -102,6 +102,29 @@ app.get('/', (req, res) => {
   return res.json({ status: 'ok', message: 'SUKA TECH API is running!' });
 });
 
+// ✅ Endpoint PÚBLICO de diagnóstico simples - sem autenticação
+app.get('/api/test/students-count', async (req, res) => {
+  try {
+    const { sequelize } = await import('./config/database.js');
+    
+    const [result] = await sequelize.query(`
+      SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN turma_id IS NOT NULL THEN 1 ELSE 0 END) as com_turma,
+        SUM(CASE WHEN turma_id IS NULL THEN 1 ELSE 0 END) as sem_turma
+      FROM alunos
+    `) as any;
+    
+    return res.json({
+      total: result[0].total,
+      com_turma: result[0].com_turma,
+      sem_turma: result[0].sem_turma
+    });
+  } catch (error) {
+    return res.status(500).json({ error: String(error) });
+  }
+});
+
 // ✅ Endpoint PÚBLICO de diagnóstico - sem autenticação
 app.get('/api/diagnose/students', async (req, res) => {
   try {
