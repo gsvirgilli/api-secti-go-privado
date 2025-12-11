@@ -162,7 +162,7 @@ class ClassService {
         {
           model: Student,
           as: 'alunos',
-          attributes: ['id', 'matricula', 'nome', 'email', 'status', 'telefone'],
+          attributes: ['id', 'matricula', 'nome', 'email', 'status', 'telefone', 'turma_id'],
           required: false,
           order: [['nome', 'ASC']]
         },
