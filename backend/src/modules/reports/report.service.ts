@@ -302,8 +302,9 @@ class ReportService {
           doc.text(`   |   Turno: ${turma.turno}`);
 
           doc.text(`   Status: ${turma.status}`, { continued: true });
+          const vagasDisponiveis = (turma.vagas || 0) - (turma.matriculas?.length || 0);
           doc.text(
-            `   |   Vagas: ${turma.vagas_disponiveis} de ${turma.vagas_totais}`
+            `   |   Vagas: ${vagasDisponiveis} de ${turma.vagas || 0}`
           );
 
           doc.text(

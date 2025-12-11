@@ -132,6 +132,13 @@ class ClassService {
           as: 'alunos',
           attributes: ['id', 'nome', 'matricula', 'email', 'status'],
           required: false
+        },
+        {
+          model: Instructor,
+          as: 'instrutores',
+          attributes: ['id', 'nome', 'email', 'especialidade'],
+          required: false,
+          through: { attributes: [] }
         }
       ],
       order: [['createdAt', 'DESC']],
@@ -238,6 +245,14 @@ class ClassService {
     if (dataInicio && dataFim) {
       if (new Date(dataFim) <= new Date(dataInicio)) {
         throw new Error('Data de fim deve ser posterior à data de início');
+      }
+    }
+
+    // Se está tentando ativar a turma, verificar se tem instrutor
+    if (data.status === 'ATIVA') {
+      const instrutoresCount = await InstructorClass.count({ where: { id_turma: id } });
+      if (instrutoresCount === 0) {
+        throw new Error('Turma ativa deve ter pelo menos um instrutor cadastrado');
       }
     }
 
@@ -396,6 +411,11 @@ class ClassService {
       // Pode reativar turma CANCELADA (mas não ENCERRADA)
       if (turma.status === 'ENCERRADA') {
         throw new Error('Turmas ENCERRADAS não podem ser reativadas');
+      }
+      // Validar se tem instrutor ao ativar
+      const instrutoresCount = await InstructorClass.count({ where: { id_turma: id } });
+      if (instrutoresCount === 0) {
+        throw new Error('Turma ativa deve ter pelo menos um instrutor cadastrado');
       }
     }
 
