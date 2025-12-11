@@ -126,14 +126,18 @@ class ClassService {
           as: 'curso',
           attributes: ['id', 'nome', 'carga_horaria'],
           required: false
+        },
+        {
+          model: Student,
+          as: 'alunos',
+          attributes: ['id', 'nome', 'matricula', 'email', 'status'],
+          required: false
         }
       ],
       order: [['createdAt', 'DESC']],
       limit: limit + 1, // +1 para verificar próxima página
       offset: calculateOffset(page, limit),
-      subQuery: false,
-      raw: true,
-      nest: true
+      subQuery: false
     });
 
     // Verificar se há próxima página

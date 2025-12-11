@@ -150,8 +150,20 @@ app.get('/api/test/classes-with-students', async (req, res) => {
   }
 });
 
-// ✅ Endpoint PÚBLICO de diagnóstico - sem autenticação
-app.get('/api/diagnose/students', async (req, res) => {
+// ✅ Endpoint PÚBLICO - Listar classes usando service atualizado
+app.get('/api/test/classes-list', async (req, res) => {
+  try {
+    const ClassService = (await import('./modules/classes/class.service.js')).default;
+    const result = await ClassService.list();
+    return res.json(result);
+  } catch (error) {
+    console.error('Erro:', error);
+    return res.status(500).json({ error: String(error) });
+  }
+});
+
+// ✅ Endpoint PÚBLICO - Turmas com alunos (sem autenticação)
+app.get('/api/test/classes-with-students-old', async (req, res) => {
   try {
     const { sequelize } = await import('./config/database.js');
     
