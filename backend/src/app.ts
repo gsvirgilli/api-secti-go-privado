@@ -102,6 +102,42 @@ app.get('/', (req, res) => {
   return res.json({ status: 'ok', message: 'SUKA TECH API is running!' });
 });
 
+// ✅ Endpoint PÚBLICO de diagnóstico - sem autenticação
+app.get('/api/diagnose/students', async (req, res) => {
+  try {
+    const { sequelize } = await import('./config/database.js');
+    
+    const [totalStudents] = await sequelize.query(`
+      SELECT COUNT(*) as total FROM alunos
+    `) as any;
+    
+    const [withClass] = await sequelize.query(`
+      SELECT COUNT(*) as total FROM alunos WHERE turma_id IS NOT NULL
+    `) as any;
+    
+    const [withoutClass] = await sequelize.query(`
+      SELECT COUNT(*) as total FROM alunos WHERE turma_id IS NULL
+    `) as any;
+    
+    const [students] = await sequelize.query(`
+      SELECT a.id, a.nome, a.matricula, a.turma_id, t.nome as turma_nome
+      FROM alunos a
+      LEFT JOIN turmas t ON a.turma_id = t.id
+      ORDER BY a.id
+    `) as any;
+    
+    return res.json({
+      totalStudents: totalStudents[0].total,
+      withClass: withClass[0].total,
+      withoutClass: withoutClass[0].total,
+      students
+    });
+  } catch (error) {
+    console.error('Erro no diagnóstico:', error);
+    return res.status(500).json({ error: String(error) });
+  }
+});
+
 // Endpoint de diagnóstico de matrículas
 app.get('/api/diagnose/enrollments', async (req, res) => {
   try {
