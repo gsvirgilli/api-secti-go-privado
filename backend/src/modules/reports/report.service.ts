@@ -85,6 +85,20 @@ class ReportService {
 
     const students: any[] = await Student.findAll({
       where,
+      include: [
+        {
+          model: Class,
+          as: 'turma',
+          attributes: ['id', 'nome'],
+          include: [
+            {
+              model: Course,
+              as: 'curso',
+              attributes: ['id', 'nome']
+            }
+          ]
+        }
+      ],
       order: [['nome', 'ASC']],
     });
 
@@ -148,6 +162,18 @@ class ReportService {
 
           doc.text(`   Matrícula: ${student.matricula}`);
           doc.text(`   Status: ${student.status || 'N/A'}`);
+          
+          // Turma e Curso
+          const turma = student.turma as any;
+          if (turma) {
+            doc.text(`   Turma: ${turma.nome}`);
+            if (turma.curso) {
+              doc.text(`   Curso: ${turma.curso.nome}`);
+            }
+          } else {
+            doc.text(`   Turma: N/A`);
+            doc.text(`   Curso: N/A`);
+          }
 
           doc.moveDown(0.5);
         });
@@ -609,6 +635,20 @@ class ReportService {
 
     const students = await Student.findAll({
       where,
+      include: [
+        {
+          model: Class,
+          as: 'turma',
+          attributes: ['id', 'nome'],
+          include: [
+            {
+              model: Course,
+              as: 'curso',
+              attributes: ['id', 'nome']
+            }
+          ]
+        }
+      ],
       order: [['nome', 'ASC']],
     });
 
@@ -623,7 +663,9 @@ class ReportService {
       { header: 'Email', key: 'email', width: 30 },
       { header: 'Matrícula', key: 'matricula', width: 15 },
       { header: 'Data Nascimento', key: 'data_nascimento', width: 18 },
-      { header: 'Turmas', key: 'turmas', width: 40 },
+      { header: 'Curso', key: 'curso', width: 25 },
+      { header: 'Turma', key: 'turma', width: 25 },
+      { header: 'Status', key: 'status', width: 12 },
     ];
 
     // Estilizar header
@@ -637,14 +679,17 @@ class ReportService {
 
     // Adicionar dados
     students.forEach((student: any) => {
+      const turma = student.turma as any;
       worksheet.addRow({
         id: student.id,
         nome: student.nome,
         cpf: student.cpf,
         email: student.email,
         matricula: student.matricula,
-        data_nascimento: 'N/A',
-        turmas: 'N/A',
+        data_nascimento: student.data_nascimento ? new Date(student.data_nascimento).toLocaleDateString('pt-BR') : 'N/A',
+        curso: turma?.curso?.nome || 'N/A',
+        turma: turma?.nome || 'N/A',
+        status: student.status || 'N/A',
       });
     });
 

@@ -245,7 +245,7 @@ const Dashboard = () => {
               <Card
                 className="hover:shadow-lg transition-all duration-500 cursor-pointer group border-0 bg-gradient-to-br from-white to-rose-50/50 animate-fade-in"
                 style={{ animationDelay: '400ms' }}
-                onClick={() => handleCardClick('processo-seletivo')}
+                onClick={() => handleCardClick('processo-seletivo-admin')}
               >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
