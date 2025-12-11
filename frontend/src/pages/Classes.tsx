@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { DataBot } from "@/components/ui/DataBot";
-import { Plus, Search, Eye, Grid, List, Filter, Download, MoreHorizontal, Calendar, Users, BookOpen, Trash2 } from "lucide-react";
+import { Plus, Search, Eye, Grid, List, Filter, Download, Edit, Calendar, Users, BookOpen, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ClassDetailsModal from "@/components/modals/ClassDetailsModal";
 import ClassFormModal from "@/components/modals/ClassFormModal";
 import { ExportButtons } from "@/components/ExportButtons";
@@ -711,35 +710,61 @@ const Classes = () => {
                   </TableCell>
                   <TableCell>{classItem.startDate}</TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          Ações
-                          <MoreHorizontal className="h-4 w-4 ml-2" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => handleViewDetails(classItem)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Ver detalhes
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDuplicateClass(classItem)}>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Duplicar turma
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleArchiveClass(classItem)}>
-                          <MoreHorizontal className="h-4 w-4 mr-2" />
-                          Arquivar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteClass(classItem)}
-                          className="text-red-600 focus:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Excluir turma
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleViewDetails(classItem);
+                        }}
+                        className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                        title="Ver detalhes"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedClass(classItem);
+                          setIsFormModalOpen(true);
+                        }}
+                        className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
+                        title="Editar turma"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDuplicateClass(classItem);
+                        }}
+                        className="h-8 w-8 p-0 hover:bg-purple-50 hover:text-purple-600"
+                        title="Duplicar turma"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDeleteClass(classItem);
+                        }}
+                        className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                        title="Excluir turma"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
