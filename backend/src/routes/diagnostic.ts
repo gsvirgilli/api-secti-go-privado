@@ -84,5 +84,52 @@ diagnosticRouter.get('/data-sync', async (req, res) => {
   }
 });
 
+/**
+ * Fix rápido: Sincronizar turma_id dos alunos com a tabela matriculas
+ */
+diagnosticRouter.post('/fix-turma-sync', async (req, res) => {
+  try {
+    console.log('🔧 Iniciando sincronização...');
+
+    // 1. Para cada aluno, buscar sua turma_id da tabela matriculas
+    const students = await Student.findAll({
+      where: { turma_id: null },
+      attributes: ['id']
+    });
+
+    console.log(`Found ${students.length} students with turma_id = NULL`);
+
+    let updated = 0;
+    for (const student of students) {
+      const enrollment = await Enrollment.findOne({
+        where: { id_aluno: student.id },
+        attributes: ['id_turma'],
+        order: [['createdAt', 'ASC']]
+      });
+
+      if (enrollment) {
+        await student.update({ turma_id: enrollment.id_turma });
+        updated++;
+        console.log(`✓ Student ${student.id} updated with turma_id ${enrollment.id_turma}`);
+      }
+    }
+
+    // 2. Recount
+    const studentsWithTurmaId = await Student.count({
+      where: { turma_id: { [Op.not]: null } }
+    });
+
+    return res.json({
+      success: true,
+      updated,
+      totalWithTurmaId: studentsWithTurmaId,
+      message: `${updated} alunos sincronizados com sucesso`
+    });
+  } catch (error) {
+    console.error('Erro ao sincronizar:', error);
+    return res.status(500).json({ error: String(error) });
+  }
+});
+
 export default diagnosticRouter;
 
