@@ -5,8 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
 import { FormConfigProvider } from "@/contexts/FormConfigContext";
-import { useEffect } from "react";
-import { startKeepAlive } from "@/lib/keepAlive";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
@@ -33,11 +31,6 @@ import HomeRedirect from "./components/HomeRedirect";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Iniciar keep-alive quando a app monta
-  useEffect(() => {
-    startKeepAlive();
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <AppProvider>
