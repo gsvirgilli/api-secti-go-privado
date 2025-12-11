@@ -1,5 +1,6 @@
 import Course, { CourseAttributes, CourseCreationAttributes } from './course.model.js';
 import Class from '../classes/class.model.js';
+import Student from '../students/student.model.js';
 import { AppError } from '../../utils/AppError.js';
 import { Op } from 'sequelize';
 import { 
@@ -61,6 +62,22 @@ class CourseService {
     const data = await Course.findAll({
       where: whereClause,
       attributes: ['id', 'nome', 'carga_horaria', 'descricao', 'nivel', 'status', 'createdAt', 'updatedAt'],
+      include: [
+        {
+          model: Class,
+          as: 'turmas',
+          attributes: ['id', 'nome', 'turno', 'vagas', 'status'],
+          include: [
+            {
+              model: Student,
+              as: 'alunos',
+              attributes: ['id', 'nome', 'matricula', 'email', 'status'],
+              required: false
+            }
+          ],
+          required: false
+        }
+      ],
       order: [['nome', 'ASC']],
       limit: limit + 1, // Buscar +1 para saber se há próxima página
       offset: calculateOffset(page, limit),
