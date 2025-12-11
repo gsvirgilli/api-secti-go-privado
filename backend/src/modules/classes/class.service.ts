@@ -148,8 +148,7 @@ class ClassService {
   }
 
   /**
-   * Busca uma turma por ID
-   * ✅ Otimizado: Usa eager loading e índices para evitar N+1 queries
+   * Busca uma turma por ID com alunos matriculados
    */
   async findById(id: number) {
     const turma = await Class.findByPk(id, {
@@ -158,13 +157,6 @@ class ClassService {
           model: Curso,
           as: 'curso',
           attributes: ['id', 'nome', 'carga_horaria', 'descricao']
-        },
-        {
-          model: Student,
-          as: 'alunos',
-          attributes: ['id', 'matricula', 'nome', 'email', 'status', 'telefone', 'turma_id'],
-          required: false,
-          order: [['nome', 'ASC']]
         },
         {
           model: Instructor,
@@ -179,13 +171,16 @@ class ClassService {
       throw new Error('Turma não encontrada');
     }
 
-    // Converter para JSON plain object
-    const turmaData = turma.toJSON() as any;
+    // Buscar alunos dessa turma especificamente
+    const alunos = await Student.findAll({
+      where: { turma_id: id },
+      attributes: ['id', 'matricula', 'nome', 'email', 'status', 'telefone', 'turma_id'],
+      order: [['nome', 'ASC']]
+    });
 
-    // Filtrar alunos da turma (apenas os com turma_id igual a esta classe)
-    if (turmaData.alunos && Array.isArray(turmaData.alunos)) {
-      turmaData.alunos = turmaData.alunos.filter((a: any) => a.turma_id === id);
-    }
+    // Converter para JSON e adicionar alunos
+    const turmaData = turma.toJSON() as any;
+    turmaData.alunos = alunos;
 
     return turmaData;
   }
