@@ -102,6 +102,48 @@ app.get('/', (req, res) => {
   return res.json({ status: 'ok', message: 'SUKA TECH API is running!' });
 });
 
+// Endpoint de diagnóstico de matrículas
+app.get('/api/diagnose/enrollments', async (req, res) => {
+  try {
+    const { sequelize } = await import('./config/database.js');
+    
+    const [students] = await sequelize.query(`
+      SELECT COUNT(*) as total FROM alunos
+    `) as any;
+    
+    const [studentsWithTurmaId] = await sequelize.query(`
+      SELECT COUNT(*) as total FROM alunos WHERE turma_id IS NOT NULL
+    `) as any;
+    
+    const [classes] = await sequelize.query(`
+      SELECT COUNT(*) as total FROM turmas
+    `) as any;
+    
+    const [enrollments] = await sequelize.query(`
+      SELECT COUNT(*) as total FROM matriculas
+    `) as any;
+    
+    const [enrollmentDetails] = await sequelize.query(`
+      SELECT m.id_aluno, a.nome as aluno, m.id_turma, t.nome as turma, m.status 
+      FROM matriculas m 
+      LEFT JOIN alunos a ON m.id_aluno = a.id
+      LEFT JOIN turmas t ON m.id_turma = t.id
+      LIMIT 10
+    `) as any;
+    
+    return res.json({
+      students: students[0].total,
+      studentsWithTurmaId: studentsWithTurmaId[0].total,
+      classes: classes[0].total,
+      enrollments: enrollments[0].total,
+      enrollmentDetails
+    });
+  } catch (error) {
+    console.error('Erro no diagnóstico:', error);
+    return res.status(500).json({ error: String(error) });
+  }
+});
+
 app.get('/api/health', (req, res) => {
   return res.json({ status: 'ok', message: 'SUKA TECH API is running!' });
 });

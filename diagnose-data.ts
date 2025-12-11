@@ -3,6 +3,7 @@ import Student from './backend/src/modules/students/student.model.js';
 import Class from './backend/src/modules/classes/class.model.js';
 import Enrollment from './backend/src/modules/enrollments/enrollment.model.js';
 import { setupAssociations } from './backend/src/models/associations.js';
+import { Op } from 'sequelize';
 
 async function diagnose() {
   try {
@@ -15,7 +16,7 @@ async function diagnose() {
 
     // Verificar dados
     const totalStudents = await Student.count();
-    const studentsWithTurmaId = await Student.count({ where: { turma_id: { [sequelize.Sequelize.Op.ne]: null } } });
+    const studentsWithTurmaId = await Student.count({ where: { turma_id: { [Op.ne]: null } } });
     const totalEnrollments = await Enrollment.count();
     const totalClasses = await Class.count();
 
