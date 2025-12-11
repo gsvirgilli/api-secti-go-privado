@@ -114,6 +114,16 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
       return;
     }
 
+    // Validar se status é ATIVA, deve ter instrutor
+    if (formData.status === "Ativo" && (!formData.instructorId || formData.instructorId === 0)) {
+      toast({
+        title: "Instrutor obrigatório",
+        description: "Turmas ativas devem ter um instrutor cadastrado",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       // Converter datas de volta para formato dd/mm/yyyy antes de enviar (ou vazio se não informado)
       const dataToSend = {
