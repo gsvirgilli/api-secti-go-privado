@@ -9,10 +9,6 @@ sleep 5
 echo "Syncing database tables..."
 npx tsx src/database/sync-db.ts
 
-# Executa as migrations SQL diretamente
-echo "Running SQL migrations..."
-sh run-sql-migration.sh
-
 # Popula o banco com dados iniciais (se ainda não existirem)
 echo "Seeding database with initial data..."
 npx tsx src/database/seeds/seed-db.ts

@@ -52,7 +52,69 @@ async function runMigrations() {
       }
     }
 
-    // 3. Inserir usuário de teste
+    // 3. Adicionar colunas faltantes ao candidatos (se não existirem)
+    console.log('🔧 Verificando e adicionando colunas faltantes ao candidatos...');
+    try {
+      const candidatosColumns = [
+        'ALTER TABLE candidatos ADD COLUMN rg VARCHAR(20) NULL',
+        'ALTER TABLE candidatos ADD COLUMN sexo ENUM(\'FEMININO\', \'MASCULINO\', \'OUTRO\', \'PREFIRO_NAO_INFORMAR\') NULL',
+        'ALTER TABLE candidatos ADD COLUMN deficiencia ENUM(\'NAO\', \'AUDITIVA\', \'VISUAL\', \'FISICA\', \'INTELECTUAL\', \'MULTIPLA\') NULL',
+        'ALTER TABLE candidatos ADD COLUMN telefone2 VARCHAR(20) NULL',
+        'ALTER TABLE candidatos ADD COLUMN idade INT NULL',
+        'ALTER TABLE candidatos ADD COLUMN nome_mae VARCHAR(100) NULL',
+        'ALTER TABLE candidatos ADD COLUMN cidade_nascimento VARCHAR(100) NULL',
+        'ALTER TABLE candidatos ADD COLUMN cep VARCHAR(8) NULL',
+        'ALTER TABLE candidatos ADD COLUMN rua VARCHAR(200) NULL',
+        'ALTER TABLE candidatos ADD COLUMN numero VARCHAR(20) NULL',
+        'ALTER TABLE candidatos ADD COLUMN complemento VARCHAR(100) NULL',
+        'ALTER TABLE candidatos ADD COLUMN bairro VARCHAR(100) NULL',
+        'ALTER TABLE candidatos ADD COLUMN cidade VARCHAR(100) NULL',
+        'ALTER TABLE candidatos ADD COLUMN estado VARCHAR(2) NULL',
+        'ALTER TABLE candidatos ADD COLUMN curso_id INT NULL',
+        'ALTER TABLE candidatos ADD COLUMN turno VARCHAR(20) NULL',
+        'ALTER TABLE candidatos ADD COLUMN curso_id2 INT NULL',
+        'ALTER TABLE candidatos ADD COLUMN turno2 VARCHAR(20) NULL',
+        'ALTER TABLE candidatos ADD COLUMN local_curso VARCHAR(100) NULL',
+        'ALTER TABLE candidatos ADD COLUMN lattes_url VARCHAR(255) NULL',
+        'ALTER TABLE candidatos ADD COLUMN portifolio_url VARCHAR(255) NULL',
+        'ALTER TABLE candidatos ADD COLUMN experiencia_profissional TEXT NULL',
+        'ALTER TABLE candidatos ADD COLUMN renda_mensal VARCHAR(20) NULL',
+        'ALTER TABLE candidatos ADD COLUMN tipo_residencia VARCHAR(20) NULL',
+        'ALTER TABLE candidatos ADD COLUMN goianas_ciencia VARCHAR(20) NULL',
+        'ALTER TABLE candidatos ADD COLUMN documento_identidade VARCHAR(100) NULL',
+        'ALTER TABLE candidatos ADD COLUMN raca_cor VARCHAR(20) NULL',
+        'ALTER TABLE candidatos ADD COLUMN documento_path VARCHAR(255) NULL',
+        'ALTER TABLE candidatos ADD COLUMN rg_path VARCHAR(255) NULL',
+        'ALTER TABLE candidatos ADD COLUMN cpf_path VARCHAR(255) NULL',
+        'ALTER TABLE candidatos ADD COLUMN comprovante_endereco_path VARCHAR(255) NULL',
+        'ALTER TABLE candidatos ADD COLUMN comprovante_renda_path VARCHAR(255) NULL',
+        'ALTER TABLE candidatos ADD COLUMN comprovante_deficiencia_path VARCHAR(255) NULL',
+        'ALTER TABLE candidatos ADD COLUMN outros_documentos_path VARCHAR(255) NULL',
+        'ALTER TABLE candidatos ADD COLUMN data_processamento DATETIME NULL',
+        'ALTER TABLE candidatos ADD COLUMN observacoes TEXT NULL',
+        'ALTER TABLE candidatos ADD COLUMN motivo_rejeicao TEXT NULL',
+        'ALTER TABLE candidatos ADD COLUMN avaliador_id INT NULL',
+        'ALTER TABLE candidatos ADD COLUMN data_avaliacao DATETIME NULL',
+        'ALTER TABLE candidatos ADD COLUMN lista_espera_motivo TEXT NULL',
+        'ALTER TABLE candidatos ADD COLUMN data_lista_espera DATETIME NULL'
+      ];
+
+      for (const columnSQL of candidatosColumns) {
+        try {
+          await connection.execute(columnSQL);
+        } catch (error) {
+          // Ignorar erros de coluna que já existe
+          if (!error.message.includes('Duplicate column')) {
+            console.warn('⚠️  ', error.message.split('\n')[0]);
+          }
+        }
+      }
+      console.log('✅ Colunas do candidatos verificadas!\n');
+    } catch (error) {
+      console.warn('⚠️  Erro ao adicionar colunas:', error.message.split('\n')[0]);
+    }
+
+    // 4. Inserir usuário de teste
     console.log('📝 Inserindo usuário de teste...');
     const insertUser = `
       INSERT INTO usuarios (nome, email, senha_hash, role, createdAt, updatedAt) 
@@ -63,7 +125,7 @@ async function runMigrations() {
     await connection.execute(insertUser);
     console.log('✅ Usuário de teste criado!\n');
 
-    // 4. Verificar dados
+    // 5. Verificar dados
     console.log('🔍 Verificando dados inseridos...\n');
     
     const [usuarios] = await connection.execute('SELECT id, nome, email, role FROM usuarios LIMIT 5');
