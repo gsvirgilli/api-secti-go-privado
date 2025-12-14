@@ -107,6 +107,10 @@ interface Course {
   status?: 'ATIVO' | 'INATIVO' | 'EM_DESENVOLVIMENTO';
 }
 
+// URL base para documentos (remove /api do final)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3333/api";
+const DOCUMENT_BASE_URL = API_BASE_URL.replace(/\/api$/, '');
+
 const ProcessoSeletivo = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -233,7 +237,11 @@ const ProcessoSeletivo = () => {
       candidate.cpf.includes(searchTerm) ||
       candidate.email.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return matchesSearch;
+    const matchesStatus =
+      statusFilter === 'all' ||
+      candidate.status.toUpperCase() === statusFilter.toUpperCase();
+
+    return matchesSearch && matchesStatus;
   });
 
   // Cálculos de paginação
@@ -262,14 +270,14 @@ const ProcessoSeletivo = () => {
 
   // Status visual
   const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'aprovado':
+    switch (status.toUpperCase()) {
+      case 'APROVADO':
         return <CheckCircle className="h-4 w-4 text-emerald-500" />;
-      case 'reprovado':
+      case 'REPROVADO':
         return <XCircle className="h-4 w-4 text-red-500" />;
-      case 'pendente':
+      case 'PENDENTE':
         return <Clock className="h-4 w-4 text-amber-500" />;
-      case 'lista_espera':
+      case 'LISTA_ESPERA':
         return <Clock className="h-4 w-4 text-orange-500" />;
       default:
         return <Clock className="h-4 w-4 text-gray-500" />;
@@ -277,15 +285,15 @@ const ProcessoSeletivo = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusLower = status.toLowerCase();
-    switch (statusLower) {
-      case 'aprovado':
+    const statusUpper = status.toUpperCase();
+    switch (statusUpper) {
+      case 'APROVADO':
         return <Badge className="bg-emerald-100 text-emerald-700">Aprovado</Badge>;
-      case 'reprovado':
+      case 'REPROVADO':
         return <Badge className="bg-red-100 text-red-700">Reprovado</Badge>;
-      case 'pendente':
+      case 'PENDENTE':
         return <Badge className="bg-amber-100 text-amber-700">Pendente</Badge>;
-      case 'lista_espera':
+      case 'LISTA_ESPERA':
         return <Badge className="bg-orange-100 text-orange-700">Lista de Espera</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
@@ -694,9 +702,9 @@ const ProcessoSeletivo = () => {
   // Estatísticas
   const stats = {
     total: candidates.length,
-    pendente: candidates.filter(c => c.status.toLowerCase() === 'pendente').length,
-    aprovado: candidates.filter(c => c.status.toLowerCase() === 'aprovado').length,
-    reprovado: candidates.filter(c => c.status.toLowerCase() === 'reprovado').length,
+    pendente: candidates.filter(c => c.status.toUpperCase() === 'PENDENTE').length,
+    aprovado: candidates.filter(c => c.status.toUpperCase() === 'APROVADO').length,
+    reprovado: candidates.filter(c => c.status.toUpperCase() === 'REPROVADO').length,
   };
 
   return (
@@ -1506,7 +1514,7 @@ const ProcessoSeletivo = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {selectedCandidate.rg_frente_url && (
                           <a
-                            href={`http://localhost:3333${selectedCandidate.rg_frente_url}`}
+                            href={`${DOCUMENT_BASE_URL}${selectedCandidate.rg_frente_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
@@ -1517,7 +1525,7 @@ const ProcessoSeletivo = () => {
                         )}
                         {selectedCandidate.rg_verso_url && (
                           <a
-                            href={`http://localhost:3333${selectedCandidate.rg_verso_url}`}
+                            href={`${DOCUMENT_BASE_URL}${selectedCandidate.rg_verso_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
@@ -1528,7 +1536,7 @@ const ProcessoSeletivo = () => {
                         )}
                         {selectedCandidate.cpf_aluno_url && (
                           <a
-                            href={`http://localhost:3333${selectedCandidate.cpf_aluno_url}`}
+                            href={`${DOCUMENT_BASE_URL}${selectedCandidate.cpf_aluno_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
@@ -1539,7 +1547,7 @@ const ProcessoSeletivo = () => {
                         )}
                         {selectedCandidate.comprovante_endereco_url && (
                           <a
-                            href={`http://localhost:3333${selectedCandidate.comprovante_endereco_url}`}
+                            href={`${DOCUMENT_BASE_URL}${selectedCandidate.comprovante_endereco_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
@@ -1550,7 +1558,7 @@ const ProcessoSeletivo = () => {
                         )}
                         {selectedCandidate.foto_3x4_url && (
                           <a
-                            href={`http://localhost:3333${selectedCandidate.foto_3x4_url}`}
+                            href={`${DOCUMENT_BASE_URL}${selectedCandidate.foto_3x4_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
@@ -1561,7 +1569,7 @@ const ProcessoSeletivo = () => {
                         )}
                         {selectedCandidate.comprovante_escolaridade_url && (
                           <a
-                            href={`http://localhost:3333${selectedCandidate.comprovante_escolaridade_url}`}
+                            href={`${DOCUMENT_BASE_URL}${selectedCandidate.comprovante_escolaridade_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
@@ -1572,7 +1580,7 @@ const ProcessoSeletivo = () => {
                         )}
                         {selectedCandidate.identidade_responsavel_frente_url && (
                           <a
-                            href={`http://localhost:3333${selectedCandidate.identidade_responsavel_frente_url}`}
+                            href={`${DOCUMENT_BASE_URL}${selectedCandidate.identidade_responsavel_frente_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
@@ -1583,7 +1591,7 @@ const ProcessoSeletivo = () => {
                         )}
                         {selectedCandidate.identidade_responsavel_verso_url && (
                           <a
-                            href={`http://localhost:3333${selectedCandidate.identidade_responsavel_verso_url}`}
+                            href={`${DOCUMENT_BASE_URL}${selectedCandidate.identidade_responsavel_verso_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
@@ -1594,7 +1602,7 @@ const ProcessoSeletivo = () => {
                         )}
                         {selectedCandidate.cpf_responsavel_url && (
                           <a
-                            href={`http://localhost:3333${selectedCandidate.cpf_responsavel_url}`}
+                            href={`${DOCUMENT_BASE_URL}${selectedCandidate.cpf_responsavel_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 p-3 bg-white rounded-lg border hover:border-purple-300 hover:bg-purple-50 transition-colors"
@@ -1629,25 +1637,25 @@ const ProcessoSeletivo = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="pendente">
+                            <SelectItem value="PENDENTE">
                               <div className="flex items-center gap-2">
                                 <Clock className="h-4 w-4 text-amber-600" />
                                 Pendente
                               </div>
                             </SelectItem>
-                            <SelectItem value="lista_espera">
+                            <SelectItem value="LISTA_ESPERA">
                               <div className="flex items-center gap-2">
                                 <Clock className="h-4 w-4 text-orange-600" />
                                 Lista de Espera
                               </div>
                             </SelectItem>
-                            <SelectItem value="aprovado">
+                            <SelectItem value="APROVADO">
                               <div className="flex items-center gap-2">
                                 <CheckCircle className="h-4 w-4 text-emerald-600" />
                                 Aprovado
                               </div>
                             </SelectItem>
-                            <SelectItem value="reprovado">
+                            <SelectItem value="REPROVADO">
                               <div className="flex items-center gap-2">
                                 <XCircle className="h-4 w-4 text-red-600" />
                                 Reprovado
