@@ -7,14 +7,18 @@ WORKDIR /usr/app
 # Copiar apenas package files primeiro
 COPY package.json package-lock.json .npmrc ./
 
-# Instalar com legacy-peer-deps
-RUN npm install --legacy-peer-deps && npm cache clean --force
+# Limpar cache de npm e reinstalar do zero
+RUN npm cache clean --force && \
+    rm -rf node_modules && \
+    npm install --legacy-peer-deps && \
+    npm install zod@4.1.12 --legacy-peer-deps --save
 
 # Copiar resto do código
 COPY . .
 
 # Verificar que zod foi instalado
-RUN test -f node_modules/zod/package.json || (echo "ERROR: zod not installed!" && exit 1)
+RUN test -f node_modules/zod/package.json || (echo "ERROR: zod not installed!" && exit 1) && \
+    ls -la node_modules/zod/
 
 EXPOSE 3333
 
