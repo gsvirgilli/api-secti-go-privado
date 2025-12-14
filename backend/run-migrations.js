@@ -7,6 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function runMigrations() {
+  try {
   const connection = await mysql.createConnection({
     host: process.env.DATABASE_HOST,
     port: process.env.DATABASE_PORT || 10530,
@@ -163,6 +164,11 @@ async function runMigrations() {
     process.exit(1);
   } finally {
     await connection.end();
+  }
+  } catch (outerError) {
+    console.warn('⚠️  Aviso: Não foi possível executar migrações:', outerError.message);
+    console.warn('O servidor iniciará mesmo assim, mas algumas colunas podem estar faltando.');
+    process.exit(0); // Não bloqueia o startup
   }
 }
 
