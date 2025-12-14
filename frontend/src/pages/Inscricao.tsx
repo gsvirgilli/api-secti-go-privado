@@ -641,6 +641,14 @@ const Inscricao = () => {
       }, 3000);
     } catch (error: unknown) {
       console.error("Erro ao enviar inscrição:", error);
+
+      // Log detalhado do erro
+      if (isAxiosError(error)) {
+        console.log("Status:", error.response?.status);
+        console.log("Data:", error.response?.data);
+        console.log("Message:", error.message);
+        console.log("Full response:", error.response);
+      }
       console.log("Detalhes do erro:", isAxiosError(error) ? error.response?.data : error);
 
       // Usar a mensagem exata do backend
