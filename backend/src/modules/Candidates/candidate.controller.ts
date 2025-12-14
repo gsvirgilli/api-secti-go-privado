@@ -4,7 +4,8 @@ import {
   createCandidateSchema,
   updateCandidateSchema,
   listCandidateFiltersSchema,
-  rejectCandidateSchema
+  rejectCandidateSchema,
+  publicCandidateSchema
 } from './candidate.validator.js';
 import { z } from 'zod';
 
@@ -312,8 +313,13 @@ class CandidateController {
    */
   async createPublic(req: Request, res: Response) {
     try {
-      // Dados do formulário
-      const data = req.body;
+      // Validar dados contra o schema
+      const validatedData = publicCandidateSchema.parse({
+        body: req.body
+      });
+
+      // Dados do formulário (já validados)
+      const data = validatedData.body;
       
       // Arquivos enviados (se houver)
       const files = req.files;

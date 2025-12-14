@@ -166,6 +166,42 @@ export const publicCandidateSchema = z.object({
       .string({ message: 'Data de nascimento é obrigatória' })
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data deve estar no formato YYYY-MM-DD'),
 
+    // Dados pessoais adicionais (opcionais)
+    rg: z
+      .string()
+      .max(20, 'RG deve ter no máximo 20 caracteres')
+      .optional()
+      .nullable(),
+
+    sexo: z
+      .enum(['FEMININO', 'MASCULINO', 'OUTRO', 'PREFIRO_NAO_INFORMAR'], { message: 'Sexo deve ser FEMININO, MASCULINO, OUTRO ou PREFIRO_NAO_INFORMAR' })
+      .optional()
+      .nullable(),
+
+    deficiencia: z
+      .enum(['NAO', 'AUDITIVA', 'VISUAL', 'FISICA', 'INTELECTUAL', 'MULTIPLA'], { message: 'Deficiência deve ser um valor válido' })
+      .optional()
+      .nullable(),
+
+    telefone2: z
+      .string()
+      .max(20, 'Segundo telefone deve ter no máximo 20 caracteres')
+      .optional()
+      .nullable(),
+
+    idade: z
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .nullable(),
+
+    nome_mae: z
+      .string()
+      .max(100, 'Nome da mãe deve ter no máximo 100 caracteres')
+      .optional()
+      .nullable(),
+
     // Endereço (opcional)
     cep: z
       .string()
@@ -210,7 +246,7 @@ export const publicCandidateSchema = z.object({
       .optional()
       .nullable(),
 
-    // Curso e turno desejados
+    // Curso e turno desejados (obrigatórios)
     curso_id: z
       .number({ message: 'ID do curso é obrigatório' })
       .int('ID do curso deve ser um número inteiro')
@@ -219,7 +255,76 @@ export const publicCandidateSchema = z.object({
     turno: z
       .enum(['MATUTINO', 'VESPERTINO', 'NOTURNO'], {
         message: 'Turno deve ser MATUTINO, VESPERTINO ou NOTURNO'
-      })
+      }),
+
+    // Curso - segunda opção (opcionais)
+    curso_id2: z
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .nullable(),
+
+    turno2: z
+      .enum(['MATUTINO', 'VESPERTINO', 'NOTURNO'])
+      .optional()
+      .nullable(),
+
+    local_curso: z
+      .string()
+      .max(255)
+      .optional()
+      .nullable(),
+
+    // Questionário Social (opcionais)
+    raca_cor: z
+      .enum(['BRANCO', 'PARDO', 'NEGRO', 'INDIGENA', 'AMARELO'], { message: 'Raça/Cor deve ser um valor válido' })
+      .optional()
+      .nullable(),
+
+    renda_mensal: z
+      .enum(['SEM_RENDA', 'ATE_MEIO_SM', 'ATE_1_SM', '1_A_2_SM', '2_A_3_SM', '3_A_4_SM', 'ACIMA_5_SM'], { message: 'Renda mensal deve ser um valor válido' })
+      .optional()
+      .nullable(),
+
+    pessoas_renda: z
+      .string()
+      .optional()
+      .nullable(),
+
+    tipo_residencia: z
+      .enum(['PROPRIA_QUITADA', 'PROPRIA_FINANCIADA', 'ALUGADA', 'HERDADA', 'CEDIDA'], { message: 'Tipo de residência deve ser um valor válido' })
+      .optional()
+      .nullable(),
+
+    itens_casa: z
+      .string()
+      .optional()
+      .nullable(),
+
+    // Programa Goianas (opcional)
+    goianas_ciencia: z
+      .enum(['SIM', 'NAO'], { message: 'Goianas Ciência deve ser SIM ou NAO' })
+      .optional()
+      .nullable(),
+
+    // Responsável Legal (opcionais)
+    menor_idade: z
+      .boolean()
+      .optional()
+      .nullable(),
+
+    nome_responsavel: z
+      .string()
+      .max(100, 'Nome do responsável deve ter no máximo 100 caracteres')
+      .optional()
+      .nullable(),
+
+    cpf_responsavel: z
+      .string()
+      .regex(/^\d{11}$/, 'CPF do responsável deve conter 11 dígitos')
+      .optional()
+      .nullable()
   })
 });
 

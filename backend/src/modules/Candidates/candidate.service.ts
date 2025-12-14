@@ -492,7 +492,6 @@ class CandidateService {
     }
 
     // 8. Verificar se o curso existe
-    const Course = (await import('../courses/course.model.js')).default;
     const course = await Course.findByPk(data.curso_id);
 
     if (!course) {
