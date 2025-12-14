@@ -126,6 +126,14 @@ const Inscricao = () => {
 
   // Helper: Verificar se campo está visível
   const isFieldVisible = (fieldId: string): boolean => {
+    // Campos que SEMPRE devem ser obrigatórios TAMBÉM devem ser sempre visíveis
+    const ALWAYS_REQUIRED_FIELDS = ['nome', 'cpf', 'email', 'telefone', 'data_nascimento', 'curso_id', 'turno'];
+
+    // Se é campo obrigatório, sempre retorna true (visível)
+    if (ALWAYS_REQUIRED_FIELDS.includes(fieldId)) {
+      return true;
+    }
+
     const field = formConfig.fields.find(f => f.id === fieldId);
     return field?.visible !== false; // Se não encontrar, mostra por padrão
   };

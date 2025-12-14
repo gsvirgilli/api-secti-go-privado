@@ -1893,7 +1893,7 @@ const ProcessoSeletivo = () => {
                                 <Switch
                                   disabled={ALWAYS_REQUIRED_FIELDS.includes(field.id)}
                                   checked={field.required}
-                                  title={ALWAYS_REQUIRED_FIELDS.includes(field.id) ? "Este campo é obrigatório pela API e não pode ser desmarcado" : ""}
+                                  title={ALWAYS_REQUIRED_FIELDS.includes(field.id) ? "Este campo é obrigatório e deve estar sempre visível" : ""}
                                   onCheckedChange={(checked) => {
                                     const updatedFields = config.fields.map(f =>
                                       f.id === field.id ? { ...f, required: checked } : f
@@ -1905,8 +1905,9 @@ const ProcessoSeletivo = () => {
                               <div className="flex items-center gap-2">
                                 <span className="text-sm text-muted-foreground">Visível</span>
                                 <Switch
+                                  disabled={ALWAYS_REQUIRED_FIELDS.includes(field.id)}
                                   checked={field.visible}
-                                  title={ALWAYS_REQUIRED_FIELDS.includes(field.id) ? "Este campo é obrigatório pela API e não pode ser desmarcado" : ""}
+                                  title={ALWAYS_REQUIRED_FIELDS.includes(field.id) ? "Este campo é obrigatório e deve estar sempre visível" : ""}
                                   onCheckedChange={(checked) => {
                                     const updatedFields = config.fields.map(f =>
                                       f.id === field.id ? { ...f, visible: checked } : f
@@ -1952,7 +1953,7 @@ const ProcessoSeletivo = () => {
                                 <Switch
                                   disabled={ALWAYS_REQUIRED_FIELDS.includes(field.id)}
                                   checked={field.required}
-                                  title={ALWAYS_REQUIRED_FIELDS.includes(field.id) ? "Este campo é obrigatório pela API e não pode ser desmarcado" : ""}
+                                  title={ALWAYS_REQUIRED_FIELDS.includes(field.id) ? "Este campo é obrigatório e deve estar sempre visível" : ""}
                                   onCheckedChange={(checked) => {
                                     const updatedFields = config.fields.map(f =>
                                       f.id === field.id ? { ...f, required: checked } : f
@@ -1964,8 +1965,9 @@ const ProcessoSeletivo = () => {
                               <div className="flex items-center gap-2">
                                 <span className="text-sm text-muted-foreground">Visível</span>
                                 <Switch
+                                  disabled={ALWAYS_REQUIRED_FIELDS.includes(field.id)}
                                   checked={field.visible}
-                                  title={ALWAYS_REQUIRED_FIELDS.includes(field.id) ? "Este campo é obrigatório pela API e não pode ser desmarcado" : ""}
+                                  title={ALWAYS_REQUIRED_FIELDS.includes(field.id) ? "Este campo é obrigatório e deve estar sempre visível" : ""}
                                   onCheckedChange={(checked) => {
                                     const updatedFields = config.fields.map(f =>
                                       f.id === field.id ? { ...f, visible: checked } : f
@@ -2011,7 +2013,7 @@ const ProcessoSeletivo = () => {
                                 <Switch
                                   disabled={ALWAYS_REQUIRED_FIELDS.includes(field.id)}
                                   checked={field.required}
-                                  title={ALWAYS_REQUIRED_FIELDS.includes(field.id) ? "Este campo é obrigatório pela API e não pode ser desmarcado" : ""}
+                                  title={ALWAYS_REQUIRED_FIELDS.includes(field.id) ? "Este campo é obrigatório e deve estar sempre visível" : ""}
                                   onCheckedChange={(checked) => {
                                     const updatedFields = config.fields.map(f =>
                                       f.id === field.id ? { ...f, required: checked } : f
@@ -2023,8 +2025,9 @@ const ProcessoSeletivo = () => {
                               <div className="flex items-center gap-2">
                                 <span className="text-sm text-muted-foreground">Visível</span>
                                 <Switch
+                                  disabled={ALWAYS_REQUIRED_FIELDS.includes(field.id)}
                                   checked={field.visible}
-                                  title={ALWAYS_REQUIRED_FIELDS.includes(field.id) ? "Este campo é obrigatório pela API e não pode ser desmarcado" : ""}
+                                  title={ALWAYS_REQUIRED_FIELDS.includes(field.id) ? "Este campo é obrigatório e deve estar sempre visível" : ""}
                                   onCheckedChange={(checked) => {
                                     const updatedFields = config.fields.map(f =>
                                       f.id === field.id ? { ...f, visible: checked } : f
