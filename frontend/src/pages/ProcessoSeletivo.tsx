@@ -1874,7 +1874,7 @@ const ProcessoSeletivo = () => {
                   <CardContent className="pt-4">
                     <div className="space-y-3">
                       {config.fields
-                        .filter(f => f.section === 'pessoais')
+                        .filter(f => f.section === 'pessoais' && !ALWAYS_REQUIRED_FIELDS.includes(f.id))
                         .sort((a, b) => a.order - b.order)
                         .map((field) => (
                           <div key={field.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50">
@@ -1934,7 +1934,7 @@ const ProcessoSeletivo = () => {
                   <CardContent className="pt-4">
                     <div className="space-y-3">
                       {config.fields
-                        .filter(f => f.section === 'endereco')
+                        .filter(f => f.section === 'endereco' && !ALWAYS_REQUIRED_FIELDS.includes(f.id))
                         .sort((a, b) => a.order - b.order)
                         .map((field) => (
                           <div key={field.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50">
@@ -1994,7 +1994,7 @@ const ProcessoSeletivo = () => {
                   <CardContent className="pt-4">
                     <div className="space-y-3">
                       {config.fields
-                        .filter(f => f.section === 'documentos')
+                        .filter(f => f.section === 'documentos' && !ALWAYS_REQUIRED_FIELDS.includes(f.id))
                         .sort((a, b) => a.order - b.order)
                         .map((field) => (
                           <div key={field.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50">
