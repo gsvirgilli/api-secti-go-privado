@@ -13,6 +13,7 @@
     "dev": "tsx watch src/server.ts",
     "migrate": "sequelize-cli db:migrate",
     "migrate:undo": "sequelize-cli db:migrate:undo",
+    "sync-schema": "tsx src/utils/sync-schema.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
