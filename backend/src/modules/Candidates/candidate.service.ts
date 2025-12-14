@@ -378,7 +378,7 @@ class CandidateService {
       throw new Error('Não é possível rejeitar candidato aprovado');
     }
 
-    await candidate.update({ status: 'reprovado' });
+    await candidate.update({ status: 'REPROVADO' });
 
     return {
       candidate,
@@ -560,11 +560,11 @@ class CandidateService {
     }
 
     // Determinar status inicial baseado nas vagas
-    let statusInicial: 'pendente' | 'lista_espera' = 'lista_espera';
+    let statusInicial: 'PENDENTE' | 'LISTA_ESPERA' = 'LISTA_ESPERA';
     
     // Se pelo menos uma das turmas tem vaga, status é PENDENTE
     if (vagasDisponiveis1 > 0 || vagasDisponiveis2 > 0) {
-      statusInicial = 'pendente';
+      statusInicial = 'PENDENTE';
     }
 
     // 6. Processar arquivos (se houver)
@@ -662,7 +662,7 @@ class CandidateService {
       turno: data.turno,
       vagas_disponiveis_opcao1: vagasDisponiveis1,
       vagas_disponiveis_opcao2: vagasDisponiveis2,
-      mensagem: statusInicial === 'lista_espera' 
+      mensagem: statusInicial === 'LISTA_ESPERA' 
         ? 'Inscrição realizada! Você foi colocado na lista de espera pois não há vagas disponíveis no momento.' 
         : 'Inscrição realizada com sucesso! Aguarde a análise da sua candidatura.',
       createdAt: candidate.createdAt

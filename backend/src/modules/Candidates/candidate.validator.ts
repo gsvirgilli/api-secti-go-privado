@@ -34,11 +34,11 @@ export const createCandidateSchema = z.object({
       .nullable(),
 
     status: z
-      .enum(['pendente', 'aprovado', 'reprovado'], {
-        message: 'Status deve ser pendente, aprovado ou reprovado'
+      .enum(['PENDENTE', 'APROVADO', 'REPROVADO', 'LISTA_ESPERA'], {
+        message: 'Status deve ser PENDENTE, APROVADO, REPROVADO ou LISTA_ESPERA'
       })
       .optional()
-      .default('pendente'),
+      .default('PENDENTE'),
 
     turma_id: z
       .number({ message: 'ID da turma deve ser um número' })
@@ -75,8 +75,8 @@ export const updateCandidateSchema = z.object({
       .nullable(),
 
     status: z
-      .enum(['pendente', 'aprovado', 'reprovado'], {
-        message: 'Status deve ser pendente, aprovado ou reprovado'
+      .enum(['PENDENTE', 'APROVADO', 'REPROVADO', 'LISTA_ESPERA'], {
+        message: 'Status deve ser PENDENTE, APROVADO, REPROVADO ou LISTA_ESPERA'
       })
       .optional(),
 
