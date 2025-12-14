@@ -562,7 +562,7 @@ const Inscricao = () => {
         ...(formData.menor_idade && cleanCPFResponsavel && { cpf_responsavel: cleanCPFResponsavel }),
 
         // Status inicial
-        status: 'pendente'
+        status: 'PENDENTE'
       };
 
       // Preparar arquivos para envio
