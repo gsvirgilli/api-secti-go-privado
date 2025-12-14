@@ -47,8 +47,9 @@ app.use('/api/', globalLimiter);
 
 // CORS configurado com segurança - aceitar múltiplas origens
 const allowedOrigins = [
-  'http://localhost:5173',        // Dev local
+  'http://localhost:5173',        // Dev local (Vite default)
   'http://localhost:3000',        // Dev alternativo
+  'http://localhost:8080',        // Dev com npm run dev
   process.env.FRONTEND_URL,       // Variável de ambiente
   'https://api-secti-go-privado.vercel.app',  // Vercel (produção)
 ].filter(origin => origin && origin !== 'undefined'); // Remover undefined
