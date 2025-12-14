@@ -476,6 +476,7 @@ const Inscricao = () => {
     if (e) e.preventDefault();
 
     console.log('🚀 Iniciando envio da inscrição...');
+    console.log('📋 FormData atual:', formData);
 
     // Validar todas as etapas obrigatórias
     const stepsToValidate = [1, 2, 4, 5, 6, 7]; // Todas exceto 3 que é condicional
@@ -647,6 +648,16 @@ const Inscricao = () => {
         console.log("Status:", error.response?.status);
         console.log("Data:", error.response?.data);
         console.log("Message:", error.message);
+
+        // Mostrar detalhes da validação se existirem
+        if (error.response?.data?.details) {
+          console.log("❌ DETALHES DA VALIDAÇÃO:");
+          error.response.data.details.forEach((detail: any, index: number) => {
+            console.log(`  ${index + 1}. ${detail.message || detail.code}`);
+            console.log(`     Campo: ${detail.path?.join('.') || 'desconhecido'}`);
+          });
+        }
+
         console.log("Full response:", error.response);
       }
       console.log("Detalhes do erro:", isAxiosError(error) ? error.response?.data : error);
