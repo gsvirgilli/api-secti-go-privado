@@ -482,7 +482,10 @@ const Inscricao = () => {
     const stepsToValidate = [1, 2, 4, 5, 6, 7]; // Todas exceto 3 que é condicional
 
     for (const step of stepsToValidate) {
-      if (!validateStep(step)) {
+      const isValid = validateStep(step);
+      console.log(`📝 Step ${step}: ${isValid ? '✅ PASSED' : '❌ FAILED'}`);
+      if (!isValid) {
+        console.log('   Erros encontrados:', errors);
         setCurrentStep(step);
         toast({
           title: "Campos obrigatórios faltando",
@@ -543,7 +546,7 @@ const Inscricao = () => {
         ...(formData.estado && { estado: formData.estado.trim().toUpperCase() }),
 
         // Curso - segunda opção
-        ...(formData.curso_id2 && { curso_id2: Number(formData.curso_id2) }),
+        ...(formData.curso_id2 && Number(formData.curso_id2) > 0 && { curso_id2: Number(formData.curso_id2) }),
         ...(formData.turno2 && { turno2: formData.turno2 }),
         ...(formData.local_curso && { local_curso: formData.local_curso }),
 
@@ -558,7 +561,7 @@ const Inscricao = () => {
         ...(formData.goianas_ciencia && { goianas_ciencia: formData.goianas_ciencia }),
 
         // Responsável Legal
-        menor_idade: formData.menor_idade,
+        ...(formData.menor_idade !== undefined && { menor_idade: Boolean(formData.menor_idade) }),
         ...(formData.menor_idade && formData.nome_responsavel && { nome_responsavel: formData.nome_responsavel.trim() }),
         ...(formData.menor_idade && cleanCPFResponsavel && { cpf_responsavel: cleanCPFResponsavel }),
 
