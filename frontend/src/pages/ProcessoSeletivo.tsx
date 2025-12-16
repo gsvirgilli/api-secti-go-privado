@@ -513,6 +513,16 @@ const ProcessoSeletivo = () => {
   const handleSaveEdit = async () => {
     if (!editedCandidate) return;
 
+    // Validar RG se foi preenchido
+    if (editedCandidate.rg && editedCandidate.rg.length !== 9) {
+      toast({
+        title: "Erro de validação",
+        description: "RG deve conter exatamente 9 dígitos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       console.log('💾 Salvando candidato:', {
@@ -1219,11 +1229,23 @@ const ProcessoSeletivo = () => {
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">RG</p>
                       {isEditing ? (
-                        <Input
-                          value={editedCandidate?.rg || ''}
-                          onChange={(e) => setEditedCandidate(prev => prev ? { ...prev, rg: e.target.value } : null)}
-                          className="h-9"
-                        />
+                        <div>
+                          <Input
+                            value={editedCandidate?.rg || ''}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, ''); // Remove caracteres não-numéricos
+                              setEditedCandidate(prev => prev ? { ...prev, rg: value } : null);
+                            }}
+                            placeholder="Ex: 123456789 (9 dígitos)"
+                            maxLength={9}
+                            className="h-9"
+                          />
+                          {editedCandidate?.rg && editedCandidate.rg.length !== 9 && (
+                            <p className="text-sm text-red-500 mt-1">
+                              RG deve conter exatamente 9 dígitos ({editedCandidate.rg.length}/9)
+                            </p>
+                          )}
+                        </div>
                       ) : (
                         <p className="font-medium">{selectedCandidate?.rg || '-'}</p>
                       )}
