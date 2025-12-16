@@ -486,7 +486,20 @@ const ProcessoSeletivo = () => {
   };
 
   // Iniciar edição
-  const handleStartEdit = () => {
+  const handleStartEdit = async () => {
+    // Recarregar dados do servidor para garantir que temos os dados mais recentes
+    if (selectedCandidate) {
+      try {
+        const refreshResponse = await CandidatesAPI.findById(selectedCandidate.id);
+        const refreshedCandidate = refreshResponse.data;
+        setSelectedCandidate(refreshedCandidate);
+        setEditedCandidate(refreshedCandidate);
+      } catch (error) {
+        console.error('Erro ao recarregar candidato:', error);
+        // Fallback: usar dados existentes
+        setEditedCandidate(selectedCandidate);
+      }
+    }
     setIsEditing(true);
   };
 
@@ -519,12 +532,17 @@ const ProcessoSeletivo = () => {
         className: "bg-emerald-100 text-emerald-800",
       });
 
-      // Atualizar lista de candidatos
+      // Recarregar o candidato completo do servidor para garantir sincronização
+      const refreshResponse = await CandidatesAPI.findById(editedCandidate.id);
+      const refreshedCandidate = refreshResponse.data;
+
+      // Atualizar lista de candidatos com dados atualizados
       setCandidates(prev =>
-        prev.map(c => c.id === editedCandidate.id ? editedCandidate : c)
+        prev.map(c => c.id === refreshedCandidate.id ? refreshedCandidate : c)
       );
 
-      setSelectedCandidate(editedCandidate);
+      setSelectedCandidate(refreshedCandidate);
+      setEditedCandidate(refreshedCandidate);
       setIsEditing(false);
     } catch (error: unknown) {
       console.error("Erro ao atualizar candidato:", error);
