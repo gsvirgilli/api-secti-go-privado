@@ -76,4 +76,22 @@ export interface Candidate {
   curso_id?: number;
   turno?: string;
   status?: string;
+  // Endereço
+  cep?: string;
+  rua?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  // Outros campos
+  data_nascimento?: string;
+  nome_mae?: string;
+  sexo?: string;
+  deficiencia?: string;
+  telefone2?: string;
+  rg?: string;
+  idade?: number;
+  curso_id2?: number;
+  turno2?: string;
 }

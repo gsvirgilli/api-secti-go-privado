@@ -1364,32 +1364,111 @@ const ProcessoSeletivo = () => {
                 </CardHeader>
                 <CardContent className="pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* CEP */}
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">CEP</p>
-                      <p className="font-medium">{selectedCandidate?.cep || '-'}</p>
+                      {isEditing ? (
+                        <Input
+                          value={editedCandidate?.cep || ''}
+                          onChange={(e) => setEditedCandidate(prev => prev ? { ...prev, cep: e.target.value } : null)}
+                          placeholder="00000-000"
+                          className="h-9"
+                        />
+                      ) : (
+                        <p className="font-medium">{selectedCandidate?.cep || '-'}</p>
+                      )}
                     </div>
+
+                    {/* Número */}
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Número</p>
-                      <p className="font-medium">{selectedCandidate?.numero || '-'}</p>
+                      {isEditing ? (
+                        <Input
+                          value={editedCandidate?.numero || ''}
+                          onChange={(e) => setEditedCandidate(prev => prev ? { ...prev, numero: e.target.value } : null)}
+                          placeholder="Ex: 123"
+                          className="h-9"
+                        />
+                      ) : (
+                        <p className="font-medium">{selectedCandidate?.numero || '-'}</p>
+                      )}
                     </div>
+
+                    {/* Rua */}
                     <div className="md:col-span-2">
                       <p className="text-sm text-muted-foreground mb-1">Rua</p>
-                      <p className="font-medium">{selectedCandidate?.rua || '-'}</p>
+                      {isEditing ? (
+                        <Input
+                          value={editedCandidate?.rua || ''}
+                          onChange={(e) => setEditedCandidate(prev => prev ? { ...prev, rua: e.target.value } : null)}
+                          placeholder="Nome da rua"
+                          className="h-9"
+                        />
+                      ) : (
+                        <p className="font-medium">{selectedCandidate?.rua || '-'}</p>
+                      )}
                     </div>
+
+                    {/* Bairro */}
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Bairro</p>
-                      <p className="font-medium">{selectedCandidate?.bairro || '-'}</p>
+                      {isEditing ? (
+                        <Input
+                          value={editedCandidate?.bairro || ''}
+                          onChange={(e) => setEditedCandidate(prev => prev ? { ...prev, bairro: e.target.value } : null)}
+                          placeholder="Bairro"
+                          className="h-9"
+                        />
+                      ) : (
+                        <p className="font-medium">{selectedCandidate?.bairro || '-'}</p>
+                      )}
                     </div>
+
+                    {/* Cidade */}
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Cidade/UF</p>
-                      <p className="font-medium">{selectedCandidate?.cidade && selectedCandidate?.estado ? `${selectedCandidate.cidade} - ${selectedCandidate.estado}` : selectedCandidate?.cidade || '-'}</p>
+                      <p className="text-sm text-muted-foreground mb-1">Cidade</p>
+                      {isEditing ? (
+                        <Input
+                          value={editedCandidate?.cidade || ''}
+                          onChange={(e) => setEditedCandidate(prev => prev ? { ...prev, cidade: e.target.value } : null)}
+                          placeholder="Cidade"
+                          className="h-9"
+                        />
+                      ) : (
+                        <p className="font-medium">{selectedCandidate?.cidade || '-'}</p>
+                      )}
                     </div>
-                    {selectedCandidate?.complemento && (
-                      <div className="md:col-span-2">
-                        <p className="text-sm text-muted-foreground mb-1">Complemento</p>
-                        <p className="font-medium">{selectedCandidate.complemento}</p>
-                      </div>
-                    )}
+
+                    {/* Estado */}
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Estado</p>
+                      {isEditing ? (
+                        <Input
+                          value={editedCandidate?.estado || ''}
+                          onChange={(e) => setEditedCandidate(prev => prev ? { ...prev, estado: e.target.value } : null)}
+                          placeholder="UF"
+                          maxLength={2}
+                          className="h-9"
+                        />
+                      ) : (
+                        <p className="font-medium">{selectedCandidate?.estado || '-'}</p>
+                      )}
+                    </div>
+
+                    {/* Complemento */}
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-muted-foreground mb-1">Complemento</p>
+                      {isEditing ? (
+                        <Input
+                          value={editedCandidate?.complemento || ''}
+                          onChange={(e) => setEditedCandidate(prev => prev ? { ...prev, complemento: e.target.value } : null)}
+                          placeholder="Apto, bloco, etc"
+                          className="h-9"
+                        />
+                      ) : (
+                        <p className="font-medium">{selectedCandidate?.complemento || '-'}</p>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
