@@ -42,7 +42,7 @@ export function setupAssociations() {
     through: InstructorClass,
     foreignKey: 'id_instrutor',
     otherKey: 'id_turma',
-    as: 'turmas'
+    as: 'turmas_instrutor'
   });
 
   Class.belongsToMany(Instructor, {

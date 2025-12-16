@@ -97,7 +97,7 @@ class InstructorService {
       include: [
         {
           model: Class,
-          as: 'turmas',
+          as: 'turmas_instrutor',
           attributes: ['id', 'nome', 'status'],
           required: false,
           through: { attributes: [] }

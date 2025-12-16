@@ -52,18 +52,7 @@ InstructorClass.belongsTo(Class, {
   as: 'turma'
 });
 
-Instructor.belongsToMany(Class, {
-  through: InstructorClass,
-  foreignKey: 'id_instrutor',
-  otherKey: 'id_turma',
-  as: 'turmas'
-});
-
-Class.belongsToMany(Instructor, {
-  through: InstructorClass,
-  foreignKey: 'id_turma',
-  otherKey: 'id_instrutor',
-  as: 'instrutores'
-});
+// NOTA: As associações N:M (belongsToMany) entre Instructor e Class
+// estão definidas no arquivo src/models/associations.ts para evitar conflitos
 
 export default InstructorClass;
