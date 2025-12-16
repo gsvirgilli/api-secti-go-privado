@@ -25,6 +25,7 @@ const menuItems = [
   { icon: BookOpen, label: "Cursos", path: "/cursos" },
   { icon: UserCheck, label: "Instrutores", path: "/instrutores" },
   { icon: Calendar, label: "Frequência", path: "/frequencia" },
+  { icon: Calendar, label: "Calendário Acadêmico", path: "/calendario" },
   { icon: ClipboardList, label: "Cadastro", path: "/cadastro" },
   { icon: FileText, label: "Relatórios", path: "/relatorios" },
 ];

@@ -9,6 +9,8 @@ import enrollmentsRouter from '../modules/enrollments/enrollment.routes.js';
 import attendancesRouter from '../modules/attendance/attendance.routes.js';
 import instructorsRouter from '../modules/instructors/instructor.routes.js';
 import notificationsRouter from '../modules/notifications/notification.routes.js';
+import notificationCenterRouter from '../modules/notifications/notification-center.routes.js';
+import calendarRouter from '../modules/calendar/calendar-event.routes.js';
 import reportsRouter from '../modules/reports/report.routes.js';
 import auditLogsRouter from '../modules/audit/audit-log.routes.js';
 import diagnosticRouter from './diagnostic.js';
@@ -32,6 +34,9 @@ router.use('/enrollments', enrollmentsRouter);
 router.use('/attendances', attendancesRouter);
 router.use('/instructors', instructorsRouter);
 router.use('/notifications', notificationsRouter);
+router.use('/notification-center', notificationCenterRouter); // Rota de notification-center
+router.use('/calendar', calendarRouter); // Rota de calendário
+
 router.use('/reports', reportsRouter);
 router.use('/audit-logs', auditLogsRouter);
 

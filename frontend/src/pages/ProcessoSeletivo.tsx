@@ -123,7 +123,7 @@ interface Course {
 }
 
 // URL base para documentos (remove /api do final)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3333/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 const DOCUMENT_BASE_URL = API_BASE_URL.replace(/\/api$/, '');
 
 const ProcessoSeletivo = () => {
@@ -193,6 +193,9 @@ const ProcessoSeletivo = () => {
       const params: { status?: string } = {};
       if (statusFilter !== "all") {
         params.status = statusFilter;
+      } else {
+        // Quando "all", excluir aprovados (que já viraram alunos)
+        params.status = "PENDENTE,REPROVADO,LISTA_ESPERA";
       }
       const response = await CandidatesAPI.list(params);
 
@@ -285,6 +288,9 @@ const ProcessoSeletivo = () => {
 
   // Status visual
   const getStatusIcon = (status: string) => {
+    if (!status) {
+      return <Clock className="h-4 w-4 text-gray-500" />;
+    }
     switch (status.toUpperCase()) {
       case 'APROVADO':
         return <CheckCircle className="h-4 w-4 text-emerald-500" />;
@@ -300,6 +306,9 @@ const ProcessoSeletivo = () => {
   };
 
   const getStatusBadge = (status: string) => {
+    if (!status) {
+      return <Badge className="bg-gray-100 text-gray-700">Desconhecido</Badge>;
+    }
     const statusUpper = status.toUpperCase();
     switch (statusUpper) {
       case 'APROVADO':
@@ -349,13 +358,26 @@ const ProcessoSeletivo = () => {
 
   // Ver detalhes do candidato
   const handleViewDetails = async (candidate: Candidate) => {
-    setSelectedCandidate(candidate);
-    setEditedCandidate(candidate);
-    setIsEditing(false);
-    setIsModalOpen(true);
+    try {
+      // Fazer fetch completo do candidato para garantir todos os campos
+      const response = await CandidatesAPI.findById(candidate.id);
+      const fullCandidate = response.data; // Extrair o objeto candidato da resposta
+      setSelectedCandidate(fullCandidate);
+      setEditedCandidate(fullCandidate);
+      setIsEditing(false);
+      setIsModalOpen(true);
 
-    // Buscar informações das turmas
-    await loadTurmaInfo(candidate);
+      // Buscar informações das turmas
+      await loadTurmaInfo(fullCandidate);
+    } catch (error) {
+      console.error('Erro ao carregar detalhes do candidato:', error);
+      // Fallback para o candidato da lista se a requisição falhar
+      setSelectedCandidate(candidate);
+      setEditedCandidate(candidate);
+      setIsEditing(false);
+      setIsModalOpen(true);
+      await loadTurmaInfo(candidate);
+    }
   };
 
   // Buscar informações da turma e vagas disponíveis
@@ -373,8 +395,6 @@ const ProcessoSeletivo = () => {
 
   const loadTurmaInfo = async (candidate: Candidate) => {
     try {
-      console.log('🔍 Buscando informações da turma para candidato:', candidate);
-
       const turnoMap: Record<string, string> = {
         'MATUTINO': 'MANHA',
         'VESPERTINO': 'TARDE',
@@ -479,6 +499,15 @@ const ProcessoSeletivo = () => {
 
     setIsSaving(true);
     try {
+      console.log('💾 Salvando candidato:', {
+        id: editedCandidate.id,
+        nome: editedCandidate.nome,
+        curso_id: editedCandidate.curso_id,
+        turno: editedCandidate.turno,
+        curso_id2: editedCandidate.curso_id2,
+        turno2: editedCandidate.turno2,
+      });
+
       await CandidatesAPI.update(editedCandidate.id, editedCandidate);
 
       toast({
@@ -536,50 +565,70 @@ const ProcessoSeletivo = () => {
     }
   };
 
+  // Deletar candidato
+  const handleDeleteCandidate = async () => {
+    if (!selectedCandidate) return;
+
+    const confirmDelete = confirm(
+      `Tem certeza que deseja deletar o candidato "${selectedCandidate.nome}"? Esta ação não pode ser desfeita.`
+    );
+
+    if (!confirmDelete) return;
+
+    setIsSaving(true);
+    try {
+      await CandidatesAPI.delete(selectedCandidate.id);
+
+      toast({
+        title: "Candidato deletado",
+        description: `${selectedCandidate.nome} foi removido com sucesso.`,
+        className: "bg-red-100 text-red-800",
+      });
+
+      // Remover da lista
+      setCandidates(prev => prev.filter(c => c.id !== selectedCandidate.id));
+
+      // Fechar modal
+      setIsModalOpen(false);
+      setSelectedCandidate(null);
+      setEditedCandidate(null);
+    } catch (error: unknown) {
+      console.error("Erro ao deletar candidato:", error);
+      toast({
+        title: "Erro",
+        description: getApiErrorMessage(error, "Não foi possível deletar o candidato."),
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Aprovar candidato com escolha de curso
   const handleApproveWithCourse = async (candidateId: number, opcaoCurso: 1 | 2) => {
     try {
-      await CandidatesAPI.approve(candidateId, opcaoCurso);
+      // Aprovar o candidato no sistema de seleção
+      // O backend vai criar o aluno automaticamente
+      const response = await CandidatesAPI.approve(candidateId, opcaoCurso);
 
       toast({
-        title: "Candidato aprovado!",
-        description: `Aprovado para ${opcaoCurso === 1 ? '1ª opção' : '2ª opção'} de curso.`,
+        title: "Candidato aprovado e matriculado!",
+        description: `${opcaoCurso === 1 ? '1ª opção' : '2ª opção'} foi aprovada. Aluno criado com sucesso!`,
         className: "bg-emerald-100 text-emerald-800",
       });
 
-      // Atualizar lista de candidatos
+      // Atualizar lista de candidatos (para remover da view)
       await loadCandidates();
 
-      // Buscar dados atualizados do candidato
-      const updatedCandidateResponse = await CandidatesAPI.findById(candidateId);
-      const updatedCandidate = updatedCandidateResponse.data;
-
-      // Atualizar candidato selecionado com novos dados
-      setSelectedCandidate(updatedCandidate);
-      setEditedCandidate(updatedCandidate);
-
-      // Recarregar informações das turmas (vagas atualizadas)
-      await loadTurmaInfo(updatedCandidate);
-
-      toast({
-        title: "Vagas atualizadas!",
-        description: "As informações de vagas foram atualizadas.",
-        className: "bg-blue-100 text-blue-800",
-      });
-
+      // Fechar modal
+      setIsModalOpen(false);
+      setSelectedCandidate(null);
+      setEditedCandidate(null);
     } catch (error: unknown) {
       console.error("Erro ao aprovar candidato:", error);
-
-      let errorMessage = "Não foi possível aprovar o candidato.";
-      if (isAxiosError(error) && error.response?.data) {
-        errorMessage = error.response.data.error || error.response.data.message || errorMessage;
-      } else {
-        errorMessage = getApiErrorMessage(error, errorMessage);
-      }
-
       toast({
         title: "Erro",
-        description: errorMessage,
+        description: getApiErrorMessage(error, "Não foi possível aprovar o candidato."),
         variant: "destructive",
       });
     }
@@ -629,6 +678,20 @@ const ProcessoSeletivo = () => {
       loadCourses();
     }
   }, [isConfigModalOpen, loadCourses]);
+
+  // Carregar cursos também quando abre o modal de detalhes do candidato
+  useEffect(() => {
+    if (isModalOpen && courses.length === 0) {
+      loadCourses();
+    }
+  }, [isModalOpen, courses.length, loadCourses]);
+
+  // Função helper para obter nome do curso pelo ID
+  const getCourseName = (courseId?: number | null) => {
+    if (!courseId) return null;
+    const course = courses.find(c => c.id === courseId);
+    return course?.nome || null;
+  };
 
   // Alternar status ativo/inativo do curso
   const handleToggleCourseStatus = async (courseId: number, currentStatus: string) => {
@@ -718,7 +781,7 @@ const ProcessoSeletivo = () => {
   const stats = {
     total: candidates.length,
     pendente: candidates.filter(c => c.status.toUpperCase() === 'PENDENTE').length,
-    aprovado: candidates.filter(c => c.status.toUpperCase() === 'APROVADO').length,
+    lista_espera: candidates.filter(c => c.status.toUpperCase() === 'LISTA_ESPERA').length,
     reprovado: candidates.filter(c => c.status.toUpperCase() === 'REPROVADO').length,
   };
 
@@ -805,10 +868,10 @@ const ProcessoSeletivo = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-emerald-600">{stats.aprovado}</p>
-                <p className="text-sm text-muted-foreground">Aprovados</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.lista_espera}</p>
+                <p className="text-sm text-muted-foreground">Lista de Espera</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-emerald-600" />
+              <Clock className="h-8 w-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
@@ -858,8 +921,8 @@ const ProcessoSeletivo = () => {
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="PENDENTE">Pendente</SelectItem>
-                <SelectItem value="APROVADO">Aprovado</SelectItem>
                 <SelectItem value="REPROVADO">Reprovado</SelectItem>
+                <SelectItem value="LISTA_ESPERA">Lista de Espera</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -883,8 +946,6 @@ const ProcessoSeletivo = () => {
                       <TableHead>CPF</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Telefone</TableHead>
-                      <TableHead>Curso</TableHead>
-                      <TableHead>Turno</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -896,12 +957,6 @@ const ProcessoSeletivo = () => {
                         <TableCell>{formatCPF(candidate.cpf)}</TableCell>
                         <TableCell>{candidate.email}</TableCell>
                         <TableCell>{formatPhone(candidate.telefone)}</TableCell>
-                        <TableCell>
-                          {candidate.curso?.nome ||
-                            candidate.turma?.nome ||
-                            (candidate.curso_id ? `Curso ID: ${candidate.curso_id}` : '-')}
-                        </TableCell>
-                        <TableCell>{candidate.turno || '-'}</TableCell>
                         <TableCell>
                           <Select
                             value={candidate.status}
@@ -920,16 +975,16 @@ const ProcessoSeletivo = () => {
                                   Pendente
                                 </div>
                               </SelectItem>
-                              <SelectItem value="APROVADO">
-                                <div className="flex items-center gap-2">
-                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
-                                  Aprovado
-                                </div>
-                              </SelectItem>
                               <SelectItem value="REPROVADO">
                                 <div className="flex items-center gap-2">
                                   <XCircle className="h-4 w-4 text-red-600" />
                                   Reprovado
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="LISTA_ESPERA">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4 text-blue-600" />
+                                  Lista de Espera
                                 </div>
                               </SelectItem>
                             </SelectContent>
@@ -945,6 +1000,50 @@ const ProcessoSeletivo = () => {
                               title="Ver detalhes completos"
                             >
                               <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedCandidate(candidate);
+                                setEditedCandidate(candidate);
+                                setIsEditing(true);
+                                setIsModalOpen(true);
+                              }}
+                              className="h-8 w-8 p-0 hover:bg-amber-50 hover:text-amber-600"
+                              title="Editar candidato"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                const confirmDelete = confirm(
+                                  `Tem certeza que deseja deletar o candidato "${candidate.nome}"? Esta ação não pode ser desfeita.`
+                                );
+                                if (confirmDelete) {
+                                  try {
+                                    await CandidatesAPI.delete(candidate.id);
+                                    setCandidates(prev => prev.filter(c => c.id !== candidate.id));
+                                    toast({
+                                      title: "Candidato deletado",
+                                      description: `${candidate.nome} foi removido com sucesso.`,
+                                      className: "bg-red-100 text-red-800",
+                                    });
+                                  } catch (error) {
+                                    toast({
+                                      title: "Erro",
+                                      description: "Não foi possível deletar o candidato.",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }
+                              }}
+                              className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                              title="Deletar candidato"
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -1259,12 +1358,13 @@ const ProcessoSeletivo = () => {
                 </CardHeader>
                 <CardContent className="pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* 1ª Opção */}
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">1ª Opção de Curso</p>
                       {isEditing ? (
                         <Select
                           value={editedCandidate?.curso_id?.toString() || ''}
-                          onValueChange={(value) => setEditedCandidate(prev => prev ? { ...prev, curso_id: parseInt(value) } : null)}
+                          onValueChange={(value) => setEditedCandidate(prev => prev ? { ...prev, curso_id: value ? parseInt(value) : null } : null)}
                         >
                           <SelectTrigger className="h-9">
                             <SelectValue placeholder="Selecione um curso" />
@@ -1280,16 +1380,18 @@ const ProcessoSeletivo = () => {
                       ) : (
                         <p className="font-medium">
                           {selectedCandidate?.curso?.nome ||
+                            getCourseName(selectedCandidate?.curso_id) ||
                             (selectedCandidate?.curso_id ? `Curso ID: ${selectedCandidate.curso_id}` : '-')}
                         </p>
                       )}
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Turno</p>
+                      <p className="text-sm text-muted-foreground mb-1">Turno (1ª opção)</p>
                       {isEditing ? (
                         <Select
                           value={editedCandidate?.turno || ''}
-                          onValueChange={(value) => setEditedCandidate(prev => prev ? { ...prev, turno: value } : null)}
+                          onValueChange={(value) => setEditedCandidate(prev => prev ? { ...prev, turno: value || null } : null)}
+                          disabled={!editedCandidate?.curso_id}
                         >
                           <SelectTrigger className="h-9">
                             <SelectValue placeholder="Selecione um turno" />
@@ -1304,21 +1406,56 @@ const ProcessoSeletivo = () => {
                         <p className="font-medium">{selectedCandidate?.turno || '-'}</p>
                       )}
                     </div>
-                    {selectedCandidate?.curso_id2 && (
-                      <>
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">2ª Opção de Curso</p>
-                          <p className="font-medium">
-                            {selectedCandidate.curso2?.nome ||
-                              (selectedCandidate.curso_id2 ? `Curso ID: ${selectedCandidate.curso_id2}` : '-')}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Turno (2ª opção)</p>
-                          <p className="font-medium">{selectedCandidate.turno2 || '-'}</p>
-                        </div>
-                      </>
-                    )}
+
+                    {/* 2ª Opção - sempre visível em modo edição */}
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">2ª Opção de Curso</p>
+                      {isEditing ? (
+                        <Select
+                          value={editedCandidate?.curso_id2?.toString() || ''}
+                          onValueChange={(value) => setEditedCandidate(prev => prev ? { ...prev, curso_id2: value ? parseInt(value) : null } : null)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione um curso (opcional)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {courses.map((course) => (
+                              <SelectItem key={course.id} value={course.id.toString()}>
+                                {course.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <p className="font-medium">
+                          {selectedCandidate?.curso2?.nome ||
+                            getCourseName(selectedCandidate?.curso_id2) ||
+                            (selectedCandidate?.curso_id2 ? `Curso ID: ${selectedCandidate.curso_id2}` : '-')}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Turno (2ª opção)</p>
+                      {isEditing ? (
+                        <Select
+                          value={editedCandidate?.turno2 || ''}
+                          onValueChange={(value) => setEditedCandidate(prev => prev ? { ...prev, turno2: value || null } : null)}
+                          disabled={!editedCandidate?.curso_id2}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione um turno" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="MATUTINO">Matutino</SelectItem>
+                            <SelectItem value="VESPERTINO">Vespertino</SelectItem>
+                            <SelectItem value="NOTURNO">Noturno</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <p className="font-medium">{selectedCandidate?.turno2 || '-'}</p>
+                      )}
+                    </div>
+
                     {selectedCandidate?.local_curso && (
                       <div className="md:col-span-2">
                         <p className="text-sm text-muted-foreground mb-1">Local desejado</p>
@@ -1353,6 +1490,7 @@ const ProcessoSeletivo = () => {
                           <div className="flex-1">
                             <p className="font-semibold text-emerald-900">
                               1ª Opção: {turmaInfo.opcao1?.curso || selectedCandidate?.curso?.nome ||
+                                getCourseName(selectedCandidate?.curso_id) ||
                                 (selectedCandidate?.curso_id ? `Curso ID: ${selectedCandidate.curso_id}` : '-')}
                             </p>
                             <p className="text-sm text-muted-foreground mt-1">
@@ -1389,6 +1527,7 @@ const ProcessoSeletivo = () => {
                             <div className="flex-1">
                               <p className="font-semibold text-emerald-900">
                                 2ª Opção: {turmaInfo.opcao2?.curso || selectedCandidate?.curso2?.nome ||
+                                  getCourseName(selectedCandidate?.curso_id2) ||
                                   (selectedCandidate?.curso_id2 ? `Curso ID ${selectedCandidate.curso_id2}` : '-')}
                               </p>
                               <p className="text-sm text-muted-foreground mt-1">
@@ -1664,12 +1803,6 @@ const ProcessoSeletivo = () => {
                                 Lista de Espera
                               </div>
                             </SelectItem>
-                            <SelectItem value="APROVADO">
-                              <div className="flex items-center gap-2">
-                                <CheckCircle className="h-4 w-4 text-emerald-600" />
-                                Aprovado
-                              </div>
-                            </SelectItem>
                             <SelectItem value="REPROVADO">
                               <div className="flex items-center gap-2">
                                 <XCircle className="h-4 w-4 text-red-600" />
@@ -1725,7 +1858,26 @@ const ProcessoSeletivo = () => {
                     Cancelar
                   </Button>
                 </div>
-              ) : null}
+              ) : (
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button
+                    onClick={handleStartEdit}
+                    className="flex-1"
+                    variant="outline"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar Dados
+                  </Button>
+                  <Button
+                    onClick={handleDeleteCandidate}
+                    disabled={isSaving}
+                    variant="destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Deletar
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

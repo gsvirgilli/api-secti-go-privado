@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Desabilitar Console Ninja */
+[class*="console-ninja"],
+[id*="console-ninja"],
+.cninja-root,
+.console-ninja-container,
+iframe[src*="console-ninja"],
+iframe[src*="chat"],
+div[style*="position: fixed"][style*="bottom"],
+button[aria-label*="ninja"],
+button[aria-label*="chat"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

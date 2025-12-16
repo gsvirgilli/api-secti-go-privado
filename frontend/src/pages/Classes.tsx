@@ -62,6 +62,21 @@ const Classes = () => {
     return instructors.sort();
   }, [classes]);
 
+  // Log das turmas com dados de matricula
+  useEffect(() => {
+    if (classes.length > 0) {
+      const bdTurma = classes.find(c => c.name?.includes('BD - Turma A'));
+      if (bdTurma) {
+        console.log('🔍 BD - Turma A:', {
+          name: bdTurma.name,
+          enrolled: bdTurma.enrolled,
+          capacity: bdTurma.capacity,
+          completo: bdTurma
+        });
+      }
+    }
+  }, [classes]);
+
   // Filtros e ordenação
   const filteredAndSortedClasses = useMemo(() => {
     const filtered = classes.filter(classItem => {

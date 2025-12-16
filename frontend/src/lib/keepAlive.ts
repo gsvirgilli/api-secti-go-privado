@@ -5,22 +5,23 @@ import { api } from './api';
  * Envia requisições periódicas para evitar que o Render coloque em sleep
  */
 
-const KEEP_ALIVE_INTERVAL = 4 * 60 * 1000; // 4 minutos (antes do timeout de 15 min do Render)
+const KEEP_ALIVE_INTERVAL = 30 * 60 * 1000; // 30 minutos
+const KEEP_ALIVE_TIMEOUT = 30000; // 30 segundos
 
 let keepAliveInterval: ReturnType<typeof setInterval> | null = null;
 
 export const startKeepAlive = () => {
   if (keepAliveInterval) return; // Já está rodando
 
-  console.log('🔄 Keep-alive iniciado - enviando pings a cada 4 minutos');
+  console.log('🔄 Keep-alive iniciado - enviando pings a cada 30 minutos');
 
   keepAliveInterval = setInterval(async () => {
     try {
-      await api.get('/health', { timeout: 5000 });
+      await api.get('/health', { timeout: KEEP_ALIVE_TIMEOUT });
       console.log('✅ Keep-alive ping bem-sucedido');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      console.log('⚠️ Keep-alive ping falhou:', errorMessage);
+      console.warn('⚠️ Keep-alive ping falhou:', errorMessage);
     }
   }, KEEP_ALIVE_INTERVAL);
 };

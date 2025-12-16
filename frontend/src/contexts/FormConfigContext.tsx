@@ -65,7 +65,6 @@ export const FormConfigProvider = ({ children }: { children: ReactNode }) => {
         try {
           const newConfig = JSON.parse(e.newValue);
           setConfig(newConfig);
-          console.log('🔄 Configuração do formulário atualizada automaticamente!', newConfig);
         } catch (error) {
           console.error('Erro ao processar mudança de configuração:', error);
         }
@@ -84,7 +83,6 @@ export const FormConfigProvider = ({ children }: { children: ReactNode }) => {
           // Comparar se mudou
           if (JSON.stringify(parsedConfig) !== JSON.stringify(config)) {
             setConfig(parsedConfig);
-            console.log('🔄 Configuração sincronizada!');
           }
         } catch (error) {
           // Ignorar erros de parse
@@ -106,7 +104,6 @@ export const FormConfigProvider = ({ children }: { children: ReactNode }) => {
 
     // Disparar evento customizado para sincronização imediata
     window.dispatchEvent(new CustomEvent('formConfigUpdated', { detail: updated }));
-    console.log('✅ Configuração atualizada:', newConfig);
   };
 
   // Resetar para configuração padrão

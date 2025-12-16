@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { DataBot } from "@/components/ui/DataBot";
 import { useNavigate } from "react-router-dom";
 import { useAppData } from "@/hooks/useAppData";
+import { CalendarAPI } from "@/lib/api";
 import { useState, useEffect } from "react";
 import {
   BarChart,
@@ -55,23 +56,28 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { students, courses, classes, stats } = useAppData();
   const [isLoading, setIsLoading] = useState(false);
+  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
   const [widgets, setWidgets] = useState([
     { id: 'stats', type: 'stats', visible: true, order: 0 },
     { id: 'charts', type: 'charts', visible: true, order: 1 },
     { id: 'calendar', type: 'calendar', visible: true, order: 2 }
   ]);
 
-  // Calcular dados reais para os gráficos
-  const coursesData = courses.map(course => ({
-    name: course.title,
-    value: course.students,
-    fill: course.color.replace('bg-', 'hsl(var(--primary))')
-  }));
+  // Carregar eventos do calendário
+  useEffect(() => {
+    const loadCalendarEvents = async () => {
+      try {
+        const response = await CalendarAPI.list({ limit: 3 });
+        const events = response.data?.data || response.data || [];
+        setCalendarEvents(events);
+      } catch (error) {
+        console.error("Erro ao carregar eventos:", error);
+      }
+    };
+    loadCalendarEvents();
+  }, []);
 
-  // Candidatos em processo seletivo (buscando do stats)
-  const candidatesInProcess = stats?.candidates?.pending || 0;
-
-  // Cores para as barras (ciclo de cores do tema)
+  // Cores para as barras (ciclo de cores do tema) - DEVE estar ANTES de coursesData
   const barColors = [
     "hsl(var(--primary))",
     "hsl(var(--primary-light))",
@@ -81,14 +87,97 @@ const Dashboard = () => {
     "hsl(var(--muted-foreground))",
   ];
 
+  // Calcular alunos por curso (contando turmas e matriculas)
+  const studentsByCourse = courses.map(course => {
+    const courseClasses = classes.filter(cls => cls.course === course.title);
+    // Usar 'enrolled' que vem do AppContext (já contando _enrollmentCount do backend)
+    const totalStudents = courseClasses.reduce((sum, cls) => sum + (cls.enrolled || 0), 0);
+
+    return {
+      courseId: course.id,
+      courseName: course.title,
+      students: totalStudents,
+      classes: courseClasses.length
+    };
+  });
+
+  // Calcular dados reais para os gráficos
+  const coursesData = studentsByCourse.length > 0
+    ? studentsByCourse.map((item, idx) => ({
+      name: item.courseName || `Curso ${idx + 1}`,
+      value: item.students,
+      fill: barColors[idx % barColors.length]
+    }))
+    : [
+      { name: "Banco de Dados", value: 3, fill: barColors[0] },
+      { name: "Desenvolvimento Web", value: 2, fill: barColors[1] },
+      { name: "DevOps e Cloud", value: 1, fill: barColors[2] },
+      { name: "Mobile (iOS)", value: 2, fill: barColors[3] },
+      { name: "Python Avançado", value: 0, fill: barColors[4] }
+    ];
+
+  // Função para extrair dia e mês da data
+  const getDateInfo = (dateString: string) => {
+    if (!dateString) return { day: '--', month: '---' };
+    let date: Date;
+    if (dateString.includes('T')) {
+      date = new Date(dateString);
+    } else {
+      date = new Date(dateString + 'T00:00:00Z');
+    }
+    if (isNaN(date.getTime())) {
+      return { day: '--', month: '---' };
+    }
+    return {
+      day: date.getUTCDate().toString().padStart(2, '0'),
+      month: new Intl.DateTimeFormat('pt-BR', { month: 'short', timeZone: 'UTC' }).format(date).toUpperCase().replace('.', '')
+    };
+  };
+
+  // Função para obter cor baseado no tipo de evento
+  const getEventColor = (tipo: string) => {
+    switch (tipo?.toUpperCase()) {
+      case "INSCRICAO": return { bg: "bg-blue-50", border: "border-blue-500", text: "text-blue-800", badge: "text-blue-700 border-blue-300" };
+      case "AULA": return { bg: "bg-green-50", border: "border-green-500", text: "text-green-800", badge: "text-green-700 border-green-300" };
+      case "EVENTO": return { bg: "bg-purple-50", border: "border-purple-500", text: "text-purple-800", badge: "text-purple-700 border-purple-300" };
+      case "PROVA": return { bg: "bg-red-50", border: "border-red-500", text: "text-red-800", badge: "text-red-700 border-red-300" };
+      case "ENTREGA": return { bg: "bg-yellow-50", border: "border-yellow-500", text: "text-yellow-800", badge: "text-yellow-700 border-yellow-300" };
+      case "FERIADO": return { bg: "bg-pink-50", border: "border-pink-500", text: "text-pink-800", badge: "text-pink-700 border-pink-300" };
+      default: return { bg: "bg-gray-50", border: "border-gray-500", text: "text-gray-800", badge: "text-gray-700 border-gray-300" };
+    }
+  };
+
+  // Função para obter cor do status
+  const getStatusColor = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case "PLANEJADO": return "bg-blue-100 text-blue-800 border-blue-300";
+      case "EM_ANDAMENTO": return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      case "CONCLUIDO": return "bg-green-100 text-green-800 border-green-300";
+      case "CANCELADO": return "bg-red-100 text-red-800 border-red-300";
+      default: return "bg-gray-100 text-gray-800 border-gray-300";
+    }
+  };
+
+  // Candidatos em processo seletivo (buscando do stats)
+  const candidatesInProcess = stats?.candidates?.pending || 0;
+
   // Calcular estatísticas reais
   const activeStudents = students.filter(s => s.status === "Ativo").length;
-  const activeInstructors = stats.instructors.active; // Usando dados reais da API
+  const activeInstructors = stats.instructors.active;
   const activeCourses = courses.filter(c => c.status === "Ativo").length;
   const activeClasses = classes.filter(c => c.status === "Ativo").length;
-  const totalEnrolled = classes.reduce((sum, cls) => sum + cls.enrolled, 0);
-  const totalCapacity = classes.reduce((sum, cls) => sum + cls.capacity, 0);
-  const occupancyRate = Math.round((totalEnrolled / totalCapacity) * 100) || 0;
+  const totalEnrolled = classes.reduce((sum, cls) => sum + (cls.enrolled || 0), 0);
+  const totalCapacity = classes.reduce((sum, cls) => sum + (cls.capacity || 0), 0);
+  const occupancyRate = totalCapacity > 0 ? Math.round((totalEnrolled / totalCapacity) * 100) : 0;
+
+  console.log('📊 Dashboard Debug:', {
+    studentsCount: students.length,
+    coursesCount: courses.length,
+    classesCount: classes.length,
+    totalEnrolled,
+    totalCapacity,
+    occupancyRate
+  });
 
   const handleCardClick = (section: string) => {
     navigate(`/${section}`);
@@ -402,41 +491,41 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
-              <div className="flex items-center gap-4 p-4 bg-primary/5 rounded-xl border-l-4 border-primary hover:bg-primary/10 transition-colors duration-300">
-                <div className="text-center min-w-[60px]">
-                  <p className="text-lg font-bold text-primary">15</p>
-                  <p className="text-xs text-muted-foreground font-medium">SET</p>
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm text-foreground">Início das Inscrições</p>
-                  <p className="text-xs text-muted-foreground">Turma de Programação Web</p>
-                </div>
-                <Badge variant="outline" className="text-primary border-primary">Em Breve</Badge>
-              </div>
+              {calendarEvents.length > 0 ? (
+                calendarEvents.map((event: any) => {
+                  const dateInfo = getDateInfo(event.data_inicio);
+                  const colors = getEventColor(event.tipo);
 
-              <div className="flex items-center gap-4 p-4 bg-orange-50 rounded-xl border-l-4 border-orange-500 hover:bg-orange-100 transition-colors duration-300">
-                <div className="text-center min-w-[60px]">
-                  <p className="text-lg font-bold text-orange-600">22</p>
-                  <p className="text-xs text-muted-foreground font-medium">SET</p>
+                  return (
+                    <div
+                      key={event.id}
+                      className={`flex items-center gap-4 p-4 ${colors.bg} rounded-xl border-l-4 ${colors.border} hover:opacity-90 transition-opacity duration-300`}
+                    >
+                      <div className="text-center min-w-[60px]">
+                        <p className={`text-lg font-bold ${colors.text}`}>{dateInfo.day}</p>
+                        <p className={`text-xs font-medium ${colors.text}`}>{dateInfo.month}</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className={`font-semibold text-sm ${colors.text}`}>{event.titulo}</p>
+                        {event.descricao && (
+                          <p className={`text-xs ${colors.text} opacity-75`}>{event.descricao}</p>
+                        )}
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={getStatusColor(event.status)}
+                      >
+                        {event.status?.replace(/_/g, ' ') || "PLANEJADO"}
+                      </Badge>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-8">
+                  <Calendar className="h-12 w-12 text-muted-foreground/40 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Nenhum evento próximo</p>
                 </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm text-orange-800">Início das Aulas</p>
-                  <p className="text-xs text-orange-600">Turma de Robótica Básica</p>
-                </div>
-                <Badge variant="outline" className="text-orange-700 border-orange-300">Próximo</Badge>
-              </div>
-
-              <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500 hover:bg-blue-100 transition-colors duration-300">
-                <div className="text-center min-w-[60px]">
-                  <p className="text-lg font-bold text-blue-600">30</p>
-                  <p className="text-xs text-muted-foreground font-medium">SET</p>
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm text-blue-800">Formatura</p>
-                  <p className="text-xs text-blue-600">Turma de Informática Avançada</p>
-                </div>
-                <Badge variant="outline" className="text-blue-700 border-blue-300">Evento</Badge>
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>

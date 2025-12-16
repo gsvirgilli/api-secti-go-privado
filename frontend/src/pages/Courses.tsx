@@ -56,18 +56,6 @@ const Courses = () => {
   };
 
   const hasMore = !isSearching && itemsToShow < courses.length;
-
-  // Debug
-  console.log('📊 Courses Debug:', {
-    totalCourses: courses.length,
-    itemsToShow,
-    displayedCoursesLength: displayedCourses.length,
-    isSearching,
-    hasMore,
-    firstCourseTitles: courses.slice(0, 3).map(c => c.title),
-    displayedTitles: displayedCourses.slice(0, 3).map(c => c.title)
-  });
-
   const handleEditCourse = (course: Course) => {
     setSelectedCourse(course);
     setIsFormModalOpen(true);

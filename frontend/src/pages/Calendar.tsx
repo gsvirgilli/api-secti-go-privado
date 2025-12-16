@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Calendar, Plus, Edit, Trash2, Clock, MapPin, Users } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Calendar, Plus, Edit, Trash2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,142 +9,189 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { CalendarAPI } from "@/lib/api";
 
 interface Event {
   id: number;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  location: string;
-  type: string;
-  participants: string[];
+  titulo: string;
+  descricao: string;
+  data_inicio: string;
+  data_fim?: string;
+  tipo: string;
+  status: string;
+  turma_id?: number;
+  curso_id?: number;
 }
 
 const CalendarPage = () => {
   const { toast } = useToast();
-  const [events, setEvents] = useState<Event[]>([
-    {
-      id: 1,
-      title: "Início das Inscrições",
-      description: "Abertura das inscrições para a Turma de Programação Web",
-      date: "2024-09-15",
-      time: "09:00",
-      location: "Sala Principal",
-      type: "Inscrição",
-      participants: ["Todos os interessados"]
-    },
-    {
-      id: 2,
-      title: "Início das Aulas",
-      description: "Início das aulas da Turma de Robótica Básica",
-      date: "2024-09-22",
-      time: "14:00",
-      location: "Laboratório de Robótica",
-      type: "Aula",
-      participants: ["Turma de Robótica"]
-    },
-    {
-      id: 3,
-      title: "Formatura",
-      description: "Cerimônia de formatura da Turma de Informática Avançada",
-      date: "2024-09-30",
-      time: "19:00",
-      location: "Auditório Principal",
-      type: "Evento",
-      participants: ["Turma de Informática"]
-    }
-  ]);
-
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    date: "",
-    time: "",
-    location: "",
-    type: "",
-    participants: ""
+    titulo: "",
+    descricao: "",
+    data_inicio: "",
+    data_fim: "",
+    tipo: "EVENTO",
+    status: "PLANEJADO",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (selectedEvent) {
-      // Editar evento existente
-      setEvents(prev => prev.map(event => 
-        event.id === selectedEvent.id 
-          ? { ...event, ...formData, participants: formData.participants.split(',').map(p => p.trim()) }
-          : event
-      ));
+  // Carregar eventos ao montar o componente
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      const response = await CalendarAPI.list();
+      setEvents(response.data?.data || response.data || []);
+    } catch (error) {
+      console.error("Erro ao carregar eventos:", error);
       toast({
-        title: "Evento Atualizado!",
-        description: "O evento foi atualizado com sucesso.",
-        className: "bg-blue-100 text-blue-800 border-blue-200",
+        title: "Erro",
+        description: "Não foi possível carregar os eventos",
+        className: "bg-red-100 text-red-800 border-red-200",
       });
-    } else {
-      // Adicionar novo evento
-      const newEvent: Event = {
-        id: Math.max(...events.map(e => e.id), 0) + 1,
-        ...formData,
-        participants: formData.participants.split(',').map(p => p.trim())
-      };
-      setEvents(prev => [...prev, newEvent]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      // Preparar dados, removendo campos vazios
+      const dataToSend = Object.fromEntries(
+        Object.entries(formData).filter(([, value]) => value !== "")
+      ) as any;
+
+      // Garantir que as datas são enviadas como YYYY-MM-DD sem conversão de timezone
+      if (dataToSend.data_inicio) {
+        dataToSend.data_inicio = String(dataToSend.data_inicio).split('T')[0];
+      }
+      if (dataToSend.data_fim) {
+        dataToSend.data_fim = String(dataToSend.data_fim).split('T')[0];
+      }
+
+      if (selectedEvent) {
+        // Editar evento existente
+        await CalendarAPI.update(selectedEvent.id, dataToSend);
+        toast({
+          title: "Evento Atualizado!",
+          description: "O evento foi atualizado com sucesso.",
+          className: "bg-blue-100 text-blue-800 border-blue-200",
+        });
+      } else {
+        // Adicionar novo evento
+        await CalendarAPI.create(dataToSend);
+        toast({
+          title: "Evento Criado!",
+          description: "O evento foi adicionado ao calendário.",
+          className: "bg-green-100 text-green-800 border-green-200",
+        });
+      }
+
+      // Recarregar eventos
+      await loadEvents();
+    } catch (error: any) {
+      console.error("Erro ao salvar evento:", error);
       toast({
-        title: "Evento Criado!",
-        description: "O evento foi adicionado ao calendário.",
-        className: "bg-green-100 text-green-800 border-green-200",
+        title: "Erro",
+        description: error?.response?.data?.message || "Erro ao salvar evento",
+        className: "bg-red-100 text-red-800 border-red-200",
       });
     }
-    
-    setIsModalOpen(false);
-    setSelectedEvent(null);
-    setFormData({
-      title: "",
-      description: "",
-      date: "",
-      time: "",
-      location: "",
-      type: "",
-      participants: ""
-    });
+
+    resetModal();
   };
 
   const handleEdit = (event: Event) => {
     setSelectedEvent(event);
     setFormData({
-      title: event.title,
-      description: event.description,
-      date: event.date,
-      time: event.time,
-      location: event.location,
-      type: event.type,
-      participants: event.participants.join(', ')
+      titulo: event.titulo,
+      descricao: event.descricao,
+      data_inicio: String(event.data_inicio).split('T')[0],
+      data_fim: event.data_fim ? String(event.data_fim).split('T')[0] : "",
+      tipo: event.tipo,
+      status: event.status,
     });
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    setEvents(prev => prev.filter(event => event.id !== id));
-    toast({
-      title: "Evento Removido!",
-      description: "O evento foi removido do calendário.",
-      className: "bg-red-100 text-red-800 border-red-200",
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Tem certeza que deseja deletar este evento?")) return;
+
+    try {
+      await CalendarAPI.delete(id);
+      toast({
+        title: "Evento Removido!",
+        description: "O evento foi removido do calendário.",
+        className: "bg-red-100 text-red-800 border-red-200",
+      });
+      await loadEvents();
+    } catch (error: any) {
+      console.error("Erro ao deletar evento:", error);
+      toast({
+        title: "Erro",
+        description: error?.response?.data?.message || "Erro ao deletar evento",
+        className: "bg-red-100 text-red-800 border-red-200",
+      });
+    }
+  };
+
+  const resetModal = () => {
+    setIsModalOpen(false);
+    setSelectedEvent(null);
+    setFormData({
+      titulo: "",
+      descricao: "",
+      data_inicio: "",
+      data_fim: "",
+      tipo: "EVENTO",
+      status: "PLANEJADO",
     });
   };
 
   const getEventTypeColor = (type: string) => {
-    switch (type) {
-      case "Inscrição": return "bg-blue-100 text-blue-800 border-blue-200";
-      case "Aula": return "bg-green-100 text-green-800 border-green-200";
-      case "Evento": return "bg-purple-100 text-purple-800 border-purple-200";
+    switch (type?.toUpperCase()) {
+      case "INSCRICAO": return "bg-blue-100 text-blue-800 border-blue-200";
+      case "AULA": return "bg-green-100 text-green-800 border-green-200";
+      case "EVENTO": return "bg-purple-100 text-purple-800 border-purple-200";
+      case "PROVA": return "bg-red-100 text-red-800 border-red-200";
+      case "ENTREGA": return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "FERIADO": return "bg-pink-100 text-pink-800 border-pink-200";
+      case "FORMATURAS": return "bg-indigo-100 text-indigo-800 border-indigo-200";
       default: return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateString: string | Date) => {
+    if (!dateString) return "Invalid Date";
+
+    let date: Date;
+
+    if (typeof dateString === 'string') {
+      // Se a string já contiver hora (ISO format), use diretamente
+      if (dateString.includes('T')) {
+        date = new Date(dateString);
+      } else {
+        // Se for apenas data (YYYY-MM-DD), adicione T00:00:00
+        date = new Date(dateString + "T00:00:00");
+      }
+    } else {
+      date = new Date(dateString);
+    }
+
+    // Validar se a data é válida
+    if (isNaN(date.getTime())) {
+      console.warn("Data inválida:", dateString);
+      return "Invalid Date";
+    }
+
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -160,7 +207,10 @@ const CalendarPage = () => {
           <h1 className="text-3xl font-bold text-foreground">Calendário Acadêmico</h1>
           <p className="text-muted-foreground mt-1">Gerencie eventos e atividades acadêmicas</p>
         </div>
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <Dialog open={isModalOpen} onOpenChange={(open) => {
+          setIsModalOpen(open);
+          if (!open) resetModal();
+        }}>
           <DialogTrigger asChild>
             <Button className="gap-2 bg-primary hover:bg-primary/90">
               <Plus className="h-4 w-4" />
@@ -176,105 +226,87 @@ const CalendarPage = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Título do Evento</Label>
+                  <Label htmlFor="titulo">Título do Evento</Label>
                   <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    id="titulo"
+                    value={formData.titulo}
+                    onChange={(e) => setFormData(prev => ({ ...prev, titulo: e.target.value }))}
                     placeholder="Ex: Início das Aulas"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="type">Tipo de Evento</Label>
-                  <Select value={formData.type} onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}>
+                  <Label htmlFor="tipo">Tipo de Evento</Label>
+                  <Select value={formData.tipo} onValueChange={(value) => setFormData(prev => ({ ...prev, tipo: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Inscrição">Inscrição</SelectItem>
-                      <SelectItem value="Aula">Aula</SelectItem>
-                      <SelectItem value="Evento">Evento</SelectItem>
-                      <SelectItem value="Reunião">Reunião</SelectItem>
+                      <SelectItem value="INSCRICAO">Inscrição</SelectItem>
+                      <SelectItem value="AULA">Aula</SelectItem>
+                      <SelectItem value="EVENTO">Evento</SelectItem>
+                      <SelectItem value="PROVA">Prova</SelectItem>
+                      <SelectItem value="ENTREGA">Entrega</SelectItem>
+                      <SelectItem value="FERIADO">Feriado</SelectItem>
+                      <SelectItem value="FORMATURAS">Formaturas</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
+                <Label htmlFor="descricao">Descrição</Label>
                 <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  id="descricao"
+                  value={formData.descricao}
+                  onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
                   placeholder="Descrição detalhada do evento"
                   rows={3}
-                  required
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="date">Data</Label>
+                  <Label htmlFor="data_inicio">Data Inicial</Label>
                   <Input
-                    id="date"
+                    id="data_inicio"
                     type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                    value={formData.data_inicio}
+                    onChange={(e) => setFormData(prev => ({ ...prev, data_inicio: e.target.value }))}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="time">Horário</Label>
+                  <Label htmlFor="data_fim">Data Final (opcional)</Label>
                   <Input
-                    id="time"
-                    type="time"
-                    value={formData.time}
-                    onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
-                    required
+                    id="data_fim"
+                    type="date"
+                    value={formData.data_fim}
+                    onChange={(e) => setFormData(prev => ({ ...prev, data_fim: e.target.value }))}
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="location">Local</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                  placeholder="Ex: Sala Principal"
-                  required
-                />
+                <Label htmlFor="status">Status</Label>
+                <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PLANEJADO">Planejado</SelectItem>
+                    <SelectItem value="EM_ANDAMENTO">Em Andamento</SelectItem>
+                    <SelectItem value="CONCLUIDO">Concluído</SelectItem>
+                    <SelectItem value="CANCELADO">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="participants">Participantes</Label>
-                <Input
-                  id="participants"
-                  value={formData.participants}
-                  onChange={(e) => setFormData(prev => ({ ...prev, participants: e.target.value }))}
-                  placeholder="Ex: Turma A, Turma B (separados por vírgula)"
-                  required
-                />
-              </div>
-              
+
               <div className="flex justify-end gap-2 pt-4">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setSelectedEvent(null);
-                    setFormData({
-                      title: "",
-                      description: "",
-                      date: "",
-                      time: "",
-                      location: "",
-                      type: "",
-                      participants: ""
-                    });
-                  }}
+                  onClick={resetModal}
                 >
                   Cancelar
                 </Button>
@@ -287,76 +319,81 @@ const CalendarPage = () => {
         </Dialog>
       </div>
 
-      {/* Events Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {events.map((event) => (
-          <Card key={event.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-lg">{event.title}</CardTitle>
-                  <Badge className={getEventTypeColor(event.type)}>
-                    {event.type}
-                  </Badge>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEdit(event)}
-                    className="h-8 w-8"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(event.id)}
-                    className="h-8 w-8 text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">{event.description}</p>
-              
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>{formatDate(event.date)} às {event.time}</span>
-                </div>
-                
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span>{event.location}</span>
-                </div>
-                
-                <div className="flex items-center gap-2 text-sm">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span>{event.participants.join(', ')}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Loading State */}
+      {loading ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Carregando eventos...</p>
+        </div>
+      ) : (
+        <>
+          {/* Events Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {events.map((event) => (
+              <Card key={event.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg">{event.titulo}</CardTitle>
+                      <Badge className={getEventTypeColor(event.tipo)}>
+                        {event.tipo}
+                      </Badge>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(event)}
+                        className="h-8 w-8"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(event.id)}
+                        className="h-8 w-8 text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">{event.descricao}</p>
 
-      {events.length === 0 && (
-        <Card className="text-center py-12">
-          <CardContent>
-            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum evento encontrado</h3>
-            <p className="text-muted-foreground mb-4">
-              Comece adicionando eventos ao seu calendário acadêmico.
-            </p>
-            <Button onClick={() => setIsModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Primeiro Evento
-            </Button>
-          </CardContent>
-        </Card>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>{formatDate(event.data_inicio)}</span>
+                    </div>
+
+                    {event.data_fim && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        até {formatDate(event.data_fim)}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {events.length === 0 && (
+            <Card className="text-center py-12">
+              <CardContent>
+                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum evento encontrado</h3>
+                <p className="text-muted-foreground mb-4">
+                  Comece adicionando eventos ao seu calendário acadêmico.
+                </p>
+                <Button onClick={() => setIsModalOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Primeiro Evento
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
   );

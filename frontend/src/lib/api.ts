@@ -1,11 +1,11 @@
 import axios from "axios";
 
 // Configuração base da API - usar variável de ambiente ou fallback para localhost
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3333/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // Aumentado de 10s para 30s (Render pode ser lento ao acordar)
+  timeout: 60000, // Aumentado para 60 segundos
   headers: {
     "Content-Type": "application/json",
   },
@@ -20,7 +20,7 @@ api.interceptors.response.use(
     // Se for timeout e ainda não tentou retry, tenta novamente
     if (
       error.code === 'ECONNABORTED' &&
-      config.timeout === 30000 &&
+      config.timeout === 60000 &&
       (!config.__retryCount || config.__retryCount < 2)
     ) {
       config.__retryCount = (config.__retryCount || 0) + 1;
@@ -229,10 +229,21 @@ export const CoursesAPI = {
   // Listagem pública de cursos (sem autenticação)
   listPublic: () => {
     // Criar uma requisição sem token para endpoint público
+    console.log('🌐 [API] Chamando GET /courses/public...');
+    const start = performance.now();
     return axios.get(`${API_BASE_URL}/courses/public`, {
+      timeout: 45000, // 45 segundos de timeout (banco está lento)
       headers: {
         "Content-Type": "application/json",
       },
+    }).then(response => {
+      const duration = performance.now() - start;
+      console.log(`✅ [API] /courses/public respondeu em ${duration.toFixed(2)}ms`);
+      return response;
+    }).catch(error => {
+      const duration = performance.now() - start;
+      console.error(`❌ [API] /courses/public falhou após ${duration.toFixed(2)}ms:`, error.message);
+      throw error;
     });
   },
   
@@ -431,6 +442,68 @@ export const ReportsAPI = {
 // ======================================
 export const HealthAPI = {
   check: () => api.get("/health"),
+};
+
+// 📅 CALENDÁRIO
+// ======================================
+export const CalendarAPI = {
+  list: (params?: { page?: number; limit?: number; status?: string; type?: string }) =>
+    api.get("/calendar", { params }),
+
+  findById: (id: number) =>
+    api.get(`/calendar/${id}`),
+
+  create: (data: {
+    titulo: string;
+    descricao?: string;
+    data_inicio: string;
+    data_fim?: string;
+    tipo: string;
+    status?: string;
+    turma_id?: number;
+    curso_id?: number;
+  }) =>
+    api.post("/calendar", data),
+
+  update: (id: number, data: Partial<{
+    titulo: string;
+    descricao?: string;
+    data_inicio: string;
+    data_fim?: string;
+    tipo: string;
+    status?: string;
+    turma_id?: number;
+    curso_id?: number;
+  }>) =>
+    api.put(`/calendar/${id}`, data),
+
+  delete: (id: number) =>
+    api.delete(`/calendar/${id}`),
+};
+
+// ======================================
+// 🔔 NOTIFICAÇÕES (Centro de Notificações)
+// ======================================
+export const NotificationAPI = {
+  list: (params?: {
+    lido?: boolean;
+    tipo?: string;
+    page?: number;
+    limit?: number;
+  }) =>
+    api.get("/notification-center", { params }),
+
+  getUnread: () =>
+    api.get("/notification-center/unread"),
+
+  markAsRead: (id: number) =>
+    api.put(`/notification-center/${id}/read`),
+
+  markAllAsRead: () =>
+    api.put("/notification-center/read-all"),
+
+  delete: (id: number) =>
+    api.delete(`/notification-center/${id}`),
 };
 
 export default api;

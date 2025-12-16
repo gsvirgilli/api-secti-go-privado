@@ -233,7 +233,8 @@ const mapBackendCourse = (course: BackendCourse): Course => ({
   title: course.nome || '',
   description: course.descricao || '',
   duration: `${course.carga_horaria ?? 0}h`,
-  students: countCourseStudents(course.turmas),
+  // Usar _enrollmentCount do backend (mais confiável), fallback para contar turmas
+  students: (course as any)._enrollmentCount ?? countCourseStudents(course.turmas),
   level: mapCourseLevel(course.nivel),
   status: mapCourseStatus(course.status),
   color: 'bg-blue-500'
@@ -249,6 +250,8 @@ const mapClassStudents = (alunos?: BackendClass['alunos']) =>
 const mapBackendClass = (classData: BackendClass): Class => {
   const instructors = classData.instrutores || [];
   const firstInstructor = instructors.length > 0 ? instructors[0] : undefined;
+  // Contar alunos a partir de _enrollmentCount (nova contagem do backend)
+  const enrollmentCount = (classData as any)._enrollmentCount ?? classData.matriculas?.length ?? classData.alunos?.length ?? 0;
 
   return {
     id: classData.id ?? 0,
@@ -259,7 +262,7 @@ const mapBackendClass = (classData: BackendClass): Class => {
     instructors: instructors.map(i => ({ id: i.id, name: i.nome })),
     instructorIds: instructors.map(i => i.id),
     capacity: classData.vagas || 0,
-    enrolled: (classData.alunos?.length ?? 0),
+    enrolled: enrollmentCount,
     schedule: getClassScheduleLabel(classData.turno),
     duration: '6 meses',
     status: getClassStatusLabel(classData.status),
@@ -359,71 +362,67 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const loadAllCourses = async () => {
-        const seenIds = new Set<number | undefined>();
-        let uniqueCourses: BackendCourse[] = [];
-        let currentPage = 1;
-        let hasMore = true;
-
-        while (hasMore && currentPage <= 10) {
-          const response = await CoursesAPI.list({ page: currentPage, limit: 100 });
-          const pageData = unwrapNestedArray<BackendCourse>(response.data);
-          const pagination = response.data?.data?.pagination;
-
-          const newCourses = pageData.filter((course) => {
-            if (seenIds.has(course.id)) {
-              return false;
-            }
-            seenIds.add(course.id);
-            return true;
-          });
-
-          uniqueCourses = [...uniqueCourses, ...newCourses];
-
-          if (newCourses.length === 0) {
-            break;
-          }
-
-          hasMore = pagination?.hasNextPage || false;
-          currentPage++;
+        try {
+          const response = await Promise.race([
+            CoursesAPI.listPublic(),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Timeout ao carregar cursos (50s)')), 50000)
+            )
+          ]);
+          const pageData = unwrapNestedArray<BackendCourse>(response?.data);
+          return { data: { data: { data: pageData } } };
+        } catch (error) {
+          console.error('❌ Erro ao carregar cursos:', error instanceof Error ? error.message : error);
+          return { data: { data: { data: [] } } };
         }
-
-        return { data: { data: { data: uniqueCourses } } };
       };
 
       try {
         setLoading(true);
 
-        const [studentsRes, coursesRes, classesRes, instructorsRes, candidatesRes] = await Promise.all([
-          StudentsAPI.list({ limit: 100, page: 1 }).catch(() => ({ data: [] })),
-          loadAllCourses().catch(() => ({ data: { data: { data: [] } } })),
-          ClassesAPI.list({ limit: 100, page: 1 }).catch(() => ({ data: [] })),
-          InstructorsAPI.list().catch(() => ({ data: [] })),
-          CandidatesAPI.list({ limit: 100, page: 1 }).catch(() => ({ data: [] }))
+        // Carregar cursos primeiro (geralmente mais rápido)
+        const coursesRes = await loadAllCourses().catch((err) => {
+          console.error('❌ Erro ao carregar cursos:', err);
+          return { data: { data: { data: [] } } };
+        });
+        const backendCourses = unwrapNestedArray<BackendCourse>(coursesRes.data);
+        const mappedCourses = backendCourses.map(mapBackendCourse);
+        setCourses(mappedCourses);
+
+        // Depois carregar turmas e instrutores em paralelo
+        const [classesRes, instructorsRes] = await Promise.all([
+          ClassesAPI.list({ limit: 1000, page: 1 }).catch(() => ({ data: [] })),
+          InstructorsAPI.list().catch(() => ({ data: [] }))
         ]);
 
-        const backendStudents = unwrapNestedArray<BackendStudent>(studentsRes.data);
-        setStudents(backendStudents.map(mapBackendStudent));
-
-        const backendCourses = unwrapNestedArray<BackendCourse>(coursesRes.data);
-        setCourses(backendCourses.map(mapBackendCourse));
-
         const backendClasses = unwrapNestedArray<BackendClass>(classesRes.data);
-        setClasses(backendClasses.map(mapBackendClass));
+        const mappedClasses = backendClasses.map(mapBackendClass);
+        setClasses(mappedClasses);
 
         const backendInstructors = unwrapNestedArray<BackendInstructor>(instructorsRes.data);
-        setInstructors(backendInstructors.map(mapBackendInstructor));
+        const mappedInstructors = backendInstructors.map(mapBackendInstructor);
+        setInstructors(mappedInstructors);
 
-        const backendCandidates = unwrapNestedArray<BackendCandidate>(candidatesRes.data);
-        setCandidates(backendCandidates);
+        // Carregar alunos e candidatos no background (não bloqueia o login)
+        Promise.all([
+          StudentsAPI.list({ limit: 1000, page: 1 }).catch(() => ({ data: [] })),
+          CandidatesAPI.list({ limit: 1000, page: 1 }).catch(() => ({ data: [] }))
+        ]).then(([studentsRes, candidatesRes]) => {
+          const backendStudents = unwrapNestedArray<BackendStudent>(studentsRes.data);
+          setStudents(backendStudents.map(mapBackendStudent));
+
+          const backendCandidates = unwrapNestedArray<BackendCandidate>(candidatesRes.data);
+          setCandidates(backendCandidates);
+        });
+
         setError(null);
       } catch (error) {
+        console.error('❌ Erro ao carregar dados:', error);
         const errorMessage = buildErrorMessage(error, 'Erro ao carregar dados');
         setError(errorMessage);
-        setStudents([]);
         setCourses([]);
         setClasses([]);
         setInstructors([]);
-        setCandidates([]);
       } finally {
         setLoading(false);
       }
@@ -756,8 +755,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const oldInstructorIds = currentClass.instructorIds || [];
         const newInstructorIds = classData.instructorIds || [];
 
-        console.log('🔄 Atualizando instrutores:', { oldInstructorIds, newInstructorIds });
-
         // Encontrar instrutores a remover
         const instructorsToRemove = oldInstructorIds.filter(
           id => !newInstructorIds.includes(id) && id > 0
@@ -768,17 +765,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           id => !oldInstructorIds.includes(id) && id > 0
         );
 
-        console.log('➕ Adicionando:', instructorsToAdd, '➖ Removendo:', instructorsToRemove);
-
         // Remover instrutores antigos
         for (const instructorId of instructorsToRemove) {
-          console.log(`Removendo instrutor ${instructorId} da turma ${id}`);
           await ClassesAPI.removeInstructor(id, instructorId).catch(logAxiosError);
         }
 
         // Adicionar novos instrutores
         for (const instructorId of instructorsToAdd) {
-          console.log(`Adicionando instrutor ${instructorId} à turma ${id}`);
           await ClassesAPI.addInstructor(id, instructorId).catch(logAxiosError);
         }
       } else if (classData.instructorId !== undefined && classData.instructorId !== currentClass.instructorId) {
