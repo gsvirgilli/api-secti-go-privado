@@ -164,5 +164,5 @@ export const listCalendarEventsSchema = z.object({
   turma_id: z.coerce.number().int().optional(),
   curso_id: z.coerce.number().int().optional(),
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(50),
+  limit: z.coerce.number().int().min(1).max(1000).default(50),
 });

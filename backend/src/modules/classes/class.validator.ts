@@ -170,8 +170,8 @@ export const listClassFiltersSchema = z.object({
     .string()
     .optional()
     .transform(val => (val ? parseInt(val, 10) : 10))
-    .refine(val => val >= 1 && val <= 100, { 
-      message: 'Limite deve estar entre 1 e 100' 
+    .refine(val => val >= 1 && val <= 1000, { 
+      message: 'Limite deve estar entre 1 e 1000' 
     })
 });
 
