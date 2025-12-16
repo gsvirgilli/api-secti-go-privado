@@ -356,6 +356,25 @@ const ProcessoSeletivo = () => {
     }
   };
 
+  // Calcular idade a partir da data de nascimento
+  const calculateAge = (dateString?: string): number | null => {
+    if (!dateString) return null;
+    try {
+      const birthDate = new Date(dateString);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+
+      return age;
+    } catch {
+      return null;
+    }
+  };
+
   // Ver detalhes do candidato
   const handleViewDetails = async (candidate: Candidate) => {
     try {
@@ -521,6 +540,19 @@ const ProcessoSeletivo = () => {
         variant: "destructive",
       });
       return;
+    }
+
+    // Validar idade mínima
+    if (editedCandidate.data_nascimento) {
+      const age = calculateAge(editedCandidate.data_nascimento);
+      if (age !== null && age < 12) {
+        toast({
+          title: "Erro de validação",
+          description: `Candidato deve ter pelo menos 12 anos. Idade atual: ${age} anos.`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -1254,14 +1286,42 @@ const ProcessoSeletivo = () => {
                     {/* Data Nascimento e Idade */}
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Data de Nascimento</p>
-                      <p className="font-medium flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        {formatDate(selectedCandidate?.data_nascimento)}
-                      </p>
+                      {isEditing ? (
+                        <div>
+                          <Input
+                            type="date"
+                            value={editedCandidate?.data_nascimento || ''}
+                            onChange={(e) => setEditedCandidate(prev => prev ? { ...prev, data_nascimento: e.target.value } : null)}
+                            className="h-9"
+                          />
+                          {editedCandidate?.data_nascimento && calculateAge(editedCandidate.data_nascimento) !== null && (
+                            <p className="text-sm mt-1 font-medium">
+                              Idade: {calculateAge(editedCandidate.data_nascimento)} anos
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="font-medium flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          {formatDate(selectedCandidate?.data_nascimento)}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Idade</p>
-                      <p className="font-medium">{selectedCandidate?.idade || '-'} anos</p>
+                      <p className="text-sm text-muted-foreground mb-1">Idade Calculada</p>
+                      {isEditing ? (
+                        <p className="font-medium">
+                          {editedCandidate?.data_nascimento
+                            ? `${calculateAge(editedCandidate.data_nascimento)} anos`
+                            : '-'}
+                        </p>
+                      ) : (
+                        <p className="font-medium">
+                          {selectedCandidate?.data_nascimento
+                            ? `${calculateAge(selectedCandidate.data_nascimento)} anos`
+                            : '-'}
+                        </p>
+                      )}
                     </div>
 
                     {/* Email e Telefone */}
