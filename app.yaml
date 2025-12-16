@@ -17,6 +17,7 @@ services:
     scope: RUN_AND_BUILD_TIME
   - key: DATABASE_NAME
     scope: RUN_AND_BUILD_TIME
+    value: "defaultdb"
   - key: DATABASE_PORT
     value: "3306"
   - key: JWT_SECRET
