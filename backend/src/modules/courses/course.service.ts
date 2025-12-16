@@ -262,7 +262,7 @@ class CourseService {
    */
   async findByIdPublic(id: number) {
     const course = await Course.findByPk(id, {
-      attributes: ['id', 'nome', 'descricao', 'carga_horaria', 'nivel', 'status']
+      attributes: ['id', 'nome', 'descricao', 'carga_horaria', 'status']
     });
 
     if (!course) {
@@ -275,8 +275,7 @@ class CourseService {
       id: courseData.id,
       nome: courseData.nome,
       descricao: courseData.descricao,
-      carga_horaria: courseData.carga_horaria,
-      nivel: courseData.nivel || 'INTERMEDIARIO'
+      carga_horaria: courseData.carga_horaria
     };
   }
 }
