@@ -314,45 +314,55 @@ class CandidateService {
     try {
       // Verificar se já existe aluno com este CPF (candidato já aprovado antes)
       const existingStudent = await Student.findOne({ where: { cpf: candidate.cpf } });
-      if (existingStudent) {
-        throw new Error('Este candidato já foi aprovado anteriormente e já possui cadastro como aluno');
-      }
-
-      // Gerar matrícula
-      const matricula = await this.generateMatricula();
-
-      // Verificar se já existe um usuário com esse email
-      const existingUser = await User.findOne({ where: { email: candidate.email } });
       
+      let student;
       let usuario;
-      if (existingUser) {
-        // Se já existe, usar o usuário existente
-        usuario = existingUser;
-      } else {
-        // Criar usuário para o aluno
-        // Senha padrão será o CPF (deve ser alterada no primeiro acesso)
-        const senhaTemporaria = candidate.cpf;
-        const senhaHash = await bcrypt.hash(senhaTemporaria, 8);
+      let isNewStudent = false;
 
-        usuario = await User.create({
+      if (existingStudent) {
+        // Se o aluno já existe, apenas atualizar a turma
+        await existingStudent.update({ turma_id: turmaId });
+        student = existingStudent;
+        usuario = await User.findByPk(existingStudent.usuario_id);
+      } else {
+        // Criar novo aluno
+        // Gerar matrícula
+        const matricula = await this.generateMatricula();
+
+        // Verificar se já existe um usuário com esse email
+        const existingUser = await User.findOne({ where: { email: candidate.email } });
+        
+        if (existingUser) {
+          // Se já existe, usar o usuário existente
+          usuario = existingUser;
+        } else {
+          // Criar usuário para o aluno
+          // Senha padrão será o CPF (deve ser alterada no primeiro acesso)
+          const senhaTemporaria = candidate.cpf;
+          const senhaHash = await bcrypt.hash(senhaTemporaria, 8);
+
+          usuario = await User.create({
+            nome: candidate.nome,
+            email: candidate.email,
+            senha_hash: senhaHash,
+            role: 'ALUNO'
+          } as any);
+        }
+
+        // Criar aluno com os campos obrigatórios
+        student = await Student.create({
+          candidato_id: candidate.id,
+          usuario_id: usuario.id,
+          matricula,
+          cpf: candidate.cpf,
           nome: candidate.nome,
           email: candidate.email,
-          senha_hash: senhaHash,
-          role: 'ALUNO'
+          turma_id: turmaId,
+          status: 'ativo'
         } as any);
-      }
 
-      // Criar aluno com os campos obrigatórios
-      const student = await Student.create({
-        candidato_id: candidate.id,
-        usuario_id: usuario.id,
-        matricula,
-        cpf: candidate.cpf,
-        nome: candidate.nome,
-        email: candidate.email,
-        turma_id: turmaId,
-        status: 'ativo'
-      } as any);
+        isNewStudent = true;
+      }
 
       // Atualizar status do candidato
       await candidate.update({ status: 'APROVADO' });
@@ -361,8 +371,10 @@ class CandidateService {
         candidate,
         student,
         usuario,
-        message: 'Candidato aprovado e convertido em aluno com sucesso',
-        senhaTemporaria: existingUser ? undefined : candidate.cpf
+        message: isNewStudent 
+          ? 'Candidato aprovado e convertido em aluno com sucesso'
+          : 'Candidato aprovado e vinculado à turma com sucesso',
+        senhaTemporaria: isNewStudent && !existingStudent ? candidate.cpf : undefined
       };
     } catch (error) {
       console.error('Erro detalhado ao aprovar candidato:', error);
