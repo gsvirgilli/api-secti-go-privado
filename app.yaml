@@ -4,8 +4,7 @@ services:
   github:
     repo: gsvirgilli/api-secti-go-privado
     branch: principal
-  dockerfile_path: backend/Dockerfile
-  source_dir: backend
+  dockerfile_path: Dockerfile.backend
   http_port: 3000
   envs:
   - key: NODE_ENV
@@ -31,8 +30,7 @@ services:
   github:
     repo: gsvirgilli/api-secti-go-privado
     branch: principal
-  dockerfile_path: frontend/Dockerfile
-  source_dir: frontend
+  dockerfile_path: Dockerfile.frontend
   http_port: 3000
   envs:
   - key: VITE_API_URL

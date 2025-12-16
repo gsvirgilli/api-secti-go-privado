@@ -1,0 +1,19 @@
+FROM node:20-alpine
+
+WORKDIR /usr/app
+
+# Copiar apenas package files primeiro
+COPY frontend/package.json frontend/package-lock.json ./
+
+# Instalar dependências
+RUN npm install
+
+# Copiar resto do código frontend
+COPY frontend . 
+
+# Build
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npm", "run", "preview"]
