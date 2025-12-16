@@ -1038,11 +1038,23 @@ const ProcessoSeletivo = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                setSelectedCandidate(candidate);
-                                setEditedCandidate(candidate);
-                                setIsEditing(true);
-                                setIsModalOpen(true);
+                              onClick={async () => {
+                                try {
+                                  // Recarregar dados atualizados do servidor
+                                  const response = await CandidatesAPI.findById(candidate.id);
+                                  const fullCandidate = response.data;
+                                  setSelectedCandidate(fullCandidate);
+                                  setEditedCandidate(fullCandidate);
+                                  setIsEditing(true);
+                                  setIsModalOpen(true);
+                                } catch (error) {
+                                  console.error('Erro ao carregar candidato:', error);
+                                  // Fallback
+                                  setSelectedCandidate(candidate);
+                                  setEditedCandidate(candidate);
+                                  setIsEditing(true);
+                                  setIsModalOpen(true);
+                                }
                               }}
                               className="h-8 w-8 p-0 hover:bg-amber-50 hover:text-amber-600"
                               title="Editar candidato"
