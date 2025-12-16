@@ -1,0 +1,51 @@
+name: api-secti
+services:
+- name: backend
+  github:
+    repo: gsvirgilli/api-secti-go-privado
+    branch: main
+  dockerfile_path: Dockerfile
+  http_port: 3000
+  envs:
+  - key: NODE_ENV
+    value: production
+  - key: DATABASE_HOST
+    scope: RUN_AND_BUILD_TIME
+  - key: DATABASE_USER
+    scope: RUN_AND_BUILD_TIME
+  - key: DATABASE_PASSWORD
+    scope: RUN_AND_BUILD_TIME
+  - key: DATABASE_NAME
+    scope: RUN_AND_BUILD_TIME
+  - key: DATABASE_PORT
+    value: "3306"
+  - key: JWT_SECRET
+    scope: RUN_AND_BUILD_TIME
+  - key: JWT_EXPIRES_IN
+    value: "1d"
+  - key: APP_PORT
+    value: "3000"
+  routes:
+  - path: /api
+    source:
+      name: backend
+
+- name: web
+  github:
+    repo: gsvirgilli/api-secti-go-privado
+    branch: main
+  dockerfile_path: Dockerfile.frontend
+  http_port: 3000
+  envs:
+  - key: VITE_API_URL
+    value: "https://api-secti-go-privado-backend-XXXXX.ondigitalocean.app/api"
+  routes:
+  - path: /
+    source:
+      name: web
+
+databases:
+- name: db
+  engine: MYSQL
+  version: "8.0"
+  production: true
