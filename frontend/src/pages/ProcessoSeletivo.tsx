@@ -382,6 +382,7 @@ const ProcessoSeletivo = () => {
 
   // Buscar informações da turma e vagas disponíveis
   type TurmaOptionInfo = {
+    id: number;
     curso: string;
     turma: string;
     vagas: number;
@@ -429,6 +430,7 @@ const ProcessoSeletivo = () => {
           const alunosCount = alunosData.length;
 
           info.opcao1 = {
+            id: turma.id,
             curso: turma.curso?.nome || candidate.curso?.nome || 'Curso não identificado',
             turma: turma.nome,
             vagas: turma.vagas - alunosCount,
@@ -463,6 +465,7 @@ const ProcessoSeletivo = () => {
           const alunosCount = alunosData.length;
 
           info.opcao2 = {
+            id: turma.id,
             curso: turma.curso?.nome || 'Curso não identificado',
             turma: turma.nome,
             vagas: turma.vagas - alunosCount,
@@ -607,9 +610,22 @@ const ProcessoSeletivo = () => {
   // Aprovar candidato com escolha de curso
   const handleApproveWithCourse = async (candidateId: number, opcaoCurso: 1 | 2) => {
     try {
+      // Obter o turma_id baseado na opção de curso
+      const turmaInfo_data = opcaoCurso === 1 ? turmaInfo.opcao1 : turmaInfo.opcao2;
+      const turma_id = turmaInfo_data?.id;
+
+      if (!turma_id) {
+        toast({
+          title: "Erro",
+          description: "Turma não identificada. Por favor, tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Aprovar o candidato no sistema de seleção
       // O backend vai criar o aluno automaticamente
-      const response = await CandidatesAPI.approve(candidateId, opcaoCurso);
+      const response = await CandidatesAPI.approve(candidateId, opcaoCurso, turma_id);
 
       toast({
         title: "Candidato aprovado e matriculado!",

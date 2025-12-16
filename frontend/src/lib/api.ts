@@ -175,8 +175,8 @@ export const CandidatesAPI = {
   delete: (id: number) => 
     api.delete(`/candidates/${id}`),
   
-  approve: (id: number, opcaoCurso?: 1 | 2) => 
-    api.post(`/candidates/${id}/approve`, { opcaoCurso }),
+  approve: (id: number, opcaoCurso?: 1 | 2, turma_id?: number) => 
+    api.post(`/candidates/${id}/approve`, { opcaoCurso, turma_id }),
   
   reject: (id: number, motivo: string) => 
     api.post(`/candidates/${id}/reject`, { motivo }),
