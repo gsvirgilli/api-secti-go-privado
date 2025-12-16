@@ -12,7 +12,7 @@ const envSchema = z.object({
   DATABASE_HOST: z.string().default('localhost'),
   DATABASE_USER: z.string().default('root'),
   DATABASE_PASSWORD: z.string().default(''),
-  DATABASE_NAME: z.string().default('sukatechdb'),
+  DATABASE_NAME: z.string().default('defaultdb'),
   DATABASE_PORT: z.coerce.number().default(3306),
 
   JWT_SECRET: z.string().min(8, 'JWT_SECRET must be at least 8 characters').default('jwt_secret'),
