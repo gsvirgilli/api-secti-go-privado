@@ -8,6 +8,7 @@ import Class from '../modules/classes/class.model.js';
 import Student from '../modules/students/student.model.js';
 import Instructor from '../modules/instructors/instructor.model.js';
 import Candidate from '../modules/Candidates/candidate.model.js';
+import InstructorClass from '../modules/instructor_classes/instructor_class.model.js';
 
 /**
  * Define todas as associações entre modelos
@@ -36,7 +37,20 @@ export function setupAssociations() {
     as: 'turma'
   });
 
-  // Associação Turma ↔ Instrutor (N:M) já está definida em instructor_class.model.ts
+  // Associação Turma ↔ Instrutor (N:M)
+  Instructor.belongsToMany(Class, {
+    through: InstructorClass,
+    foreignKey: 'id_instrutor',
+    otherKey: 'id_turma',
+    as: 'turmas'
+  });
+
+  Class.belongsToMany(Instructor, {
+    through: InstructorClass,
+    foreignKey: 'id_turma',
+    otherKey: 'id_instrutor',
+    as: 'instrutores'
+  });
 
   // Candidato → Curso (N:1) - 1ª opção
   Candidate.belongsTo(Course, {
