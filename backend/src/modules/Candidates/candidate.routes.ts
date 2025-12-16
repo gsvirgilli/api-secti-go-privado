@@ -7,6 +7,7 @@ import {
   updateCandidateSchema,
   listCandidateFiltersSchema,
   rejectCandidateSchema,
+  approveCandidateSchema,
   publicCandidateSchema
 } from './candidate.validator.js';
 import { auditMiddleware } from '../../middlewares/audit.middleware.js';
@@ -377,6 +378,7 @@ router.delete(
 router.post(
   '/:id/approve',
   isAuthenticated,
+  validateRequest(approveCandidateSchema),
   async (req, res, next) => {
     try {
       const candidate = await Candidate.findByPk(req.params.id);

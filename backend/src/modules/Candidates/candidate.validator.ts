@@ -106,8 +106,21 @@ export const listCandidateFiltersSchema = z.object({
     .optional(),
   
   status: z
-    .enum(['PENDENTE', 'APROVADO', 'REPROVADO'])
-    .optional(),
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val) return undefined;
+      // Aceita valores separados por vírgula e valida cada um
+      const validStatuses = ['PENDENTE', 'APROVADO', 'REPROVADO', 'LISTA_ESPERA'];
+      const statuses = val.split(',').map((s) => s.trim());
+      
+      for (const status of statuses) {
+        if (!validStatuses.includes(status)) {
+          throw new Error(`Status inválido: ${status}. Deve ser um de: ${validStatuses.join(', ')}`);
+        }
+      }
+      return statuses;
+    }),
   
   turma_id: z
     .string()
@@ -121,7 +134,13 @@ export const listCandidateFiltersSchema = z.object({
  */
 export const approveCandidateSchema = z.object({
   body: z.object({
-    motivo: z.string().optional()
+    opcaoCurso: z
+      .number()
+      .int()
+      .refine((val) => val === 1 || val === 2, {
+        message: 'Opção de curso deve ser 1 ou 2'
+      })
+      .optional()
   })
 });
 

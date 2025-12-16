@@ -19,7 +19,7 @@ interface CandidateFilters {
   nome?: string;
   cpf?: string;
   email?: string;
-  status?: string;
+  status?: string | string[];
   turma_id?: number; // Alterado de id_turma_desejada
   page?: number;
   limit?: number;
@@ -116,9 +116,15 @@ class CandidateService {
       };
     }
 
-    // Filtro por status
+    // Filtro por status (pode ser array ou string única)
     if (filters.status) {
-      where.status = filters.status;
+      if (Array.isArray(filters.status)) {
+        where.status = {
+          [Op.in]: filters.status
+        };
+      } else {
+        where.status = filters.status;
+      }
     }
 
     // Filtro por turma desejada
