@@ -272,7 +272,7 @@ class CandidateService {
    * @param id - ID do candidato
    * @param opcaoCurso - Qual curso aprovar: 1 (primeira opção) ou 2 (segunda opção). Se não informado, tenta a primeira com vaga.
    */
-  async approve(id: number, opcaoCurso?: 1 | 2) {
+  async approve(id: number, opcaoCurso?: 1 | 2, turmaIdSelecionada?: number) {
     const candidate = await Candidate.findByPk(id);
 
     if (!candidate) {
@@ -283,13 +283,15 @@ class CandidateService {
       throw new Error('Candidato já foi aprovado');
     }
 
-    // Para esta versão simplificada, o candidato é aprovado e vinculado à turma desejada
-    if (!candidate.id_turma_desejada) {
-      throw new Error('Candidato não possui turma desejada definida');
+    // Usar turma desejada do candidato OU turma selecionada na aprovação
+    const turmaId = turmaIdSelecionada || candidate.id_turma_desejada;
+    
+    if (!turmaId) {
+      throw new Error('Candidato não possui turma desejada definida. Selecione uma turma para aprovar.');
     }
 
     // Buscar a turma desejada
-    const turma = await Class.findByPk(candidate.id_turma_desejada);
+    const turma = await Class.findByPk(turmaId);
     
     const turmaDisponivel = turma;
     
@@ -305,8 +307,6 @@ class CandidateService {
     if (vagasDisponiveis <= 0) {
       throw new Error('Não há mais vagas disponíveis nesta turma. O candidato deve permanecer em lista de espera.');
     }
-
-    const turmaId = turmaDisponivel.id;
     
     // Atualizar o candidato com a turma
     await candidate.update({ turma_id: turmaId });

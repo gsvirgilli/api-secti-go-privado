@@ -140,6 +140,11 @@ export const approveCandidateSchema = z.object({
       .refine((val) => val === 1 || val === 2, {
         message: 'Opção de curso deve ser 1 ou 2'
       })
+      .optional(),
+    turma_id: z
+      .number()
+      .int()
+      .positive('Turma ID deve ser um número positivo')
       .optional()
   })
 });

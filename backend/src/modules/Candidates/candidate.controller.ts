@@ -199,18 +199,17 @@ class CandidateController {
     /**
    * Aprova um candidato
    * POST /api/candidates/:id/approve
-   * Body (opcional): { opcaoCurso: 1 | 2 }
+   * Body (opcional): { opcaoCurso: 1 | 2, turma_id: number }
    */
   async approve(req: Request, res: Response) {
     try {
       const { id } = req.params;
       // req.body may be undefined in some test setups; guard access
       const opcaoCurso = (req.body && (req.body as any).opcaoCurso) as 1 | 2 | undefined;
+      const turma_id = (req.body && (req.body as any).turma_id) as number | undefined;
       
       const candidateId = Number(id);
-      const result = typeof opcaoCurso !== 'undefined'
-        ? await CandidateService.approve(candidateId, opcaoCurso)
-        : await CandidateService.approve(candidateId);
+      const result = await CandidateService.approve(candidateId, opcaoCurso, turma_id);
       
       return res.status(200).json(result);
     } catch (error) {
