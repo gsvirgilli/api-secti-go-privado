@@ -57,6 +57,7 @@ UserTest.init({
   sequelize: testSequelize,
   tableName: 'usuarios',
   timestamps: true,
+  underscored: true,
 });
 
 export default UserTest;

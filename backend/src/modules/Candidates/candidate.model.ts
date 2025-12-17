@@ -307,6 +307,7 @@ Candidate.init({
   sequelize,
   tableName: 'candidatos',
   timestamps: true,
+  underscored: true,
   indexes: [
     {
       unique: true,
