@@ -63,7 +63,7 @@ Course.init({
         msg: 'Carga horária não pode exceder 1000 horas'
       }
     },
-    field: 'cargaHoraria'
+    field: 'carga_horaria'
   },
   descricao: {
     type: DataTypes.TEXT,

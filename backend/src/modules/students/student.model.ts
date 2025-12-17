@@ -114,14 +114,14 @@ Student.init({
   indexes: [
     {
       unique: true,
-      fields: ['candidato_id']
+      fields: ['candidatoId']
     },
     {
       unique: true,
-      fields: ['usuario_id']
+      fields: ['usuarioId']
     },
     {
-      fields: ['turma_id']
+      fields: ['turmaId']
     }
   ]
 });

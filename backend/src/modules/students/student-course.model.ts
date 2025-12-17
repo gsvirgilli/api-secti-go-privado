@@ -3,13 +3,13 @@ import { sequelize } from '../../config/database.js';
 
 export class StudentCourse extends Model {
   declare id: number;
-  declare student_id: number;
-  declare course_id: number;
-  declare turma_id?: number;
+  declare studentId: number;
+  declare courseId: number;
+  declare turmaId?: number;
   declare status: 'Ativo' | 'Concluído' | 'Desistente';
-  declare data_inicio: Date;
-  declare data_conclusao?: Date;
-  declare motivo_desistencia?: string;
+  declare dataInicio: Date;
+  declare dataConclusao?: Date;
+  declare motivoDesistencia?: string;
   declare createdAt: Date;
   declare updatedAt: Date;
 }
@@ -21,25 +21,28 @@ StudentCourse.init(
       primaryKey: true,
       autoIncrement: true,
     },
-    student_id: {
+    studentId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'student_id',
       references: {
         model: 'alunos',
         key: 'id',
       },
     },
-    course_id: {
+    courseId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'course_id',
       references: {
         model: 'cursos',
         key: 'id',
       },
     },
-    turma_id: {
+    turmaId: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      field: 'turma_id',
       references: {
         model: 'turmas',
         key: 'id',
@@ -50,18 +53,21 @@ StudentCourse.init(
       allowNull: false,
       defaultValue: 'Ativo',
     },
-    data_inicio: {
+    dataInicio: {
       type: DataTypes.DATE,
       allowNull: false,
+      field: 'data_inicio',
       defaultValue: DataTypes.NOW,
     },
-    data_conclusao: {
+    dataConclusao: {
       type: DataTypes.DATE,
       allowNull: true,
+      field: 'data_conclusao',
     },
-    motivo_desistencia: {
+    motivoDesistencia: {
       type: DataTypes.STRING(255),
       allowNull: true,
+      field: 'motivo_desistencia',
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -82,7 +88,7 @@ StudentCourse.init(
     underscored: true,
     indexes: [
       {
-        fields: ['student_id', 'course_id'],
+        fields: ['studentId', 'courseId'],
         unique: true,
       },
       {

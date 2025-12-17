@@ -10,9 +10,9 @@ class Class extends Model {
   declare id: number;
   declare nome: string;
   declare turno: string;
-  declare data_inicio: Date | null;
-  declare data_fim: Date | null;
-  declare id_curso: number;
+  declare dataInicio: Date | null;
+  declare dataFim: Date | null;
+  declare idCurso: number;
   declare vagas: number; // Total de vagas da turma
   declare status: 'ATIVA' | 'PLANEJADA' | 'ENCERRADA' | 'CANCELADA';
   declare readonly createdAt: Date;
@@ -51,24 +51,27 @@ Class.init({
       }
     }
   },
-  data_inicio: {
+  dataInicio: {
     type: DataTypes.DATE,
     allowNull: true,
+    field: 'data_inicio',
   },
-  data_fim: {
+  dataFim: {
     type: DataTypes.DATE,
     allowNull: true,
+    field: 'data_fim',
     validate: {
       isAfterStart(value: Date) {
-        if (value && this.data_inicio && value <= this.data_inicio) {
+        if (value && this.dataInicio && value <= this.dataInicio) {
           throw new Error('Data de fim deve ser posterior à data de início');
         }
       }
     }
   },
-  id_curso: {
+  idCurso: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    field: 'id_curso',
     references: {
       model: Curso,
       key: 'id',

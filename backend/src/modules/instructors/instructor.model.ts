@@ -8,7 +8,7 @@ class Instructor extends Model<InferAttributes<Instructor>, InferCreationAttribu
   declare email: string;
   declare telefone: string | null;
   declare endereco: string | null;
-  declare data_nascimento: string | null;
+  declare dataNascimento: string | null;
   declare especialidade: string | null;
   declare experiencia: string | null;
   declare status: string | null;
@@ -44,9 +44,10 @@ Instructor.init({
     type: DataTypes.STRING(255),
     allowNull: true,
   },
-  data_nascimento: {
+  dataNascimento: {
     type: DataTypes.DATEONLY,
     allowNull: true,
+    field: 'data_nascimento',
   },
   especialidade: {
     type: DataTypes.STRING(100),
