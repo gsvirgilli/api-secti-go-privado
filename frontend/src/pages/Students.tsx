@@ -268,11 +268,15 @@ const Students = () => {
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-primary" />
-            <span>{student.course}</span>
+            <span>{student.course || 'Sem curso'}</span>
           </div>
           <div className="flex items-center gap-2">
             <GraduationCap className="h-4 w-4 text-purple-500" />
-            <span>{student.class}</span>
+            <span>{student.turma || 'Sem turma'}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-blue-500" />
+            <span>{student.turno || 'Sem turno'}</span>
           </div>
         </div>
 
@@ -485,7 +489,7 @@ const Students = () => {
                             </Badge>
                           </div>
                         </TableCell>
-                        <TableCell>{student.course}</TableCell>
+                        <TableCell>{student.course || '-'}</TableCell>
                         <TableCell>{student.turma || '-'}</TableCell>
                         <TableCell>{student.turno || '-'}</TableCell>
                         <TableCell className="text-right">
