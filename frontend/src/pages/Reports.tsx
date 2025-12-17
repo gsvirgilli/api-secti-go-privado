@@ -34,7 +34,7 @@ interface DashboardData {
 
 const Reports = () => {
   const { toast } = useToast();
-  const { stats, charts, students, courses, classes } = useAppData();
+  const { stats, charts, students, courses, classes, instructors } = useAppData();
 
   // Estados para dados do dashboard da API
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -491,11 +491,11 @@ const Reports = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos os instrutores</SelectItem>
-                      <SelectItem value="a">Instrutor A</SelectItem>
-                      <SelectItem value="b">Instrutor B</SelectItem>
-                      <SelectItem value="c">Instrutor C</SelectItem>
-                      <SelectItem value="d">Instrutor D</SelectItem>
-                      <SelectItem value="e">Instrutor E</SelectItem>
+                      {instructors.map(instructor => (
+                        <SelectItem key={instructor.id} value={instructor.id.toString()}>
+                          {instructor.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
