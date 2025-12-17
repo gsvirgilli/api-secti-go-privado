@@ -16,6 +16,9 @@ import auditLogsRouter from '../modules/audit/audit-log.routes.js';
 import diagnosticRouter from './diagnostic.js';
 import { isAuthenticated } from '../middlewares/isAuthenticated.js';
 
+// Importar modelos para garantir que estão registrados no Sequelize
+import '../modules/students/student-course.model.js';
+
 const router = Router();
 
 // Rotas de autenticação (público)

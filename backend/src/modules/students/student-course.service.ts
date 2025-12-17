@@ -9,7 +9,7 @@ export class StudentCourseService {
   /**
    * Adicionar um aluno a um curso
    */
-  async addStudentToCourse(
+  static async addStudentToCourse(
     studentId: number,
     courseId: number,
     turmaId?: number
@@ -57,7 +57,7 @@ export class StudentCourseService {
   /**
    * Remover aluno de um curso (marcar como desistente)
    */
-  async dropStudentFromCourse(
+  static async dropStudentFromCourse(
     studentId: number,
     courseId: number,
     motivo?: string
@@ -81,7 +81,7 @@ export class StudentCourseService {
   /**
    * Marcar curso como concluído
    */
-  async completeCourse(
+  static async completeCourse(
     studentId: number,
     courseId: number
   ) {
@@ -103,7 +103,7 @@ export class StudentCourseService {
   /**
    * Obter todos os cursos de um aluno
    */
-  async getStudentCourses(studentId: number) {
+  static async getStudentCourses(studentId: number) {
     const studentCourses = await StudentCourse.findAll({
       where: { student_id: studentId },
       include: [
@@ -127,7 +127,7 @@ export class StudentCourseService {
   /**
    * Obter histórico de cursos (concluídos e desistências)
    */
-  async getStudentCourseHistory(studentId: number) {
+  static async getStudentCourseHistory(studentId: number) {
     const history = await StudentCourse.findAll({
       where: {
         student_id: studentId,
@@ -150,7 +150,7 @@ export class StudentCourseService {
    * Calcular status automático do aluno baseado em seus cursos
    * Status geral é determinado pelo curso mais recente/importante
    */
-  async calculateStudentStatus(studentId: number): Promise<'Ativo' | 'Concluído' | 'Desistente'> {
+  static async calculateStudentStatus(studentId: number): Promise<'Ativo' | 'Concluído' | 'Desistente'> {
     const studentCourses = await StudentCourse.findAll({
       where: { student_id: studentId },
       order: [['createdAt', 'DESC']]
@@ -176,7 +176,7 @@ export class StudentCourseService {
   /**
    * Obter informações completas de cursos do aluno para exibição
    */
-  async getStudentCoursesWithStatus(studentId: number) {
+  static async getStudentCoursesWithStatus(studentId: number) {
     const currentCourses = await StudentCourse.findAll({
       where: {
         student_id: studentId,
@@ -196,7 +196,7 @@ export class StudentCourseService {
       ]
     });
 
-    const history = await this.getStudentCourseHistory(studentId);
+    const history = await StudentCourseService.getStudentCourseHistory(studentId);
     const overallStatus = await this.calculateStudentStatus(studentId);
 
     return {
@@ -207,4 +207,4 @@ export class StudentCourseService {
   }
 }
 
-export default new StudentCourseService();
+export default StudentCourseService;
