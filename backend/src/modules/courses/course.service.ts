@@ -290,12 +290,49 @@ class CourseService {
     const courses = await Course.findAll({
       attributes: ['id', 'nome', 'descricao', 'carga_horaria', 'nivel', 'status'],
       where: { status: 'ATIVO' }, // Apenas cursos ativos
+      include: [
+        {
+          model: Class,
+          as: 'turmas',
+          attributes: ['id', 'nome', 'turno', 'vagas', 'status'],
+          include: [
+            {
+              model: Student,
+              as: 'alunos',
+              attributes: ['id', 'nome', 'matricula', 'email', 'status'],
+              required: false
+            }
+          ],
+          required: false
+        }
+      ],
       order: [['nome', 'ASC']],
-      raw: true, // Evita overhead de instâncias Sequelize
-      limit: 1000 // Limite para evitar carregar dados demais
+      subQuery: false
     });
 
-    return courses;
+    // ✅ Calcular contagem de alunos para cada curso
+    return courses.map(course => {
+      const courseData = course.toJSON();
+      
+      // Contar alunos únicos em todas as turmas
+      let totalStudents = 0;
+      if (courseData.turmas && Array.isArray(courseData.turmas)) {
+        const uniqueStudentIds = new Set<number>();
+        courseData.turmas.forEach(turma => {
+          if (turma.alunos && Array.isArray(turma.alunos)) {
+            turma.alunos.forEach(aluno => {
+              uniqueStudentIds.add(aluno.id);
+            });
+          }
+        });
+        totalStudents = uniqueStudentIds.size;
+      }
+      
+      return {
+        ...courseData,
+        _enrollmentCount: totalStudents
+      };
+    });
   }
 
   /**
