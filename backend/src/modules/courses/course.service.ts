@@ -88,9 +88,33 @@ class CourseService {
     const hasNextPage = data.length > limit;
     const courses = hasNextPage ? data.slice(0, limit) : data;
 
+    // ✅ Calcular contagem de alunos para cada curso
+    const coursesWithCount = courses.map(course => {
+      const courseData = course.toJSON();
+      
+      // Contar alunos únicos em todas as turmas
+      let totalStudents = 0;
+      if (courseData.turmas && Array.isArray(courseData.turmas)) {
+        const uniqueStudentIds = new Set<number>();
+        courseData.turmas.forEach(turma => {
+          if (turma.alunos && Array.isArray(turma.alunos)) {
+            turma.alunos.forEach(aluno => {
+              uniqueStudentIds.add(aluno.id);
+            });
+          }
+        });
+        totalStudents = uniqueStudentIds.size;
+      }
+      
+      return {
+        ...courseData,
+        _enrollmentCount: totalStudents
+      };
+    });
+
     return {
-      data: courses,
-      pagination: createPagination(page, limit, hasNextPage ? (page + 1) * limit + 1 : courses.length)
+      data: coursesWithCount,
+      pagination: createPagination(page, limit, hasNextPage ? (page + 1) * limit + 1 : coursesWithCount.length)
     };
   }
 
@@ -121,7 +145,25 @@ class CourseService {
       throw new AppError('Curso não encontrado', 404);
     }
     
-    return course;
+    // ✅ Calcular contagem de alunos
+    const courseData = course.toJSON();
+    let totalStudents = 0;
+    if (courseData.turmas && Array.isArray(courseData.turmas)) {
+      const uniqueStudentIds = new Set<number>();
+      courseData.turmas.forEach(turma => {
+        if (turma.alunos && Array.isArray(turma.alunos)) {
+          turma.alunos.forEach(aluno => {
+            uniqueStudentIds.add(aluno.id);
+          });
+        }
+      });
+      totalStudents = uniqueStudentIds.size;
+    }
+    
+    return {
+      ...courseData,
+      _enrollmentCount: totalStudents
+    } as any;
   }
 
   /**
