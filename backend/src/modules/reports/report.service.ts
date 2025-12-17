@@ -1042,7 +1042,7 @@ class ReportService {
       
       const turmaIds = turmas.map(t => t.id);
       const totalAlunos = turmaIds.length > 0 ? await Enrollment.count({
-        where: { id_turma: { [Op.in]: turmaIds } }
+        where: { idTurma: { [Op.in]: turmaIds } }
       }) : 0;
 
       return {

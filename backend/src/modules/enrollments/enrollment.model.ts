@@ -53,7 +53,7 @@ Enrollment.init({
   indexes: [
     {
       unique: true,
-      fields: ['idAluno', 'idTurma']
+      fields: ['id_aluno', 'id_turma']
     },
     {
       fields: ['status']

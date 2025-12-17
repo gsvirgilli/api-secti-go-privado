@@ -305,7 +305,7 @@ class ClassService {
 
     // Se está tentando ativar a turma, verificar se tem instrutor
     if (data.status === 'ATIVA') {
-      const instrutoresCount = await InstructorClass.count({ where: { id_turma: id } });
+      const instrutoresCount = await InstructorClass.count({ where: { idTurma: id } });
       if (instrutoresCount === 0) {
         throw new Error('Turma ativa deve ter pelo menos um instrutor cadastrado');
       }
@@ -355,7 +355,7 @@ class ClassService {
     }
 
     // Verificar se existem matrículas ou alunos vinculados à turma
-    const enrollmentCount = await Enrollment.count({ where: { id_turma: id } });
+    const enrollmentCount = await Enrollment.count({ where: { idTurma: id } });
     const studentCount = await Student.count({ where: { turma_id: id } });
 
     if (enrollmentCount > 0 || studentCount > 0) {
@@ -363,7 +363,7 @@ class ClassService {
     }
 
     // Remover associações de instrutores antes de deletar a turma
-    await InstructorClass.destroy({ where: { id_turma: id } });
+    await InstructorClass.destroy({ where: { idTurma: id } });
 
     await turma.destroy();
 
@@ -494,7 +494,7 @@ class ClassService {
         throw new Error('Turmas ENCERRADAS não podem ser reativadas');
       }
       // Validar se tem instrutor ao ativar
-      const instrutoresCount = await InstructorClass.count({ where: { id_turma: id } });
+      const instrutoresCount = await InstructorClass.count({ where: { idTurma: id } });
       if (instrutoresCount === 0) {
         throw new Error('Turma ativa deve ter pelo menos um instrutor cadastrado');
       }
@@ -508,7 +508,7 @@ class ClassService {
       // Buscar alunos matriculados na turma
       const enrollments = await Enrollment.findAll({
         where: {
-          id_turma: id,
+          idTurma: id,
           status: { [Op.ne]: 'Cancelado' } // Apenas matrículas ativas
         },
         include: [{

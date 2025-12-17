@@ -7,12 +7,12 @@ import { sequelize } from '../../config/database.js';
  */
 class Attendance extends Model {
   declare id: number;
-  declare id_aluno: number;
-  declare id_turma: number;
-  declare id_usuario?: number;
-  declare data_chamada: Date;
+  declare idAluno: number;
+  declare idTurma: number;
+  declare idUsuario?: number;
+  declare dataChamada: Date;
   declare status: 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADO';
-  declare motivo_justificacao?: string;
+  declare motivoJustificacao?: string;
   declare createdAt: Date;
   declare updatedAt: Date;
 }
@@ -23,9 +23,10 @@ Attendance.init({
     primaryKey: true,
     autoIncrement: true
   },
-  id_aluno: {
+  idAluno: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    field: 'id_aluno',
     references: {
       model: 'alunos',
       key: 'id'
@@ -36,9 +37,10 @@ Attendance.init({
       }
     }
   },
-  id_turma: {
+  idTurma: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    field: 'id_turma',
     references: {
       model: 'turmas',
       key: 'id'
@@ -49,9 +51,10 @@ Attendance.init({
       }
     }
   },
-  data_chamada: {
+  dataChamada: {
     type: DataTypes.DATEONLY,
     allowNull: false,
+    field: 'data_chamada',
     validate: {
       notNull: {
         msg: 'Data da chamada é obrigatória'
@@ -71,14 +74,16 @@ Attendance.init({
       }
     }
   },
-  motivo_justificacao: {
+  motivoJustificacao: {
     type: DataTypes.TEXT,
     allowNull: true,
+    field: 'motivo_justificacao',
     comment: 'Motivo da justificação (quando status é JUSTIFICADO)'
   },
-  id_usuario: {
+  idUsuario: {
     type: DataTypes.INTEGER,
     allowNull: true,
+    field: 'id_usuario',
     references: {
       model: 'usuarios',
       key: 'id'
@@ -89,21 +94,21 @@ Attendance.init({
   sequelize,
   tableName: 'presenca',
   timestamps: true,
-
+  underscored: true,
   indexes: [
     {
       unique: true,
-      fields: ['id_aluno', 'id_turma', 'data_chamada'],
+      fields: ['idAluno', 'idTurma', 'dataChamada'],
       name: 'unique_attendance_per_day'
     },
     {
-      fields: ['id_aluno']
+      fields: ['idAluno']
     },
     {
-      fields: ['id_turma']
+      fields: ['idTurma']
     },
     {
-      fields: ['data_chamada']
+      fields: ['dataChamada']
     }
   ]
 });
@@ -115,17 +120,17 @@ import User from '../users/user.model.js';
 
 // Associações
 Attendance.belongsTo(Student, {
-  foreignKey: 'id_aluno',
+  foreignKey: 'idAluno',
   as: 'aluno'
 });
 
 Attendance.belongsTo(Class, {
-  foreignKey: 'id_turma',
+  foreignKey: 'idTurma',
   as: 'turma'
 });
 
 Attendance.belongsTo(User, {
-  foreignKey: 'id_usuario',
+  foreignKey: 'idUsuario',
   as: 'usuario'
 });
 

@@ -78,7 +78,7 @@ class EnrollmentService {
    */
   async findOne(id_aluno: number, id_turma: number) {
     const enrollment = await Enrollment.findOne({
-      where: { id_aluno, id_turma },
+      where: { idAluno: id_aluno, idTurma: id_turma },
       include: [
         {
           model: Student,
@@ -134,8 +134,8 @@ class EnrollmentService {
       // Verificar se já existe matrícula
       const existingEnrollment = await Enrollment.findOne({
         where: {
-          id_aluno: data.id_aluno,
-          id_turma: data.id_turma
+          idAluno: data.id_aluno,
+          idTurma: data.id_turma
         },
         transaction
       });
@@ -146,8 +146,8 @@ class EnrollmentService {
 
       // Criar a matrícula
       const enrollment = await Enrollment.create({
-        id_aluno: data.id_aluno,
-        id_turma: data.id_turma,
+        idAluno: data.id_aluno,
+        idTurma: data.id_turma,
         status: data.status || 'Cursando'
       }, { transaction });
 
@@ -255,7 +255,7 @@ class EnrollmentService {
     try {
       // Buscar a matrícula
       const enrollment = await Enrollment.findOne({
-        where: { id_aluno, id_turma },
+        where: { idAluno: id_aluno, idTurma: id_turma },
         transaction
       });
 
@@ -293,7 +293,7 @@ class EnrollmentService {
    */
   async listByStudent(id_aluno: number) {
     const enrollments = await Enrollment.findAll({
-      where: { id_aluno },
+      where: { idAluno: id_aluno },
       include: [
         {
           model: Class,
@@ -312,7 +312,7 @@ class EnrollmentService {
    */
   async listByClass(id_turma: number) {
     const enrollments = await Enrollment.findAll({
-      where: { id_turma },
+      where: { idTurma: id_turma },
       include: [
         {
           model: Student,
