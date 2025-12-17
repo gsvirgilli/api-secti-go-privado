@@ -8,18 +8,19 @@ import Class from '../classes/class.model.js';
  * Relacionamento entre Aluno e Turma
  */
 class Enrollment extends Model {
-  declare id_aluno: number;
-  declare id_turma: number;
+  declare idAluno: number;
+  declare idTurma: number;
   declare status: 'ativo' | 'trancado' | 'concluido' | 'cancelado';
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
 
 Enrollment.init({
-  id_aluno: {
+  idAluno: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     allowNull: false,
+    field: 'id_aluno',
     references: {
       model: 'alunos',
       key: 'id',
@@ -27,10 +28,11 @@ Enrollment.init({
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
   },
-  id_turma: {
+  idTurma: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     allowNull: false,
+    field: 'id_turma',
     references: {
       model: 'turmas',
       key: 'id',
@@ -51,7 +53,7 @@ Enrollment.init({
   indexes: [
     {
       unique: true,
-      fields: ['id_aluno', 'id_turma']
+      fields: ['idAluno', 'idTurma']
     },
     {
       fields: ['status']
@@ -61,23 +63,23 @@ Enrollment.init({
 
 // Associações
 Enrollment.belongsTo(Student, {
-  foreignKey: 'id_aluno',
+  foreignKey: 'idAluno',
   as: 'aluno'
 });
 
 Enrollment.belongsTo(Class, {
-  foreignKey: 'id_turma',
+  foreignKey: 'idTurma',
   as: 'turma'
 });
 
 // Associações inversas
 Student.hasMany(Enrollment, {
-  foreignKey: 'id_aluno',
+  foreignKey: 'idAluno',
   as: 'matriculas'
 });
 
 Class.hasMany(Enrollment, {
-  foreignKey: 'id_turma',
+  foreignKey: 'idTurma',
   as: 'matriculas'
 });
 

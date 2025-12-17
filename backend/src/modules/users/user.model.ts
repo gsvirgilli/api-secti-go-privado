@@ -60,6 +60,7 @@ User.init({
   avatar_url: {
     type: DataTypes.STRING(255),
     allowNull: true,
+    field: 'avatar_url',
   }
 }, {
   sequelize,
