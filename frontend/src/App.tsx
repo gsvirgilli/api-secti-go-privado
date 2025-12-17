@@ -26,7 +26,7 @@ import APITest from "./pages/APITest";
 import Inscricao from "./pages/Inscricao";
 import Sobre from "./pages/Sobre";
 import ProcessoSeletivo from "./pages/ProcessoSeletivo";
-import Frequencia from "./pages/Frequencia";
+// import Frequencia from "./pages/Frequencia"; // Página de Frequência ocultada
 import HomeRedirect from "./components/HomeRedirect";
 
 const queryClient = new QueryClient();
@@ -55,7 +55,7 @@ const App = () => {
                   <Route path="/turmas" element={<Layout><Classes /></Layout>} />
                   <Route path="/cursos" element={<Layout><Courses /></Layout>} />
                   <Route path="/instrutores" element={<Layout><Instructors /></Layout>} />
-                  <Route path="/frequencia" element={<Layout><Frequencia /></Layout>} />
+                  {/* <Route path="/frequencia" element={<Layout><Frequencia /></Layout>} /> */} {/* Página de Frequência ocultada */}
                   <Route path="/relatorios" element={<Layout><Reports /></Layout>} />
                   <Route path="/admin" element={<Layout><Dashboard /></Layout>} />
                   <Route path="/perfil" element={<Layout><Profile /></Layout>} />
