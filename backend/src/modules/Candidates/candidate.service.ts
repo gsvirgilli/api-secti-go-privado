@@ -134,7 +134,7 @@ class CandidateService {
 
     // Buscar candidatos com paginação (skip COUNT para evitar pool timeout)
     const data = await Candidate.findAll({
-      attributes: ['id', 'nome', 'cpf', 'email', 'telefone', 'dataNascimento', 'status', 'idTurmaDesejada', 'turmaId', 'createdAt', 'updatedAt'],
+      attributes: ['id', 'nome', 'cpf', 'email', 'telefone', 'dataNascimento', 'status', 'idTurmaDesejada', 'turmaId', 'createdAt', 'updatedAt', 'rgFrenteUrl', 'rgVersoUrl', 'cpfAlunoUrl', 'comprovante_endereco_url', 'foto3x4Url', 'comprovanteEscolaridadeUrl', 'identidadeResponsavelFrenteUrl', 'identidadeResponsavelVersoUrl', 'cpfResponsavelUrl'],
       where,
       order: [['createdAt', 'DESC']],
       limit,
