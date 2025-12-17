@@ -101,6 +101,12 @@ export const updateClassSchema = z.object({
     .number({ message: 'ID do curso deve ser um número' })
     .int('ID do curso deve ser um número inteiro')
     .positive('ID do curso deve ser um número positivo')
+    .optional(),
+
+  status: z
+    .enum(['ATIVA', 'PLANEJADA', 'ENCERRADA', 'CANCELADA'], {
+      message: 'Status deve ser ATIVA, PLANEJADA, ENCERRADA ou CANCELADA'
+    })
     .optional()
 }).refine(
   (data) => {
