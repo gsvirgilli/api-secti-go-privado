@@ -214,7 +214,7 @@ export const publicCandidateSchema = z.object({
       .nullable(),
 
     idade: z
-      .number()
+      .coerce.number()
       .int()
       .positive()
       .optional()
@@ -272,7 +272,7 @@ export const publicCandidateSchema = z.object({
 
     // Curso e turno desejados (obrigatórios)
     curso_id: z
-      .number({ message: 'ID do curso é obrigatório' })
+      .coerce.number({ message: 'ID do curso é obrigatório' })
       .int('ID do curso deve ser um número inteiro')
       .positive('ID do curso deve ser positivo'),
 
@@ -283,7 +283,7 @@ export const publicCandidateSchema = z.object({
 
     // Curso - segunda opção (opcionais)
     curso_id2: z
-      .number()
+      .coerce.number()
       .int()
       .positive()
       .optional()
@@ -334,7 +334,13 @@ export const publicCandidateSchema = z.object({
 
     // Responsável Legal (opcionais)
     menor_idade: z
-      .boolean()
+      .string()
+      .transform(v => {
+        if (typeof v === 'string') {
+          return v === '1' || v === 'true' || v === 'True' || v === 'TRUE';
+        }
+        return Boolean(v);
+      })
       .optional()
       .nullable(),
 

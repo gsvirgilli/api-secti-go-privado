@@ -138,7 +138,21 @@ export const CandidatesAPI = {
       const formData = new FormData();
       const appendField = (key: string, value: unknown) => {
         if (value === null || value === undefined || value === "") return;
-        const normalized = value instanceof Blob ? value : String(value);
+        
+        // Preservar tipos: números e booleanos devem ir como strings mas reconhecíveis
+        let normalized: string | Blob;
+        if (value instanceof Blob) {
+          normalized = value;
+        } else if (typeof value === 'boolean') {
+          // Converter boolean para string '1' ou '0' para preservar tipo
+          normalized = value ? '1' : '0';
+        } else if (typeof value === 'number') {
+          // Converter número para string mantendo número
+          normalized = String(value);
+        } else {
+          normalized = String(value);
+        }
+        
         formData.append(key, normalized);
       };
       
@@ -158,6 +172,10 @@ export const CandidatesAPI = {
         headers: {
           "Content-Type": "multipart/form-data",
         },
+        transformRequest: [function(data) {
+          // Deixar FormData como está para axios tratar corretamente
+          return data;
+        }]
       });
     }
 
