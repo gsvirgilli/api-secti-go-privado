@@ -311,18 +311,19 @@ class ClassService {
       }
     }
 
-    // Calcular status automático baseado nas datas (se não foi explicitamente cancelada)
-    // Se o usuário enviou um status específico, usar esse (permitir override)
-    let finalStatus = data.status;
-    if (!data.status) {
-      // Calcular automático apenas se não foi especificado um status
+    // Determinar o status final
+    let finalStatus: 'PLANEJADA' | 'ATIVA' | 'ENCERRADA' | 'CANCELADA';
+
+    if (data.status === 'CANCELADA') {
+      // Usuário explicitamente cancelou - respeitar e não sobrescrever
+      finalStatus = 'CANCELADA';
+    } else if (data.status) {
+      // Usuário enviou um status específico - usar esse
+      finalStatus = data.status;
+    } else {
+      // Usuário não enviou status - calcular automático baseado nas datas
       finalStatus = this.calculateAutoStatus(dataInicio, dataFim, turma.status);
-    } else if (data.status !== 'CANCELADA') {
-      // Se enviou um status mas não é cancelada, ainda assim calcular baseado nas datas
-      // para garantir consistência
-      finalStatus = this.calculateAutoStatus(dataInicio, dataFim, data.status);
     }
-    // Se é CANCELADA, mantém CANCELADA
 
     // Atualizar turma com status calculado
     await turma.update({

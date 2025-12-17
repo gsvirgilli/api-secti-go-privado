@@ -784,21 +784,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (classData.startDate !== undefined) backendData.data_inicio = parseDateInput(classData.startDate);
       if (classData.endDate !== undefined) backendData.data_fim = parseDateInput(classData.endDate);
 
-      if (Object.keys(backendData).length > 0) {
-        await ClassesAPI.update(id, backendData);
-      }
-
+      // Se o status foi modificado, incluir no payload
       if (classData.status) {
         const mappedStatus = backendClassStatusValue(classData.status);
-        const currentStatus = backendClassStatusValue(currentClass.status);
+        backendData.status = mappedStatus;
+      }
 
-        if (mappedStatus !== currentStatus) {
-          try {
-            await ClassesAPI.updateStatus(id, { status: mappedStatus });
-          } catch (statusError) {
-            logAxiosError(statusError);
-          }
-        }
+      if (Object.keys(backendData).length > 0) {
+        await ClassesAPI.update(id, backendData);
       }
 
       if (classData.instructorIds !== undefined) {
