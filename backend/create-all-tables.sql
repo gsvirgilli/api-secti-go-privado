@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS candidatos (
   local_curso VARCHAR(100),
   
   -- Status
-  status ENUM('PENDENTE', 'REPROVADO', 'LISTA_ESPERA') DEFAULT 'PENDENTE',
+  status ENUM('PENDENTE', 'APROVADO', 'REPROVADO', 'LISTA_ESPERA') DEFAULT 'PENDENTE',
   processo_seletivo_id INT,
   
   -- Turmas desejadas
