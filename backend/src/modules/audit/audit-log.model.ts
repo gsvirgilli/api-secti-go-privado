@@ -8,15 +8,15 @@ import { sequelize } from '../../config/database.js';
 class AuditLog extends Model {
   declare id: number;
   declare usuario_id: number | null;
-  declare acao: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'APPROVE' | 'REJECT';
-  declare entidade: string; // Nome da entidade (ex: 'Student', 'Class', 'Enrollment')
-  declare entidade_id: number | null; // ID do registro afetado
+  declare operacao: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE';
+  declare tabela: string; // Nome da tabela
+  declare registro_id: number | null; // ID do registro afetado
   declare dados_anteriores: object | null; // Dados antes da alteração (JSON)
   declare dados_novos: object | null; // Dados depois da alteração (JSON)
-  declare ip: string | null; // IP do usuário
+  declare ip_address: string | null; // IP do usuário
   declare user_agent: string | null; // User Agent do navegador
   declare descricao: string | null; // Descrição adicional da ação
-  declare readonly createdAt: Date;
+  declare readonly created_at: Date;
 }
 
 AuditLog.init(
@@ -36,16 +36,17 @@ AuditLog.init(
       comment: 'ID do usuário que executou a ação',
     },
     acao: {
-      type: DataTypes.ENUM('CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'APPROVE', 'REJECT'),
+      type: DataTypes.ENUM('CREATE', 'READ', 'UPDATE', 'DELETE'),
       allowNull: false,
-      comment: 'Tipo de ação realizada',
+      field: 'operacao',
+      comment: 'Tipo de operação realizada',
     },
-    entidade: {
-      type: DataTypes.STRING(100),
+    tabela: {
+      type: DataTypes.STRING(255),
       allowNull: false,
-      comment: 'Nome da entidade afetada (tabela/modelo)',
+      comment: 'Nome da tabela afetada',
     },
-    entidade_id: {
+    registro_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
       comment: 'ID do registro afetado',
@@ -63,6 +64,7 @@ AuditLog.init(
     ip: {
       type: DataTypes.STRING(45),
       allowNull: true,
+      field: 'ip_address',
       comment: 'Endereço IP do usuário',
     },
     user_agent: {
@@ -79,28 +81,30 @@ AuditLog.init(
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,
+      field: 'created_at',
     },
   },
   {
     sequelize,
     tableName: 'audit_logs',
-    timestamps: false, // Apenas createdAt, sem updatedAt
+    timestamps: false, // Apenas created_at, sem updated_at
+    underscored: true,
     indexes: [
       {
         name: 'idx_audit_usuario',
         fields: ['usuario_id'],
       },
       {
-        name: 'idx_audit_entidade',
-        fields: ['entidade', 'entidade_id'],
+        name: 'idx_audit_tabela',
+        fields: ['tabela', 'registro_id'],
       },
       {
-        name: 'idx_audit_acao',
-        fields: ['acao'],
+        name: 'idx_audit_operacao',
+        fields: ['operacao'],
       },
       {
         name: 'idx_audit_created',
-        fields: ['createdAt'],
+        fields: ['created_at'],
       },
     ],
   }

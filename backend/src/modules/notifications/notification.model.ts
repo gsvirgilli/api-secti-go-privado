@@ -70,7 +70,7 @@ Notification.init(
         name: 'idx_notification_tipo',
       },
       {
-        fields: ['createdAt'],
+        fields: ['created_at'],
         name: 'idx_notification_criacao',
       },
     ],
