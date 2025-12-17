@@ -145,7 +145,7 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
         endDate: formData.endDate ? convertToDisplayFormat(formData.endDate) : ""
       };
 
-      console.log('📋 Dados a enviar:', { formData, dataToSend });
+      console.log('📋 Dados a enviar no submit:', { formData, dataToSend, status: formData.status });
 
       if (mode === "create") {
         await addClass(dataToSend);
@@ -272,7 +272,10 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
 
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
+              <Select value={formData.status} onValueChange={(value) => {
+                console.log('📝 Status selecionado no formulário:', value);
+                handleInputChange("status", value);
+              }}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
