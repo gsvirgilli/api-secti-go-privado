@@ -7,6 +7,7 @@ export interface UserAttributes {
   email: string;
   senha_hash: string;
   role: string;
+  avatar_url?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -16,6 +17,7 @@ export interface UserCreationAttributes {
   email: string;
   senha_hash: string;
   role?: string;
+  avatar_url?: string;
 }
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
@@ -24,6 +26,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   declare email: string;
   declare senha_hash: string;
   declare role: string;
+  declare avatar_url?: string;
   
   // Timestamps automáticos
   declare readonly createdAt: Date;
@@ -53,6 +56,10 @@ User.init({
     type: DataTypes.STRING(50),
     allowNull: false,
     defaultValue: 'INSTRUTOR', // Ex: 'ADMIN', 'INSTRUTOR'
+  },
+  avatar_url: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
   }
 }, {
   sequelize,

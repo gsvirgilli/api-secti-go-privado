@@ -1,21 +1,36 @@
-import React, { useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect, ReactNode, useCallback } from 'react';
 import { AuthContext, AuthContextType, UserRole, User } from './authContextCore';
-import { notifyAuthChange } from '@/lib/authEvents';
+import { notifyAuthChange, AUTH_CHANGE_EVENT } from '@/lib/authEvents';
 
 // Provider do contexto
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Função de logout (mover para cima para uso no useEffect)
+  const logout = useCallback(() => {
+    console.log('Realizando logout');
+    localStorage.removeItem('@sukatech:token');
+    localStorage.removeItem('@sukatech:user');
+    localStorage.removeItem('@sukatech:role');
+    setUser(null);
+    setIsAuthenticated(false);
+    notifyAuthChange();
+  }, []);
+
   // Carregar dados do usuário do localStorage ao inicializar
   useEffect(() => {
+    console.log('AuthProvider: Carregando dados do localStorage');
     const token = localStorage.getItem('@sukatech:token');
     const storedUser = localStorage.getItem('@sukatech:user');
     const storedRole = localStorage.getItem('@sukatech:role');
 
+    console.log('AuthProvider: token =', !!token, 'storedUser =', !!storedUser, 'storedRole =', storedRole);
+
     if (token && storedUser && storedRole) {
       try {
         const userData = JSON.parse(storedUser);
+        console.log('AuthProvider: Dados do usuário carregados:', userData);
         setUser({
           ...userData,
           role: storedRole as UserRole
@@ -25,7 +40,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error('Erro ao carregar dados do usuário:', error);
         logout();
       }
+    } else {
+      console.log('AuthProvider: Dados incompletos ou não encontrados');
+      setIsAuthenticated(false);
     }
+  }, [logout]);
+
+  // Escutar mudanças de autenticação (por exemplo, após login)
+  useEffect(() => {
+    const handleAuthChange = () => {
+      console.log('AuthProvider: Evento AUTH_CHANGE_EVENT recebido, recarregando dados');
+      const token = localStorage.getItem('@sukatech:token');
+      const storedUser = localStorage.getItem('@sukatech:user');
+      const storedRole = localStorage.getItem('@sukatech:role');
+
+      if (token && storedUser && storedRole) {
+        try {
+          const userData = JSON.parse(storedUser);
+          console.log('AuthProvider: Dados do usuário recarregados:', userData);
+          setUser({
+            ...userData,
+            role: storedRole as UserRole
+          });
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error('Erro ao recarregar dados do usuário:', error);
+        }
+      }
+    };
+
+    window.addEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
+    return () => window.removeEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
   }, []);
 
   // Função de login
@@ -46,16 +91,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.setItem('@sukatech:role', role);
       notifyAuthChange();
     }
-  };
-
-  // Função de logout
-  const logout = () => {
-    localStorage.removeItem('@sukatech:token');
-    localStorage.removeItem('@sukatech:user');
-    localStorage.removeItem('@sukatech:role');
-    setUser(null);
-    setIsAuthenticated(false);
-    notifyAuthChange();
   };
 
   // Verificar se é admin
@@ -98,4 +133,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 };
 
 // (hook moved to a dedicated file)
+
+export default AuthProvider;// (hook moved to a dedicated file)
 

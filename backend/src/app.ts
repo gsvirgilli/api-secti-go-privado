@@ -34,10 +34,11 @@ app.use(helmet({
 // 📦 Comprimir respostas gzip
 app.use(compression());
 
-// 🔒 Rate limiting global (100 requisições por 15 minutos por IP)
+// 🔒 Rate limiting global - aumentado para desenvolvimento
+// Em produção, considerar reduzir para 100 requisições
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: 15 * 60 * 1000,  // 15 minutos
+  max: 1000,  // 1000 requisições por IP (aumentado para dev)
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Muitas requisições. Tente novamente mais tarde.' },
@@ -50,6 +51,7 @@ const allowedOrigins = [
   'http://localhost:5173',        // Dev local (Vite default)
   'http://localhost:3000',        // Dev alternativo
   'http://localhost:8080',        // Dev com npm run dev
+  'http://localhost:8081',        // Dev porta alternativa
   process.env.FRONTEND_URL,       // Variável de ambiente
   'https://api-secti-go-privado.vercel.app',  // Vercel (produção)
 ].filter(origin => origin && origin !== 'undefined'); // Remover undefined

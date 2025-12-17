@@ -56,6 +56,12 @@ const Login = () => {
       if (response.data.token) {
         localStorage.setItem('@sukatech:token', response.data.token);
         localStorage.setItem('@sukatech:user', JSON.stringify(response.data.usuario || response.data.user));
+
+        // Salvar role - pode estar em response.data.role ou em response.data.usuario.role
+        const role = response.data.role || response.data.usuario?.role || response.data.user?.role || 'professor';
+        localStorage.setItem('@sukatech:role', role);
+
+        console.log('Login: Dados salvos no localStorage', { token: !!response.data.token, role });
         notifyAuthChange();
       }
 
