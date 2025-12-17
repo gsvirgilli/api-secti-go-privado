@@ -105,13 +105,26 @@ const ClassFormModal = ({ isOpen, onClose, classData, mode }: ClassFormModalProp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.course || !formData.instructor) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios",
-        variant: "destructive"
-      });
-      return;
+    // Em modo create, exigir todos os campos obrigatórios
+    if (mode === "create") {
+      if (!formData.name || !formData.course || !formData.instructor) {
+        toast({
+          title: "Campos obrigatórios",
+          description: "Preencha todos os campos obrigatórios",
+          variant: "destructive"
+        });
+        return;
+      }
+    } else {
+      // Em modo edit, exigir apenas o nome se estiver sendo alterado
+      if (!formData.name || formData.name.trim() === "") {
+        toast({
+          title: "Nome obrigatório",
+          description: "O nome da turma é obrigatório",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     // Validar se status é ATIVA, deve ter instrutor

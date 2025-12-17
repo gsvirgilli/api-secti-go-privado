@@ -26,6 +26,7 @@ const Classes = () => {
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
 
   // Pesquisa por texto
@@ -339,7 +340,11 @@ const Classes = () => {
               size="sm"
             />
             <Button
-              onClick={() => setIsFormModalOpen(true)}
+              onClick={() => {
+                setSelectedClass(null);
+                setFormMode("create");
+                setIsFormModalOpen(true);
+              }}
               className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Plus className="h-4 w-4" />
@@ -746,6 +751,7 @@ const Classes = () => {
                           e.preventDefault();
                           e.stopPropagation();
                           setSelectedClass(classItem);
+                          setFormMode("edit");
                           setIsFormModalOpen(true);
                         }}
                         className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
@@ -854,7 +860,8 @@ const Classes = () => {
       <ClassFormModal
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
-        mode="create"
+        mode={formMode}
+        classData={formMode === "edit" ? selectedClass : undefined}
       />
 
       <DataBot />
