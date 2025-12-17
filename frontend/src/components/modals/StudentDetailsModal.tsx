@@ -20,6 +20,10 @@ const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: Stu
 
   if (!student) return null;
 
+  // Debug: mostrar dados dos cursos
+  console.log('StudentDetailsModal - Student:', student);
+  console.log('StudentDetailsModal - Courses:', student.courses);
+
   const handleEdit = () => {
     if (onEdit) {
       onEdit(student);
@@ -147,7 +151,7 @@ const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: Stu
               </div>
 
               {/* Seção de múltiplos cursos */}
-              {student.courses && student.courses.length > 0 && (
+              {student.courses && student.courses.length > 0 ? (
                 <div className="mt-4 pt-4 border-t">
                   <h4 className="text-sm font-semibold text-foreground mb-2">Cursos matriculado</h4>
                   <div className="space-y-2">
@@ -169,6 +173,11 @@ const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: Stu
                       </div>
                     ))}
                   </div>
+                </div>
+              ) : (
+                <div className="mt-4 pt-4 border-t">
+                  <h4 className="text-sm font-semibold text-foreground mb-2">Cursos matriculados</h4>
+                  <p className="text-xs text-muted-foreground">Nenhum curso registrado ou dados ainda carregando...</p>
                 </div>
               )}
             </div>

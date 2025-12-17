@@ -417,21 +417,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               mappedStudents.map(async (student) => {
                 try {
                   const coursesRes = await StudentCoursesAPI.getWithStatus(student.id);
+                  console.log(`Cursos do aluno ${student.id}:`, coursesRes.data);
                   return {
                     ...student,
-                    courses: (coursesRes.data as any)?.current_courses || []
+                    courses: (coursesRes.data as any)?.current_courses || (coursesRes.data as any)?.data?.current_courses || []
                   };
                 } catch (err) {
                   // Se falhar ao carregar cursos, continuar sem eles
-                  console.warn(`Não foi possível carregar cursos do aluno ${student.id}`);
+                  console.warn(`Não foi possível carregar cursos do aluno ${student.id}:`, err);
                   return student;
                 }
               })
             );
+            console.log('Students com cursos:', studentsWithCourses);
             setStudents(studentsWithCourses);
           } catch (err) {
             // Se falhar, usar dados sem cursos
-            console.warn('Erro ao carregar cursos dos alunos');
+            console.warn('Erro ao carregar cursos dos alunos:', err);
             setStudents(mappedStudents);
           }
 
@@ -484,9 +486,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               const coursesRes = await StudentCoursesAPI.getWithStatus(student.id);
               return {
                 ...student,
-                courses: (coursesRes.data as any)?.current_courses || []
+                courses: (coursesRes.data as any)?.current_courses || (coursesRes.data as any)?.data?.current_courses || []
               };
             } catch (err) {
+              console.warn(`Erro ao carregar cursos do aluno ${student.id}:`, err);
               return student;
             }
           })
