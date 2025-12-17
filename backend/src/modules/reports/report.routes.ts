@@ -370,4 +370,31 @@ router.get('/instructors/excel', isAuthenticated, async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/reports/courses/excel:
+ *   get:
+ *     summary: Gera relatório de cursos em Excel
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Excel gerado com sucesso
+ *         content:
+ *           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       401:
+ *         description: Não autenticado
+ */
+router.get('/courses/excel', isAuthenticated, async (req, res, next) => {
+  try {
+    await ReportController.generateCoursesExcel(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

@@ -27,19 +27,28 @@ class ReportController {
    * Gera relatório de turmas em PDF
    */
   async generateClassesPDF(req: Request, res: Response) {
-    const { id_curso, status } = req.query;
+    try {
+      const { id_curso, status } = req.query;
 
-    const buffer = await ReportService.generateClassesPDF({
-      id_curso: id_curso ? Number(id_curso) : undefined,
-      status: status as string,
-    });
+      console.log('📥 Requisição de PDF de turmas recebida:', { id_curso, status });
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename=relatorio-turmas-${Date.now()}.pdf`
-    );
-    res.send(buffer);
+      const buffer = await ReportService.generateClassesPDF({
+        id_curso: id_curso ? Number(id_curso) : undefined,
+        status: status as string,
+      });
+
+      console.log('✅ PDF gerado com sucesso, tamanho:', buffer.length);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename=relatorio-turmas-${Date.now()}.pdf`
+      );
+      res.send(buffer);
+    } catch (error) {
+      console.error('❌ Erro ao gerar PDF de turmas:', error);
+      throw error;
+    }
   }
 
   /**
@@ -105,22 +114,31 @@ class ReportController {
    * Gera relatório de turmas em Excel
    */
   async generateClassesExcel(req: Request, res: Response) {
-    const { id_curso, status } = req.query;
+    try {
+      const { id_curso, status } = req.query;
 
-    const buffer = await ReportService.generateClassesExcel({
-      id_curso: id_curso ? Number(id_curso) : undefined,
-      status: status as string,
-    });
+      console.log('📥 Requisição de Excel de turmas recebida:', { id_curso, status });
 
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename=relatorio-turmas-${Date.now()}.xlsx`
-    );
-    res.send(buffer);
+      const buffer = await ReportService.generateClassesExcel({
+        id_curso: id_curso ? Number(id_curso) : undefined,
+        status: status as string,
+      });
+
+      console.log('✅ Excel gerado com sucesso, tamanho:', buffer.length);
+
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename=relatorio-turmas-${Date.now()}.xlsx`
+      );
+      res.send(buffer);
+    } catch (error) {
+      console.error('❌ Erro ao gerar Excel de turmas:', error);
+      throw error;
+    }
   }
 
   /**
@@ -179,6 +197,28 @@ class ReportController {
       `attachment; filename=relatorio-instrutores-${Date.now()}.xlsx`
     );
     res.send(buffer);
+  }
+
+  /**
+   * Gera relatório de cursos em Excel
+   */
+  async generateCoursesExcel(req: Request, res: Response) {
+    try {
+      const buffer = await ReportService.generateCoursesExcel({});
+
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename=relatorio-cursos-${Date.now()}.xlsx`
+      );
+      res.send(buffer);
+    } catch (error) {
+      console.error('❌ Erro ao gerar Excel de cursos:', error);
+      throw error;
+    }
   }
 
   /**

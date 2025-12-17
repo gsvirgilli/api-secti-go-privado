@@ -8,6 +8,7 @@ import Attendance from '../attendance/attendance.model.js';
 import Enrollment from '../enrollments/enrollment.model.js';
 import Candidate from '../Candidates/candidate.model.js';
 import { Op } from 'sequelize';
+import { sequelize } from '../../config/database.js';
 import { formatCPF } from '../../utils/formatters.js';
 import { AppError } from '../../utils/AppError.js';
 
@@ -62,6 +63,44 @@ interface DashboardStats {
 }
 
 class ReportService {
+  /**
+   * Traduz o turno para português correto
+   */
+  private translateTurno(turno: string): string {
+    const translations: { [key: string]: string } = {
+      'MANHA': 'Matutino',
+      'TARDE': 'Vespertino',
+      'NOITE': 'Noturno',
+      'matutino': 'Matutino',
+      'vespertino': 'Vespertino',
+      'noturno': 'Noturno',
+    };
+    return translations[turno] || turno;
+  }
+
+  /**
+   * Conta matrículas ativas de uma turma
+   */
+  private async countClassEnrollments(id_turma: number): Promise<number> {
+    try {
+      // Usar Sequelize ao invés de raw query para garantir compatibilidade
+      const count = await Student.count({
+        where: {
+          turma_id: id_turma,
+          status: {
+            [Op.ne]: 'Desistente'
+          }
+        }
+      });
+      
+      console.log(`✅ Total de matrículas da turma ${id_turma}: ${count}`);
+      return count;
+    } catch (error) {
+      console.error(`❌ Erro ao contar matrículas da turma ${id_turma}:`, error);
+      return 0;
+    }
+  }
+
   /**
    * Gera relatório de alunos em PDF
    */
@@ -205,145 +244,170 @@ class ReportService {
    * Gera relatório de turmas em PDF
    */
   async generateClassesPDF(filters: ReportFilters): Promise<Buffer> {
-    const where: any = {};
+    try {
+      const where: any = {};
 
-    if (filters.id_curso) {
-      where.id_curso = filters.id_curso;
-    }
-    if (filters.status) {
-      where.status = filters.status;
-    }
-
-    const classes: any[] = await Class.findAll({
-      where,
-      include: [
-        {
-          model: Course,
-          as: 'curso',
-        },
-        {
-          model: Instructor,
-          as: 'instrutores',
-        },
-        {
-          model: Enrollment,
-          as: 'matriculas',
-        },
-      ],
-      order: [['nome', 'ASC']],
-    });
-
-    return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument({ margin: 50, size: 'A4', bufferPages: true });
-        const chunks: Buffer[] = [];
-
-        doc.on('data', (chunk) => chunks.push(chunk));
-        doc.on('end', () => resolve(Buffer.concat(chunks)));
-
-        // Header
-        doc
-          .fontSize(20)
-          .fillColor('#667eea')
-          .text('Relatório de Turmas', { align: 'center' });
-
-        doc.moveDown(0.5);
-        doc
-          .fontSize(10)
-          .fillColor('#666')
-          .text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, {
-            align: 'center',
-          });
-
-        doc.moveDown(2);
-
-        // Estatísticas gerais
-        doc
-          .fontSize(14)
-          .fillColor('#333')
-          .text('Estatísticas Gerais', { underline: true });
-        doc.moveDown(0.5);
-
-        const totalTurmas = classes.length;
-        const turmasAtivas = classes.filter((c) => c.status === 'ATIVA').length;
-        const totalAlunos = classes.reduce(
-          (sum, c) => sum + (c.matriculas?.length || 0),
-          0
-        );
-
-        doc.fontSize(11).fillColor('#666');
-        doc.text(`Total de Turmas: ${totalTurmas}`, { continued: true });
-        doc.text(`   |   Turmas Ativas: ${turmasAtivas}`);
-        doc.text(`Total de Alunos Matriculados: ${totalAlunos}`);
-        doc.moveDown(2);
-
-        // Tabela de turmas
-        doc.fontSize(14).fillColor('#333').text('Detalhes das Turmas', {
-          underline: true,
-        });
-        doc.moveDown(1);
-
-        let pageCount = 1;
-        classes.forEach((turma, index) => {
-          // Quebra de página se necessário
-          if (doc.y > 650) {
-            doc.addPage();
-            pageCount++;
-          }
-
-          doc
-            .fontSize(12)
-            .fillColor('#667eea')
-            .text(`${index + 1}. ${turma.nome}`, { continued: false });
-
-          doc.fontSize(10).fillColor('#666');
-          doc.text(`   Curso: ${turma.curso?.nome || 'N/A'}`, {
-            continued: true,
-          });
-          doc.text(`   |   Turno: ${turma.turno}`);
-
-          doc.text(`   Status: ${turma.status}`, { continued: true });
-          const vagasDisponiveis = (turma.vagas || 0) - (turma.matriculas?.length || 0);
-          doc.text(
-            `   |   Vagas: ${vagasDisponiveis} de ${turma.vagas || 0}`
-          );
-
-          doc.text(
-            `   Período: ${turma.data_inicio || 'N/A'} até ${
-              turma.data_fim || 'N/A'
-            }`
-          );
-
-          if (turma.instrutores && turma.instrutores.length > 0) {
-            const instrutoresNomes = turma.instrutores.map((i: any) => i.nome).join(', ');
-            doc.text(`   Instrutores: ${instrutoresNomes}`);
-          }
-
-          doc.text(`   Alunos Matriculados: ${turma.matriculas?.length || 0}`);
-
-          doc.moveDown(1);
-        });
-
-        // Footer - adicionar em todas as páginas criadas
-        const totalPages = doc.bufferedPageRange().count;
-        for (let i = 0; i < totalPages; i++) {
-          doc.switchToPage(i);
-          doc
-            .fontSize(8)
-            .fillColor('#999')
-            .text(
-              `Página ${i + 1} de ${totalPages} | SECTI - Sistema de Gestão`,
-              50,
-              doc.page.height - 50,
-              { align: 'center' }
-            );
-        }
-
-        doc.end();
-      } catch (error) {
-        reject(error);
+      if (filters.id_curso) {
+        where.id_curso = filters.id_curso;
       }
-    });
+      if (filters.status) {
+        where.status = filters.status;
+      }
+
+      console.log('🔍 Gerando PDF de turmas com filtros:', filters);
+
+      const classes: any[] = await Class.findAll({
+        where,
+        include: [
+          {
+            model: Course,
+            as: 'curso',
+          },
+          {
+            model: Instructor,
+            as: 'instrutores',
+          },
+        ],
+        raw: false,
+        order: [['nome', 'ASC']],
+      });
+
+      console.log('📊 Turmas encontradas:', classes.length);
+
+      // Carregar contagem de matrículas para cada turma
+      const classesComMatriculas = await Promise.all(
+        classes.map(async (turma) => {
+          const totalMatriculas = await this.countClassEnrollments(turma.id);
+          return {
+            ...turma.toJSON ? turma.toJSON() : turma,
+            totalMatriculas,
+          };
+        })
+      );
+
+      return new Promise((resolve, reject) => {
+        try {
+          const doc = new PDFDocument({ margin: 50, size: 'A4', bufferPages: true });
+          const chunks: Buffer[] = [];
+
+          doc.on('data', (chunk) => chunks.push(chunk));
+          doc.on('end', () => resolve(Buffer.concat(chunks)));
+
+          // Header
+          doc
+            .fontSize(20)
+            .fillColor('#667eea')
+            .text('Relatório de Turmas', { align: 'center' });
+
+          doc.moveDown(0.5);
+          doc
+            .fontSize(10)
+            .fillColor('#666')
+            .text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, {
+              align: 'center',
+            });
+
+          doc.moveDown(2);
+
+          // Estatísticas gerais
+          doc
+            .fontSize(14)
+            .fillColor('#333')
+            .text('Estatísticas Gerais', { underline: true });
+          doc.moveDown(0.5);
+
+          const totalTurmas = classesComMatriculas.length;
+          const turmasAtivas = classesComMatriculas.filter((c) => c.status === 'ATIVA').length;
+          const totalAlunos = classesComMatriculas.reduce((sum, c) => sum + (c.totalMatriculas || 0), 0);
+          doc.text(`Total de Turmas: ${totalTurmas}`, { continued: true });
+          doc.text(`   |   Turmas Ativas: ${turmasAtivas}`);
+          doc.text(`Total de Alunos Matriculados: ${totalAlunos}`);
+          doc.moveDown(2);
+
+          // Tabela de turmas
+          doc.fontSize(14).fillColor('#333').text('Detalhes das Turmas', {
+            underline: true,
+          });
+          doc.moveDown(1);
+
+          let pageCount = 1;
+        classesComMatriculas.forEach((turma, index) => {
+          try {
+            // Quebra de página se necessário
+            if (doc.y > 650) {
+              doc.addPage();
+              pageCount++;
+            }
+
+            doc
+              .fontSize(12)
+              .fillColor('#667eea')
+              .text(`${index + 1}. ${turma.nome}`, { continued: false });
+
+            doc.fontSize(10).fillColor('#666');
+            doc.text(`   Curso: ${turma.curso?.nome || 'N/A'}`, {
+              continued: true,
+            });
+            
+            const turnoFormatado = this.translateTurno(turma.turno);
+            doc.text(`   |   Turno: ${turnoFormatado}`);
+
+            doc.text(`   Status: ${turma.status}`, { continued: true });
+            const vagasDisponiveis = (turma.vagas || 0) - (turma.totalMatriculas || 0);
+            doc.text(
+              `   |   Vagas: ${vagasDisponiveis}/${turma.vagas || 0} (${turma.totalMatriculas || 0} preenchidas)`
+            );
+
+            // Formatar datas corretamente
+            const dataInicio = turma.data_inicio 
+              ? new Date(turma.data_inicio).toLocaleDateString('pt-BR')
+              : 'N/A';
+            const dataFim = turma.data_fim
+              ? new Date(turma.data_fim).toLocaleDateString('pt-BR')
+              : 'N/A';
+
+            doc.text(
+              `   Período: ${dataInicio} até ${dataFim}`
+            );
+
+            if (turma.instrutores && turma.instrutores.length > 0) {
+              const instrutoresNomes = turma.instrutores.map((i: any) => i.nome).join(', ');
+              doc.text(`   Instrutores: ${instrutoresNomes}`);
+            }
+
+            doc.moveDown(1);
+          } catch (itemError) {
+            console.error('Erro ao processar turma:', turma.nome, itemError);
+            doc.text(`   ERRO: Não foi possível processar esta turma`);
+            doc.moveDown(1);
+          }
+        });
+
+          // Footer - adicionar em todas as páginas criadas
+          const totalPages = doc.bufferedPageRange().count;
+          for (let i = 0; i < totalPages; i++) {
+            doc.switchToPage(i);
+            doc
+              .fontSize(8)
+              .fillColor('#999')
+              .text(
+                `Página ${i + 1} de ${totalPages} | SECTI - Sistema de Gestão`,
+                50,
+                doc.page.height - 50,
+                { align: 'center' }
+              );
+          }
+
+          doc.end();
+        } catch (error) {
+          console.error('Erro ao gerar PDF:', error);
+          reject(error);
+        }
+      });
+    } catch (error) {
+      console.error('Erro em generateClassesPDF:', error);
+      throw error;
+    }
   }
 
   /**
@@ -513,8 +577,9 @@ class ReportService {
           as: 'turmas',
           include: [
             {
-              model: Enrollment,
-              as: 'matriculas',
+              model: Student,
+              as: 'alunos',
+              attributes: ['id', 'nome', 'email'],
             },
           ],
         },
@@ -570,7 +635,7 @@ class ReportService {
           }
 
           const totalAlunos = course.turmas?.reduce(
-            (sum, t) => sum + (t.matriculas?.length || 0),
+            (sum, t) => sum + (t.alunos?.length || 0),
             0
           );
 
@@ -714,85 +779,125 @@ class ReportService {
    * Gera relatório de turmas em Excel
    */
   async generateClassesExcel(filters: ReportFilters): Promise<Buffer> {
-    const where: any = {};
+    try {
+      const where: any = {};
 
-    if (filters.id_curso) {
-      where.id_curso = filters.id_curso;
-    }
-    if (filters.status) {
-      where.status = filters.status;
-    }
+      if (filters.id_curso) {
+        where.id_curso = filters.id_curso;
+      }
+      if (filters.status) {
+        where.status = filters.status;
+      }
 
-    const classes = await Class.findAll({
-      where,
-      include: [
-        { model: Course, as: 'curso' },
-        { model: Instructor, as: 'instrutores' },
-        { model: Enrollment, as: 'matriculas' },
-      ],
-      order: [['nome', 'ASC']],
-    });
+      console.log('🔍 Gerando Excel de turmas com filtros:', filters);
 
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Turmas');
-
-    worksheet.columns = [
-      { header: 'ID', key: 'id', width: 10 },
-      { header: 'Nome', key: 'nome', width: 25 },
-      { header: 'Curso', key: 'curso', width: 25 },
-      { header: 'Turno', key: 'turno', width: 12 },
-      { header: 'Status', key: 'status', width: 12 },
-      { header: 'Data Início', key: 'data_inicio', width: 15 },
-      { header: 'Data Fim', key: 'data_fim', width: 15 },
-      { header: 'Instrutor', key: 'instrutor', width: 25 },
-      { header: 'Vagas Totais', key: 'vagas_totais', width: 15 },
-      { header: 'Vagas Disponíveis', key: 'vagas_disponiveis', width: 18 },
-      { header: 'Alunos Matriculados', key: 'alunos', width: 20 },
-    ];
-
-    // Estilizar header
-    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    worksheet.getRow(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF667EEA' },
-    };
-    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
-
-    // Adicionar dados
-    classes.forEach((turma: any) => {
-      const instrutoresNomes = turma.instrutores && turma.instrutores.length > 0
-        ? turma.instrutores.map((i: any) => i.nome).join(', ')
-        : 'Não atribuído';
-      
-      worksheet.addRow({
-        id: turma.id,
-        nome: turma.nome,
-        curso: turma.curso?.nome || 'N/A',
-        turno: turma.turno,
-        status: turma.status,
-        data_inicio: turma.data_inicio || 'N/A',
-        data_fim: turma.data_fim || 'N/A',
-        instrutor: instrutoresNomes,
-        vagas_totais: turma.vagas_totais,
-        vagas_disponiveis: turma.vagas_disponiveis,
-        alunos: turma.matriculas?.length || 0,
+      const classes = await Class.findAll({
+        where,
+        include: [
+          { model: Course, as: 'curso' },
+          { model: Instructor, as: 'instrutores' },
+        ],
+        raw: false,
+        order: [['nome', 'ASC']],
       });
-    });
 
-    // Adicionar bordas
-    worksheet.eachRow((row) => {
-      row.eachCell((cell) => {
-        cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' },
-        };
+      console.log('📊 Turmas encontradas para Excel:', classes.length);
+
+      // Carregar contagem de matrículas para cada turma
+      const classesComMatriculas = await Promise.all(
+        classes.map(async (turma) => {
+          const totalMatriculas = await this.countClassEnrollments(turma.id);
+          return {
+            ...turma.toJSON ? turma.toJSON() : turma,
+            totalMatriculas,
+          };
+        })
+      );
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Turmas');
+
+      worksheet.columns = [
+        { header: 'ID', key: 'id', width: 10 },
+        { header: 'Nome', key: 'nome', width: 25 },
+        { header: 'Curso', key: 'curso', width: 25 },
+        { header: 'Turno', key: 'turno', width: 12 },
+        { header: 'Status', key: 'status', width: 12 },
+        { header: 'Data Início', key: 'data_inicio', width: 15 },
+        { header: 'Data Fim', key: 'data_fim', width: 15 },
+        { header: 'Instrutor', key: 'instrutor', width: 25 },
+        { header: 'Vagas Totais', key: 'vagas_totais', width: 15 },
+        { header: 'Vagas Disponíveis', key: 'vagas_disponiveis', width: 18 },
+        { header: 'Alunos Matriculados', key: 'alunos', width: 20 },
+      ];
+
+      // Estilizar header
+      worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF667EEA' },
+      };
+      worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+      // Adicionar dados
+      classesComMatriculas.forEach((turma: any) => {
+        try {
+          const instrutoresNomes = turma.instrutores && turma.instrutores.length > 0
+            ? turma.instrutores.map((i: any) => i.nome).join(', ')
+            : 'Não atribuído';
+          
+          // Formatar datas corretamente
+          const dataInicio = turma.data_inicio 
+            ? new Date(turma.data_inicio).toLocaleDateString('pt-BR')
+            : 'N/A';
+          const dataFim = turma.data_fim
+            ? new Date(turma.data_fim).toLocaleDateString('pt-BR')
+            : 'N/A';
+          
+          // Traduzir turno
+          const turnoFormatado = this.translateTurno(turma.turno);
+          
+          // Calcular vagas disponíveis
+          const vagasDisponiveis = (turma.vagas || 0) - (turma.totalMatriculas || 0);
+          
+          worksheet.addRow({
+            id: turma.id,
+            nome: turma.nome,
+            curso: turma.curso?.nome || 'N/A',
+            turno: turnoFormatado,
+            status: turma.status,
+            data_inicio: dataInicio,
+            data_fim: dataFim,
+            instrutor: instrutoresNomes,
+            vagas_totais: turma.vagas || 0,
+            vagas_disponiveis: vagasDisponiveis,
+            alunos: turma.totalMatriculas || 0,
+          });
+        } catch (rowError) {
+          console.error('Erro ao processar turma para Excel:', turma.nome, rowError);
+        }
       });
-    });
 
-    return (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
+      // Adicionar bordas
+      worksheet.eachRow((row) => {
+        row.eachCell((cell) => {
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' },
+          };
+        });
+      });
+
+      const buffer = (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
+      console.log('✅ Excel gerado com sucesso:', buffer.length, 'bytes');
+      return buffer;
+    } catch (error) {
+      console.error('Erro em generateClassesExcel:', error);
+      throw error;
+    }
   }
 
   /**
@@ -1149,6 +1254,102 @@ class ReportService {
     });
 
     return (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
+  }
+
+  /**
+   * Gera relatório de cursos em Excel
+   */
+  async generateCoursesExcel(filters: ReportFilters): Promise<Buffer> {
+    try {
+      const courses: any[] = await Course.findAll({
+        include: [
+          {
+            model: Class,
+            as: 'turmas',
+            attributes: ['id', 'nome', 'vagas', 'turno', 'status'],
+            include: [
+              {
+                model: Student,
+                as: 'alunos',
+                attributes: ['id'],
+                through: { attributes: [] }, // Não incluir atributos da tabela de junção
+              },
+            ],
+          },
+        ],
+        attributes: ['id', 'nome', 'descricao', 'carga_horaria', 'nivel', 'status'],
+        order: [['nome', 'ASC']],
+      });
+
+      console.log('📊 Cursos encontrados para Excel:', courses.length);
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Cursos');
+
+      worksheet.columns = [
+        { header: 'ID', key: 'id', width: 10 },
+        { header: 'Nome', key: 'nome', width: 30 },
+        { header: 'Descrição', key: 'descricao', width: 40 },
+        { header: 'Carga Horária', key: 'carga_horaria', width: 15 },
+        { header: 'Nível', key: 'nivel', width: 12 },
+        { header: 'Status', key: 'status', width: 12 },
+        { header: 'Turmas', key: 'turmas_count', width: 12 },
+        { header: 'Total Alunos', key: 'total_alunos', width: 15 },
+      ];
+
+      // Estilizar header
+      worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF667EEA' },
+      };
+      worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+      // Adicionar dados
+      courses.forEach((course: any) => {
+        try {
+          const courseData = course.toJSON ? course.toJSON() : course;
+          
+          const totalAlunos = courseData.turmas?.reduce(
+            (sum, t) => sum + (t.alunos?.length || 0),
+            0
+          ) || 0;
+
+          worksheet.addRow({
+            id: courseData.id,
+            nome: courseData.nome || 'N/A',
+            descricao: courseData.descricao || 'N/A',
+            carga_horaria: courseData.carga_horaria || 'N/A',
+            nivel: courseData.nivel || 'N/A',
+            status: courseData.status || 'Ativo',
+            turmas_count: courseData.turmas?.length || 0,
+            total_alunos: totalAlunos,
+          });
+        } catch (rowError) {
+          console.error('Erro ao processar curso para Excel:', course.nome, rowError);
+        }
+      });
+
+      // Adicionar bordas
+      worksheet.eachRow((row) => {
+        row.eachCell((cell) => {
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' },
+          };
+        });
+      });
+
+      const buffer = (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
+      console.log('✅ Excel de cursos gerado com sucesso:', buffer.length, 'bytes');
+      return buffer;
+    } catch (error) {
+      console.error('Erro em generateCoursesExcel:', error);
+      throw new AppError('Erro ao gerar relatório de cursos em Excel', 500);
+    }
   }
 }
 

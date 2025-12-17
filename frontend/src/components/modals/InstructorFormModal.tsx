@@ -33,6 +33,7 @@ const InstructorFormModal = ({ isOpen, onClose, instructorData, mode }: Instruct
     name: "",
     cpf: "",
     email: "",
+    phone: "",
     birthDate: "",
     address: "",
     specialization: "",
@@ -47,6 +48,7 @@ const InstructorFormModal = ({ isOpen, onClose, instructorData, mode }: Instruct
         name: instructorData.name || "",
         cpf: instructorData.cpf || "",
         email: instructorData.email || "",
+        phone: instructorData.phone || "",
         birthDate: instructorData.birthDate || "",
         address: instructorData.address || "",
         specialization: instructorData.specialization || "",
@@ -59,6 +61,7 @@ const InstructorFormModal = ({ isOpen, onClose, instructorData, mode }: Instruct
         name: "",
         cpf: "",
         email: "",
+        phone: "",
         birthDate: "",
         address: "",
         specialization: "",
@@ -95,9 +98,7 @@ const InstructorFormModal = ({ isOpen, onClose, instructorData, mode }: Instruct
 
     try {
       if (mode === "create") {
-        await addInstructor({ ...formData, phone: '', classes: [] });
-      } else if (instructorData) {
-        await updateInstructor(instructorData.id, formData);
+        await addInstructor({ ...formData, classes: [] });
       }
 
       const action = mode === "create" ? "CADASTRADO" : "ATUALIZADO";
@@ -158,6 +159,16 @@ const InstructorFormModal = ({ isOpen, onClose, instructorData, mode }: Instruct
                 value={formData.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 placeholder="joao@sukatech.com"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefone</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => handleInputChange("phone", e.target.value)}
+                placeholder="(XX) XXXXX-XXXX"
               />
             </div>
 

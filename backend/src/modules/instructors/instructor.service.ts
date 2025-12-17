@@ -30,6 +30,7 @@ export interface CreateInstructorData {
   cpf: string;
   nome: string;
   email: string;
+  telefone?: string | null;
   especialidade?: string | null;
 }
 
@@ -40,6 +41,7 @@ interface UpdateInstructorData {
   cpf?: string;
   nome?: string;
   email?: string;
+  telefone?: string | null;
   endereco?: string | null;
   data_nascimento?: string | null;
   especialidade?: string | null;
@@ -93,7 +95,7 @@ class InstructorService {
     // Buscar instrutores com paginação (skip COUNT para evitar pool timeout)
     const data = await Instructor.findAll({
       where,
-      attributes: ['id', 'cpf', 'nome', 'email', 'endereco', 'data_nascimento', 'especialidade', 'experiencia', 'status', 'createdAt', 'updatedAt'],
+      attributes: ['id', 'cpf', 'nome', 'email', 'telefone', 'endereco', 'data_nascimento', 'especialidade', 'experiencia', 'status', 'createdAt', 'updatedAt'],
       include: [
         {
           model: Class,
@@ -194,6 +196,7 @@ class InstructorService {
       cpf: cleanCPF,
       nome: data.nome,
       email: data.email.toLowerCase(),
+      telefone: data.telefone || null,
       especialidade: data.especialidade || null
     });
 
@@ -224,6 +227,7 @@ class InstructorService {
     if (data.cpf !== undefined) instructor.cpf = data.cpf;
     if (data.nome !== undefined) instructor.nome = data.nome;
     if (data.email !== undefined) instructor.email = data.email.toLowerCase();
+    if (data.telefone !== undefined) instructor.telefone = data.telefone;
     if (data.endereco !== undefined) instructor.endereco = data.endereco;
     if (data.data_nascimento !== undefined) instructor.data_nascimento = data.data_nascimento;
     if (data.especialidade !== undefined) instructor.especialidade = data.especialidade;

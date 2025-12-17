@@ -100,12 +100,10 @@ const Courses = () => {
                 return response.data;
               }}
               onExportExcel={async () => {
-                // Cursos só tem PDF no backend por enquanto, podemos usar o mesmo
-                const response = await ReportsAPI.coursesPDF();
+                const response = await ReportsAPI.coursesExcel();
                 return response.data;
               }}
               filename="relatorio-cursos"
-              showExcel={false}
               size="sm"
             />
             <Button
@@ -180,11 +178,6 @@ const Courses = () => {
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <Users className="h-4 w-4" />
                     <span>{course.students} alunos matriculados</span>
-                  </div>
-
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <GraduationCap className="h-4 w-4" />
-                    <span>Taxa de conclusão: 85%</span>
                   </div>
 
                   <div className="pt-2 border-t">

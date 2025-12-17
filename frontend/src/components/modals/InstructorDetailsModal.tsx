@@ -32,28 +32,6 @@ const InstructorDetailsModal = ({ isOpen, onClose, instructor }: InstructorDetai
 
   if (!instructor) return null;
 
-  const handleEditInstructor = () => {
-    toast({
-      title: "Editar Instrutor",
-      description: "Funcionalidade em desenvolvimento",
-    });
-  };
-
-  const handleAssignClass = () => {
-    toast({
-      title: "Atribuir Turma",
-      description: "Funcionalidade em desenvolvimento",
-    });
-  };
-
-  const handleDeleteInstructor = () => {
-    toast({
-      title: "Excluir Cadastro",
-      description: "Tem certeza que deseja excluir este instrutor?",
-      variant: "destructive",
-    });
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl bg-card border-none">
@@ -85,9 +63,9 @@ const InstructorDetailsModal = ({ isOpen, onClose, instructor }: InstructorDetai
                   <span className="text-muted-foreground">Telefone:</span>
                   <span className="font-medium">{instructor.phone}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="w-full">
                   <span className="text-muted-foreground">Endereço:</span>
-                  <span className="font-medium">{instructor.address}</span>
+                  <p className="font-medium mt-1">{instructor.address}</p>
                 </div>
               </div>
             </div>
@@ -105,58 +83,27 @@ const InstructorDetailsModal = ({ isOpen, onClose, instructor }: InstructorDetai
                   <span className="text-muted-foreground">Experiência:</span>
                   <span className="font-medium">{instructor.experience}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Cursos ministrados:</span>
-                  <span className="font-medium">{instructor.classes.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Turmas ativas:</span>
-                  <span className="font-medium">{instructor.classes.filter(c => c.name.includes('Ativa')).length || 1}</span>
-                </div>
               </div>
             </div>
           </div>
 
-          {/* Configurações */}
+          {/* Turmas Atuais */}
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-3">Configurações</h3>
-              <div className="space-y-3">
-                <Button
-                  onClick={handleEditInstructor}
-                  variant="outline"
-                  className="w-full justify-start text-primary hover:text-primary"
-                >
-                  Editar informações
-                </Button>
-                <Button
-                  onClick={handleAssignClass}
-                  variant="outline"
-                  className="w-full justify-start text-primary hover:text-primary"
-                >
-                  Atribuir Turma
-                </Button>
-                <Button
-                  onClick={handleDeleteInstructor}
-                  variant="outline"
-                  className="w-full justify-start text-destructive hover:text-destructive"
-                >
-                  Excluir cadastro
-                </Button>
-              </div>
-            </div>
-
-            <Separator />
-
             <div>
               <h3 className="text-lg font-semibold text-foreground mb-3">Turmas Atuais</h3>
               <div className="space-y-2">
-                {instructor.classes.map((classItem) => (
-                  <div key={classItem.id} className="p-3 bg-muted/20 rounded-lg">
-                    <div className="font-medium">{classItem.name}</div>
-                    <div className="text-sm text-muted-foreground">{classItem.course}</div>
+                {instructor.classes.length > 0 ? (
+                  instructor.classes.map((classItem) => (
+                    <div key={classItem.id} className="p-3 bg-muted/20 rounded-lg">
+                      <div className="font-medium">{classItem.name}</div>
+                      <div className="text-sm text-muted-foreground">{classItem.course}</div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-3 bg-muted/20 rounded-lg text-muted-foreground">
+                    Nenhuma turma atribuída
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>

@@ -26,7 +26,7 @@ const menuItems = [
   { icon: UserCheck, label: "Instrutores", path: "/instrutores" },
   // { icon: Calendar, label: "Frequência", path: "/frequencia" }, // Página ocultada
   { icon: Calendar, label: "Eventos", path: "/calendario" },
-  { icon: ClipboardList, label: "Cadastro", path: "/cadastro" },
+  // { icon: ClipboardList, label: "Cadastro", path: "/cadastro" }, // Ocultado
   { icon: FileText, label: "Relatórios", path: "/relatorios" },
 ];
 

@@ -6,6 +6,7 @@ class Instructor extends Model<InferAttributes<Instructor>, InferCreationAttribu
   declare cpf: string;
   declare nome: string;
   declare email: string;
+  declare telefone: string | null;
   declare endereco: string | null;
   declare data_nascimento: string | null;
   declare especialidade: string | null;
@@ -34,6 +35,10 @@ Instructor.init({
     type: DataTypes.STRING(100),
     allowNull: false,
     unique: true,
+  },
+  telefone: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
   },
   endereco: {
     type: DataTypes.STRING(255),

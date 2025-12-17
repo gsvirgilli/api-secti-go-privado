@@ -67,7 +67,7 @@ interface BackendInstructor {
   especialidade?: string;
   experiencia?: string;
   status?: string;
-  turmas?: Array<{ id?: number; nome?: string; status?: string; curso?: { nome?: string } }>;
+  turmas_instrutor?: Array<{ id?: number; nome?: string; status?: string; curso?: { nome?: string } }>;
 }
 
 type BackendCandidate = Candidate;
@@ -98,6 +98,7 @@ type InstructorPayload = {
   nome: string;
   cpf: string;
   email: string;
+  telefone?: string;
   data_nascimento?: string | null;
   endereco?: string;
   especialidade?: string;
@@ -225,22 +226,27 @@ const mapBackendStudent = (student: BackendStudent): Student => ({
   grades: 0
 });
 
-const countCourseStudents = (turmas?: BackendCourseTurma[]) => {
-  if (!turmas) return 0;
-  return turmas.reduce((sum, turma) => sum + (turma.alunos?.length ?? 0), 0);
-};
+const mapBackendCourse = (course: BackendCourse, classesData: Class[] = []): Course => {
+  // Contar alunos a partir das turmas incluídas no response ou do classesData
+  let studentCount = (course as any)._enrollmentCount ?? 0;
 
-const mapBackendCourse = (course: BackendCourse): Course => ({
-  id: course.id ?? 0,
-  title: course.nome || '',
-  description: course.descricao || '',
-  duration: `${course.carga_horaria ?? 0}h`,
-  // Usar _enrollmentCount do backend (mais confiável), fallback para contar turmas
-  students: (course as any)._enrollmentCount ?? countCourseStudents(course.turmas),
-  level: mapCourseLevel(course.nivel),
-  status: mapCourseStatus(course.status),
-  color: 'bg-blue-500'
-});
+  // Se não tiver _enrollmentCount, tentar contar a partir das turmas do curso
+  if (!studentCount && classesData.length > 0) {
+    const courseClasses = classesData.filter(c => c.courseId === course.id);
+    studentCount = courseClasses.reduce((sum, c) => sum + (c.enrolled || 0), 0);
+  }
+
+  return {
+    id: course.id ?? 0,
+    title: course.nome || '',
+    description: course.descricao || '',
+    duration: `${course.carga_horaria ?? 0}h`,
+    students: studentCount,
+    level: mapCourseLevel(course.nivel),
+    status: mapCourseStatus(course.status),
+    color: 'bg-blue-500'
+  };
+};
 
 const mapClassStudents = (alunos?: BackendClass['alunos']) =>
   (alunos || []).map(aluno => ({
@@ -259,6 +265,7 @@ const mapBackendClass = (classData: BackendClass): Class => {
     id: classData.id ?? 0,
     name: classData.nome || '',
     course: classData.curso?.nome || (classData.id_curso?.toString() || ''),
+    courseId: classData.id_curso,
     instructor: firstInstructor?.nome || 'A definir',
     instructorId: firstInstructor?.id,
     instructors: instructors.map(i => ({ id: i.id, name: i.nome })),
@@ -285,7 +292,7 @@ const mapBackendInstructor = (instructor: BackendInstructor): Instructor => ({
   specialization: instructor.especialidade || '',
   experience: instructor.experiencia || '',
   status: normalizeStatus(instructor.status),
-  classes: (instructor.turmas || []).map(turma => ({
+  classes: (instructor.turmas_instrutor || []).map(turma => ({
     id: turma.id ?? 0,
     name: turma.nome || '',
     course: turma.curso?.nome || ''
@@ -388,8 +395,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           return { data: { data: { data: [] } } };
         });
         const backendCourses = unwrapNestedArray<BackendCourse>(coursesRes.data);
-        const mappedCourses = backendCourses.map(mapBackendCourse);
-        setCourses(mappedCourses);
 
         // Depois carregar turmas e instrutores em paralelo
         const [classesRes, instructorsRes] = await Promise.all([
@@ -400,6 +405,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const backendClasses = unwrapNestedArray<BackendClass>(classesRes.data);
         const mappedClasses = backendClasses.map(mapBackendClass);
         setClasses(mappedClasses);
+
+        // Agora mapear cursos com os dados das turmas já carregadas
+        const mappedCourses = backendCourses.map(course => mapBackendCourse(course, mappedClasses));
+        setCourses(mappedCourses);
 
         const backendInstructors = unwrapNestedArray<BackendInstructor>(instructorsRes.data);
         const mappedInstructors = backendInstructors.map(mapBackendInstructor);
@@ -626,7 +635,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await CoursesAPI.list({ limit: 100 });
       const backendCourses = unwrapNestedArray<BackendCourse>(response.data);
-      setCourses(backendCourses.map(mapBackendCourse));
+      setCourses(backendCourses.map(course => mapBackendCourse(course, classes)));
       setError(null);
     } catch (err: unknown) {
       const errorMessage = buildErrorMessage(err, 'Erro ao carregar cursos');
@@ -655,7 +664,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       const response = await CoursesAPI.create(backendData);
       const backendCourse = response.data.data;
-      const newCourse = mapBackendCourse(backendCourse);
+      const newCourse = mapBackendCourse(backendCourse, classes);
       setCourses(prev => [...prev, newCourse]);
 
       return newCourse;
@@ -893,6 +902,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         nome: instructorData.name,
         cpf: instructorData.cpf.replace(/\D/g, ''),
         email: instructorData.email,
+        telefone: instructorData.phone,
         data_nascimento: instructorData.birthDate || null,
         endereco: instructorData.address,
         especialidade: instructorData.specialization,
@@ -917,6 +927,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (instructorData.name !== undefined) backendData.nome = instructorData.name;
       if (instructorData.cpf !== undefined) backendData.cpf = instructorData.cpf.replace(/\D/g, '');
       if (instructorData.email !== undefined) backendData.email = instructorData.email;
+      if (instructorData.phone !== undefined) backendData.telefone = instructorData.phone;
       if (instructorData.birthDate !== undefined) backendData.data_nascimento = instructorData.birthDate || null;
       if (instructorData.address !== undefined) backendData.endereco = instructorData.address;
       if (instructorData.specialization !== undefined) backendData.especialidade = instructorData.specialization;

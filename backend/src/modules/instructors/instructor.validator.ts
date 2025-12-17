@@ -22,6 +22,12 @@ export const createInstructorSchema = z.object({
     .toLowerCase()
     .trim(),
 
+  telefone: z
+    .string()
+    .max(20, 'Telefone deve ter no máximo 20 caracteres')
+    .optional()
+    .nullable(),
+
   especialidade: z
     .string()
     .max(100, 'Especialidade deve ter no máximo 100 caracteres')
@@ -54,6 +60,12 @@ export const updateInstructorSchema = z.object({
     .toLowerCase()
     .trim()
     .optional(),
+
+  telefone: z
+    .string()
+    .max(20, 'Telefone deve ter no máximo 20 caracteres')
+    .optional()
+    .nullable(),
 
   endereco: z
     .string()

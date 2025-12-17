@@ -328,7 +328,7 @@ export const InstructorsAPI = {
   findByEmail: (email: string) => 
     api.get(`/instructors/email/${email}`),
   
-  create: (data: { cpf: string; nome: string; email: string; especialidade?: string }) => 
+  create: (data: { cpf: string; nome: string; email: string; telefone?: string; especialidade?: string }) => 
     api.post("/instructors", data),
   
   update: (id: number, data: ApiData) => 
@@ -449,6 +449,12 @@ export const ReportsAPI = {
 
   classesExcel: (params?: { id_curso?: number; status?: string }) =>
     api.get("/reports/classes/excel", {
+      params,
+      responseType: "blob",
+    }),
+
+  coursesExcel: (params?: {}) =>
+    api.get("/reports/courses/excel", {
       params,
       responseType: "blob",
     }),

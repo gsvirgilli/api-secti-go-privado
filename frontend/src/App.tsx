@@ -17,7 +17,7 @@ import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import NewPassword from "./pages/NewPassword";
 import Profile from "./pages/Profile";
-import Cadastro from "./pages/Cadastro";
+// import Cadastro from "./pages/Cadastro"; // Página de Cadastro ocultada
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 import Reports from "./pages/Reports";
@@ -59,7 +59,7 @@ const App = () => {
                   <Route path="/relatorios" element={<Layout><Reports /></Layout>} />
                   <Route path="/admin" element={<Layout><Dashboard /></Layout>} />
                   <Route path="/perfil" element={<Layout><Profile /></Layout>} />
-                  <Route path="/cadastro" element={<Layout><Cadastro /></Layout>} />
+                  {/* <Route path="/cadastro" element={<Layout><Cadastro /></Layout>} /> */} {/* Página de Cadastro ocultada */}
                   <Route path="/processo-seletivo-admin" element={<Layout><ProcessoSeletivo /></Layout>} />
                   <Route path="/notificacoes" element={<Layout><Notifications /></Layout>} />
                   <Route path="/calendario" element={<Layout><CalendarPage /></Layout>} />
