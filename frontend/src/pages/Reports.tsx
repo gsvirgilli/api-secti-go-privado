@@ -352,28 +352,6 @@ const Reports = () => {
           }));
         break;
 
-      case 'desempenho-geral':
-        reportData = students.map(s => ({
-          Nome: s.name,
-          Curso: s.course,
-          Turma: s.class,
-          Status: s.status,
-          'Progresso (%)': s.progress,
-          'Frequência (%)': s.attendance,
-          'Nota Média': s.grades
-        }));
-        break;
-
-      case 'frequencia':
-        reportData = students.map(s => ({
-          Nome: s.name,
-          Curso: s.course,
-          Turma: s.class,
-          'Frequência (%)': s.attendance,
-          Status: s.status
-        }));
-        break;
-
       case 'matriculas':
         reportData = students.map(s => ({
           Nome: s.name,
@@ -413,8 +391,6 @@ const Reports = () => {
   const reportTypes = [
     { id: "students", label: "Dados dos Alunos", icon: Users },
     { id: "classes", label: "Informações das Turmas", icon: Calendar },
-    { id: "performance", label: "Desempenho Acadêmico", icon: TrendingUp },
-    { id: "attendance", label: "Controle de Frequência", icon: BarChart3 },
     { id: "instructors", label: "Dados dos Instrutores", icon: Users },
     { id: "courses", label: "Estatísticas dos Cursos", icon: FileText },
   ];
@@ -620,110 +596,7 @@ const Reports = () => {
 
           {/* Charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Students per Course */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm font-normal">
-                  <BarChart3 className="h-4 w-4" />
-                  Alunos por Curso
-                  {dashboardData && (
-                    <Badge variant="outline" className="ml-auto text-xs">API</Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="h-60 flex items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : (
-                  <div className="h-60">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={studentsPerCourse}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip
-                          content={({ active, payload, label }) => {
-                            if (active && payload && payload.length) {
-                              const data = payload[0].payload;
-                              return (
-                                <div className="bg-white p-3 border rounded-lg shadow-lg">
-                                  <p className="font-semibold text-sm">{label}</p>
-                                  <div className="space-y-1 mt-2">
-                                    <p className="text-xs text-green-600">
-                                      Ativos: {data.active} alunos
-                                    </p>
-                                    <p className="text-xs text-red-600">
-                                      Não Ativos: {data.inactive} alunos
-                                    </p>
-                                    <p className="text-xs text-blue-600">
-                                      Total: {data.students} alunos
-                                    </p>
-                                  </div>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <Bar dataKey="active" stackId="a" fill="#10b981" name="Ativos" />
-                        <Bar dataKey="inactive" stackId="a" fill="#ef4444" name="Não Ativos" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
-            {/* Performance Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm font-normal">
-                  <PieChart className="h-4 w-4" />
-                  Distribuição de Desempenho
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-60">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsPieChart>
-                      <Pie
-                        data={performanceData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={120}
-                        paddingAngle={2}
-                        dataKey="value"
-                      >
-                        {performanceData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        content={({ active, payload, label }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-white p-3 border rounded-lg shadow-lg">
-                                <p className="font-semibold text-sm">{data.name}</p>
-                                <div className="space-y-1 mt-2">
-                                  <p className="text-xs text-gray-600">
-                                    Alunos: {data.value}%
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                    </RechartsPieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Monthly Enrollments */}
             <Card>
@@ -820,177 +693,11 @@ const Reports = () => {
 
             {/* Gráficos movidos da página de alunos */}
 
-            {/* Evolução Temporal */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm font-normal">
-                  <TrendingUp className="h-4 w-4 text-green-500" />
-                  Evolução Temporal
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-60">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsLineChart data={timeEvolutionData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip
-                        content={({ active, payload, label }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-white p-3 border rounded-lg shadow-lg">
-                                <p className="font-semibold text-sm">{label}</p>
-                                <div className="space-y-1 mt-2">
-                                  <p className="text-xs text-green-600">
-                                    Total: {data.students} alunos
-                                  </p>
-                                  <p className="text-xs text-green-600">
-                                    Novos: {data.newStudents} alunos
-                                  </p>
-                                  <p className="text-xs text-purple-600">
-                                    Formados: {data.graduated} alunos
-                                  </p>
-                                  <p className="text-xs text-red-600">
-                                    Evasão: {data.dropouts || 0} alunos
-                                  </p>
-                                  <p className="text-xs text-orange-600">
-                                    Transferências: {data.transfers || 0} alunos
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="students"
-                        stroke="#10b981"
-                        strokeWidth={3}
-                        name="Total de Alunos"
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="newStudents"
-                        stroke="#10b981"
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        name="Novos Alunos"
-                      />
-                    </RechartsLineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Retenção por Curso */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm font-normal">
-                  <BarChart3 className="h-4 w-4 text-primary" />
-                  Retenção por Curso
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-60">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={retentionData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="course" />
-                      <YAxis domain={[0, 100]} />
-                      <Tooltip
-                        content={({ active, payload, label }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-white p-3 border rounded-lg shadow-lg">
-                                <p className="font-semibold text-sm">{label}</p>
-                                <div className="space-y-1 mt-2">
-                                  <p className="text-xs text-green-600">
-                                    Retenção: {data.retention}%
-                                  </p>
-                                  <p className="text-xs text-green-600">
-                                    Total: {data.totalStudents} alunos
-                                  </p>
-                                  <p className="text-xs text-purple-600">
-                                    Média: {data.avgGrade}
-                                  </p>
-                                  <p className="text-xs text-orange-600">
-                                    Conclusão: {data.completionRate}%
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Bar
-                        dataKey="retention"
-                        fill="#10b981"
-                        name="Taxa de Retenção (%)"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Idade dos Alunos */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm font-normal">
-                  <PieChart className="h-4 w-4 text-orange-500" />
-                  Idade dos Alunos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-60">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsPieChart>
-                      <Pie
-                        data={allCharts.ageDistribution}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={120}
-                        paddingAngle={2}
-                        dataKey="value"
-                      >
-                        {allCharts.ageDistribution.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={entry.color}
-                            className="hover:opacity-80 transition-opacity cursor-pointer"
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        content={({ active, payload, label }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-white p-3 border rounded-lg shadow-lg">
-                                <p className="font-semibold text-sm">{data.name}</p>
-                                <div className="space-y-1 mt-2">
-                                  <p className="text-xs text-gray-600">
-                                    Alunos: {data.value}%
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                    </RechartsPieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+
+
+
           </div>
         </TabsContent>
 
@@ -1150,67 +857,7 @@ const Reports = () => {
               </CardContent>
             </Card>
 
-            {/* Performance Report */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Relatório de Desempenho
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Análise de performance e notas dos alunos
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button
-                  onClick={() => handleQuickReport("Desempenho", "pdf")}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  PDF
-                </Button>
-                <Button
-                  onClick={() => handleQuickReport("Desempenho", "excel")}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Excel
-                </Button>
-              </CardContent>
-            </Card>
 
-            {/* Attendance Report */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Relatório de Frequência
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Controle de presença e faltas dos alunos
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button
-                  onClick={() => handleQuickReport("Frequência", "pdf")}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  PDF
-                </Button>
-                <Button
-                  onClick={() => handleQuickReport("Frequência", "excel")}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Excel
-                </Button>
-              </CardContent>
-            </Card>
 
             {/* Courses Report */}
             <Card>
