@@ -145,6 +145,32 @@ const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: Stu
                   <span className="font-medium">{student.grades}</span>
                 </div>
               </div>
+
+              {/* Seção de múltiplos cursos */}
+              {student.courses && student.courses.length > 0 && (
+                <div className="mt-4 pt-4 border-t">
+                  <h4 className="text-sm font-semibold text-foreground mb-2">Cursos matriculado</h4>
+                  <div className="space-y-2">
+                    {student.courses.map((course) => (
+                      <div key={course.id} className="flex items-center justify-between p-2 bg-muted rounded text-xs">
+                        <span className="font-medium">{course.course?.nome}</span>
+                        <Badge
+                          variant={course.status === 'Ativo' ? 'default' : 'secondary'}
+                          className={
+                            course.status === 'Ativo'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : course.status === 'Concluído'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-red-100 text-red-700'
+                          }
+                        >
+                          {course.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <Separator />
