@@ -480,7 +480,7 @@ const Dashboard = () => {
                   <div className="p-2 bg-primary/10 rounded-lg">
                     <Calendar className="h-5 w-5 text-primary" />
                   </div>
-                  Calendário Acadêmico
+                  Eventos
                 </CardTitle>
               </div>
               <Button variant="outline" className="gap-2" onClick={() => navigate("/calendario")}>

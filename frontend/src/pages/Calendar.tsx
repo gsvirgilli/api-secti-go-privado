@@ -204,7 +204,7 @@ const CalendarPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Calendário Acadêmico</h1>
+          <h1 className="text-3xl font-bold text-foreground">Eventos</h1>
           <p className="text-muted-foreground mt-1">Gerencie eventos e atividades acadêmicas</p>
         </div>
         <Dialog open={isModalOpen} onOpenChange={(open) => {
