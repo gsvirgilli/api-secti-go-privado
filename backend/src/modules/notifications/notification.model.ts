@@ -59,7 +59,6 @@ Notification.init(
     sequelize,
     tableName: 'notifications',
     timestamps: true,
-    underscored: true,
     indexes: [
       {
         fields: ['lido'],

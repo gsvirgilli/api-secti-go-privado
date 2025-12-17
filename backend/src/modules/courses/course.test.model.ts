@@ -73,7 +73,6 @@ CourseTest.init({
   sequelize: testSequelize,
   tableName: 'cursos',
   timestamps: true,
-  underscored: true,
 });
 
 export default CourseTest;

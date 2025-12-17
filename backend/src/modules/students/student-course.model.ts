@@ -79,7 +79,6 @@ StudentCourse.init(
     modelName: 'StudentCourse',
     tableName: 'student_courses',
     timestamps: true,
-    underscored: true,
     indexes: [
       {
         fields: ['student_id', 'course_id'],

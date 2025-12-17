@@ -99,7 +99,6 @@ Student.init({
   sequelize,
   tableName: 'alunos',
   timestamps: true,
-  underscored: true,
   indexes: [
     {
       unique: true,

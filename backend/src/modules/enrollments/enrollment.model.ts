@@ -47,7 +47,6 @@ Enrollment.init({
   sequelize,
   tableName: 'matriculas',
   timestamps: true,
-  underscored: true,
   indexes: [
     {
       unique: true,

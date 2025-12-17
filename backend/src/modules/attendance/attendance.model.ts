@@ -89,7 +89,7 @@ Attendance.init({
   sequelize,
   tableName: 'presenca',
   timestamps: true,
-  underscored: true,
+
   indexes: [
     {
       unique: true,

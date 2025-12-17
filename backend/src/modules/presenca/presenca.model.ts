@@ -45,7 +45,6 @@ Presenca.init({
   sequelize,
   tableName: 'presenca',
   timestamps: true,
-  underscored: true,
 });
 
 export default Presenca;

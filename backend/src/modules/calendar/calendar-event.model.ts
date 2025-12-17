@@ -129,7 +129,6 @@ CalendarEvent.init(
     sequelize,
     tableName: 'calendar_events',
     timestamps: true,
-    underscored: true,
     indexes: [
       {
         fields: ['data_inicio'],

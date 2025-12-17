@@ -56,7 +56,6 @@ PasswordResetToken.init(
     sequelize,
     tableName: 'password_reset_tokens',
     timestamps: true,
-    underscored: true,
     indexes: [
       {
         fields: ['token'],

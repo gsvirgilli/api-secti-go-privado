@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS instrutores (
   especialidade VARCHAR(255),
   telefone VARCHAR(20),
   ativo BOOLEAN DEFAULT TRUE,
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
   updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_instrutores_email (email),
   INDEX idx_instrutores_cpf (cpf)
@@ -108,6 +108,10 @@ CREATE TABLE IF NOT EXISTS candidatos (
   -- Status
   status ENUM('PENDENTE', 'REPROVADO', 'LISTA_ESPERA') DEFAULT 'PENDENTE',
   processo_seletivo_id INT,
+  
+  -- Turmas desejadas
+  id_turma_desejada INT,
+  turma_id INT,
   
   -- Dados pessoais estendidos
   rg VARCHAR(20),
@@ -160,6 +164,8 @@ CREATE TABLE IF NOT EXISTS candidatos (
   -- Índices
   FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE SET NULL,
   FOREIGN KEY (curso_id2) REFERENCES cursos(id) ON DELETE SET NULL,
+  FOREIGN KEY (id_turma_desejada) REFERENCES turmas(id) ON DELETE SET NULL,
+  FOREIGN KEY (turma_id) REFERENCES turmas(id) ON DELETE SET NULL,
   INDEX idx_candidatos_cpf (cpf),
   INDEX idx_candidatos_email (email),
   INDEX idx_candidatos_status (status),
