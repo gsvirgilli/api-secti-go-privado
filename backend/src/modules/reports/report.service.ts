@@ -8,6 +8,14 @@ import Attendance from '../attendance/attendance.model.js';
 import Enrollment from '../enrollments/enrollment.model.js';
 import Candidate from '../Candidates/candidate.model.js';
 import { Op } from 'sequelize';
+
+// Função para formatar CPF
+const formatCPF = (cpf: string): string => {
+  if (!cpf) return '';
+  const cleanCPF = cpf.replace(/\D/g, '');
+  if (cleanCPF.length !== 11) return cpf;
+  return `${cleanCPF.substring(0, 3)}.${cleanCPF.substring(3, 6)}.${cleanCPF.substring(6, 9)}-${cleanCPF.substring(9)}`;
+};
 import { AppError } from '../../utils/AppError.js';
 
 interface ReportFilters {
@@ -157,7 +165,7 @@ class ReportService {
           doc
             .fontSize(10)
             .fillColor('#666')
-            .text(`   CPF: ${student.cpf}`, { continued: true })
+            .text(`   CPF: ${formatCPF(student.cpf)}`, { continued: true })
             .text(`   |   Email: ${student.email}`);
 
           doc.text(`   Matrícula: ${student.matricula}`);
@@ -684,7 +692,7 @@ class ReportService {
       worksheet.addRow({
         id: student.id,
         nome: student.nome,
-        cpf: student.cpf,
+        cpf: formatCPF(student.cpf),
         email: student.email,
         matricula: student.matricula,
         data_nascimento: student.data_nascimento ? new Date(student.data_nascimento).toLocaleDateString('pt-BR') : 'N/A',
