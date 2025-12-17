@@ -290,18 +290,34 @@ const Profile = () => {
         fileInputRef.current.value = '';
       }
 
-      // Atualizar localStorage com novo avatar
-      if (user) {
-        const updatedUser = {
-          ...user,
-          avatar_url: response.data.avatar_url
-        };
-        console.log('Atualizando localStorage com:', updatedUser);
+      // Refetch o usuário atualizado do backend
+      try {
+        const meResponse = await api.get('/users/me');
+        console.log('Usuário atualizado do backend:', meResponse.data);
+
+        const updatedUser = meResponse.data;
         localStorage.setItem('@sukatech:user', JSON.stringify(updatedUser));
 
         // Disparar evento para recarregar o usuário em todo o app
-        console.log('Disparando notifyAuthChange');
+        console.log('Disparando notifyAuthChange após atualizar avatar');
         notifyAuthChange();
+
+        // Atualizar preview com novo avatar
+        if (updatedUser.avatar_url) {
+          setAvatarPreview(updatedUser.avatar_url);
+        }
+      } catch (err) {
+        console.error('Erro ao refetch usuário após upload de avatar:', err);
+        // Fallback: atualizar apenas o avatar_url localmente
+        if (user) {
+          const updatedUser = {
+            ...user,
+            avatar_url: response.data.avatar_url
+          };
+          console.log('Atualizando localStorage com:', updatedUser);
+          localStorage.setItem('@sukatech:user', JSON.stringify(updatedUser));
+          notifyAuthChange();
+        }
       }
     } catch (error: any) {
       console.error('Erro ao enviar avatar:', error);
