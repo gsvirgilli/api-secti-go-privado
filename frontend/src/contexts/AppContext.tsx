@@ -787,8 +787,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       // Se o status foi modificado, incluir no payload
       if (classData.status) {
         const mappedStatus = backendClassStatusValue(classData.status);
+        console.log('🎯 Mapeando status:', { original: classData.status, mapped: mappedStatus, CLASS_STATUS_VALUES });
         backendData.status = mappedStatus;
       }
+
+      console.log('📤 Enviando ao backend:', backendData);
 
       if (Object.keys(backendData).length > 0) {
         await ClassesAPI.update(id, backendData);
