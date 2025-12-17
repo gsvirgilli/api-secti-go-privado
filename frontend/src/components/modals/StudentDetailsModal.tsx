@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, FileText, Trash2 } from "lucide-react";
+import { Edit, FileText, Trash2, Plus } from "lucide-react";
+import { StudentCoursesAPI } from "@/lib/api";
 import type { Student } from "@/types/appContext";
+import { useAppData } from "@/hooks/useAppData";
 
 interface StudentDetailsModalProps {
   isOpen: boolean;
@@ -17,6 +19,10 @@ interface StudentDetailsModalProps {
 
 const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: StudentDetailsModalProps) => {
   const { toast } = useToast();
+  const { courses } = useAppData();
+  const [showAddCourseModal, setShowAddCourseModal] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const [isAddingCourse, setIsAddingCourse] = useState(false);
 
   if (!student) return null;
 
@@ -65,6 +71,42 @@ const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: Stu
         });
       }
       onClose();
+    }
+  };
+
+  const handleAddCourse = async () => {
+    if (!selectedCourseId) {
+      toast({
+        title: "Erro",
+        description: "Selecione um curso para adicionar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsAddingCourse(true);
+      await StudentCoursesAPI.addCourse(student.id, selectedCourseId);
+
+      toast({
+        title: "Sucesso",
+        description: "Aluno adicionado ao curso com sucesso",
+        className: "bg-green-100 text-green-800 border-green-200",
+      });
+
+      // Recarregar a página para atualizar os dados
+      window.location.reload();
+    } catch (error: unknown) {
+      console.error('Erro ao adicionar curso:', error);
+      toast({
+        title: "Erro ao Adicionar Curso",
+        description: "Não foi possível adicionar o aluno ao curso",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingCourse(false);
+      setShowAddCourseModal(false);
+      setSelectedCourseId(null);
     }
   };
 
@@ -153,7 +195,18 @@ const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: Stu
               {/* Seção de múltiplos cursos */}
               {student.courses && student.courses.length > 0 ? (
                 <div className="mt-4 pt-4 border-t">
-                  <h4 className="text-sm font-semibold text-foreground mb-2">Cursos matriculado</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-semibold text-foreground">Cursos matriculado</h4>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowAddCourseModal(true)}
+                      className="h-7 text-xs"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Adicionar
+                    </Button>
+                  </div>
                   <div className="space-y-2">
                     {student.courses.map((course) => (
                       <div key={course.id} className="flex items-center justify-between p-2 bg-muted rounded text-xs">
@@ -177,7 +230,15 @@ const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: Stu
               ) : (
                 <div className="mt-4 pt-4 border-t">
                   <h4 className="text-sm font-semibold text-foreground mb-2">Cursos matriculados</h4>
-                  <p className="text-xs text-muted-foreground">Nenhum curso registrado ou dados ainda carregando...</p>
+                  <p className="text-xs text-muted-foreground mb-3">Nenhum curso registrado ou dados ainda carregando...</p>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowAddCourseModal(true)}
+                    className="w-full h-8 text-xs"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Adicionar Primeiro Curso
+                  </Button>
                 </div>
               )}
             </div>
@@ -221,6 +282,52 @@ const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: Stu
             Voltar
           </Button>
         </div>
+
+        {/* Modal para Adicionar Curso */}
+        <Dialog open={showAddCourseModal} onOpenChange={setShowAddCourseModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Adicionar Curso para {student.name}</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Selecione o curso:</label>
+                <div className="space-y-2 max-h-60 overflow-y-auto border rounded p-2">
+                  {courses.map((course) => (
+                    <button
+                      key={course.id}
+                      onClick={() => setSelectedCourseId(course.id)}
+                      className={`w-full text-left p-2 rounded transition-colors ${selectedCourseId === course.id
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-muted'
+                        }`}
+                    >
+                      <div className="font-medium text-sm">{course.title}</div>
+                      <div className="text-xs text-muted-foreground">{course.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAddCourseModal(false)}
+                  disabled={isAddingCourse}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleAddCourse}
+                  disabled={isAddingCourse || !selectedCourseId}
+                >
+                  {isAddingCourse ? 'Adicionando...' : 'Adicionar'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
