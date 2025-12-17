@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import StudentController from './student.controller.js';
 import EnrollmentController from '../enrollments/enrollment.controller.js';
+import studentCourseRouter from './student-course.routes.js';
 import { isAuthenticated } from '../../middlewares/isAuthenticated.js';
 import { validateRequest } from '../../middlewares/validateRequest.js';
 import {
@@ -430,5 +431,8 @@ router.delete(
   }),
   StudentController.delete
 );
+
+// Rotas de cursos do aluno
+router.use('/:studentId/courses', studentCourseRouter);
 
 export default router;

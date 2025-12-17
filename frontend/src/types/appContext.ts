@@ -1,3 +1,27 @@
+export interface StudentCourse {
+  id: number;
+  course_id: number;
+  turma_id?: number;
+  status: 'Ativo' | 'Concluído' | 'Desistente';
+  data_inicio: string;
+  data_conclusao?: string;
+  motivo_desistencia?: string;
+  course?: {
+    id: number;
+    nome: string;
+    descricao?: string;
+    carga_horaria?: number;
+    nivel?: string;
+  };
+  turma?: {
+    id: number;
+    nome: string;
+    turno?: string;
+    data_inicio?: string;
+    data_fim?: string;
+  };
+}
+
 export interface Student {
   id: number;
   matricula: string;
@@ -8,12 +32,13 @@ export interface Student {
   birthDate: string;
   address: string;
   enrollmentDate: string;
-  status: string;
-  course: string;
-  class: string;
+  status: string; // Status geral calculado automaticamente
+  course: string; // Curso principal (para compatibilidade)
+  class: string; // Turma principal (para compatibilidade)
   progress: number;
   attendance: number;
   grades: number;
+  courses?: StudentCourse[]; // Array de cursos do aluno
 }
 
 export interface Course {

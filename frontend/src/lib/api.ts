@@ -217,6 +217,29 @@ export const StudentsAPI = {
 };
 
 // ======================================
+// 📚 ALUNO - CURSOS (Relacionamento N:M)
+// ======================================
+export const StudentCoursesAPI = {
+  list: (studentId: number) => 
+    api.get(`/students/${studentId}/courses`),
+  
+  getWithStatus: (studentId: number) => 
+    api.get(`/students/${studentId}/courses/with-status`),
+  
+  getHistory: (studentId: number) => 
+    api.get(`/students/${studentId}/courses/history`),
+  
+  addCourse: (studentId: number, courseId: number, turmaId?: number) => 
+    api.post(`/students/${studentId}/courses`, { courseId, turmaId }),
+  
+  removeCourse: (studentId: number, courseId: number, motivo?: string) => 
+    api.delete(`/students/${studentId}/courses/${courseId}`, { data: { motivo } }),
+  
+  completeCourse: (studentId: number, courseId: number) => 
+    api.put(`/students/${studentId}/courses/${courseId}/complete`),
+};
+
+// ======================================
 // 📚 CURSOS
 // ======================================
 export const CoursesAPI = {

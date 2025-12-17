@@ -9,6 +9,7 @@ import Student from '../modules/students/student.model.js';
 import Instructor from '../modules/instructors/instructor.model.js';
 import Candidate from '../modules/Candidates/candidate.model.js';
 import InstructorClass from '../modules/instructor_classes/instructor_class.model.js';
+import { StudentCourse } from '../modules/students/student-course.model.js';
 
 /**
  * Define todas as associações entre modelos
@@ -68,6 +69,47 @@ export function setupAssociations() {
   Candidate.belongsTo(Class, {
     foreignKey: 'turma_id',
     as: 'turma'
+  });
+
+  // Aluno ↔ Curso (N:M) - através de StudentCourse
+  Student.belongsToMany(Course, {
+    through: StudentCourse,
+    foreignKey: 'student_id',
+    otherKey: 'course_id',
+    as: 'cursos'
+  });
+
+  Course.belongsToMany(Student, {
+    through: StudentCourse,
+    foreignKey: 'course_id',
+    otherKey: 'student_id',
+    as: 'alunos_historico'
+  });
+
+  // StudentCourse associations
+  StudentCourse.belongsTo(Student, {
+    foreignKey: 'student_id',
+    as: 'aluno'
+  });
+
+  StudentCourse.belongsTo(Course, {
+    foreignKey: 'course_id',
+    as: 'curso'
+  });
+
+  StudentCourse.belongsTo(Class, {
+    foreignKey: 'turma_id',
+    as: 'turma'
+  });
+
+  Student.hasMany(StudentCourse, {
+    foreignKey: 'student_id',
+    as: 'student_courses'
+  });
+
+  Course.hasMany(StudentCourse, {
+    foreignKey: 'course_id',
+    as: 'student_courses'
   });
 
   console.log('✅ Associações entre modelos configuradas com sucesso');

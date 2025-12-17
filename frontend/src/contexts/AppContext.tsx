@@ -1,6 +1,6 @@
 import { useState, useEffect, ReactNode } from 'react';
 import { isAxiosError } from 'axios';
-import { StudentsAPI, CoursesAPI, ClassesAPI, InstructorsAPI, CandidatesAPI } from '@/lib/api';
+import { StudentsAPI, StudentCoursesAPI, CoursesAPI, ClassesAPI, InstructorsAPI, CandidatesAPI } from '@/lib/api';
 import { AUTH_CHANGE_EVENT } from '@/lib/authEvents';
 import { AppContext, AppContextType, unwrapNestedArray, getApiErrorMessage } from '@/contexts/appContextCore';
 import type { Student, Course, Class, Instructor, Candidate } from '@/types/appContext';
@@ -407,9 +407,33 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         Promise.all([
           StudentsAPI.list({ limit: 1000, page: 1 }).catch(() => ({ data: [] })),
           CandidatesAPI.list({ limit: 1000, page: 1 }).catch(() => ({ data: [] }))
-        ]).then(([studentsRes, candidatesRes]) => {
+        ]).then(async ([studentsRes, candidatesRes]) => {
           const backendStudents = unwrapNestedArray<BackendStudent>(studentsRes.data);
-          setStudents(backendStudents.map(mapBackendStudent));
+          const mappedStudents = backendStudents.map(mapBackendStudent);
+
+          // Carregar cursos para cada aluno
+          try {
+            const studentsWithCourses = await Promise.all(
+              mappedStudents.map(async (student) => {
+                try {
+                  const coursesRes = await StudentCoursesAPI.getWithStatus(student.id);
+                  return {
+                    ...student,
+                    courses: (coursesRes.data as any)?.current_courses || []
+                  };
+                } catch (err) {
+                  // Se falhar ao carregar cursos, continuar sem eles
+                  console.warn(`Não foi possível carregar cursos do aluno ${student.id}`);
+                  return student;
+                }
+              })
+            );
+            setStudents(studentsWithCourses);
+          } catch (err) {
+            // Se falhar, usar dados sem cursos
+            console.warn('Erro ao carregar cursos dos alunos');
+            setStudents(mappedStudents);
+          }
 
           const backendCandidates = unwrapNestedArray<BackendCandidate>(candidatesRes.data);
           setCandidates(backendCandidates);
@@ -450,7 +474,28 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await StudentsAPI.list({ limit: 100, page: 1 });
       const backendStudents = unwrapNestedArray<BackendStudent>(response.data);
-      setStudents(backendStudents.map(mapBackendStudent));
+      const mappedStudents = backendStudents.map(mapBackendStudent);
+
+      // Carregar cursos para cada aluno
+      try {
+        const studentsWithCourses = await Promise.all(
+          mappedStudents.map(async (student) => {
+            try {
+              const coursesRes = await StudentCoursesAPI.getWithStatus(student.id);
+              return {
+                ...student,
+                courses: (coursesRes.data as any)?.current_courses || []
+              };
+            } catch (err) {
+              return student;
+            }
+          })
+        );
+        setStudents(studentsWithCourses);
+      } catch (err) {
+        setStudents(mappedStudents);
+      }
+
       setError(null);
     } catch (err: unknown) {
       const errorMessage = buildErrorMessage(err, 'Erro ao carregar alunos');
