@@ -111,10 +111,10 @@ class ReportService {
     if (filters.id_turma) {
       // Buscar alunos matriculados na turma específica
       const enrollments: any[] = await Enrollment.findAll({
-        where: { id_turma: filters.id_turma },
-        attributes: ['id_aluno'],
+        where: { idTurma: filters.id_turma },
+        attributes: ['idAluno'],
       });
-      const studentIds = enrollments.map((e:any) => e.id_aluno);
+      const studentIds = enrollments.map((e:any) => e.idAluno);
       if (studentIds.length > 0) {
         where.id = { [Op.in]: studentIds };
       } else {
@@ -689,10 +689,10 @@ class ReportService {
 
     if (filters.id_turma) {
       const enrollments: any[] = await Enrollment.findAll({
-        where: { id_turma: filters.id_turma },
-        attributes: ['id_aluno'],
+        where: { idTurma: filters.id_turma },
+        attributes: ['idAluno'],
       });
-      const studentIds = enrollments.map((e: any) => e.id_aluno);
+      const studentIds = enrollments.map((e: any) => e.idAluno);
       if (studentIds.length > 0) {
         where.id = { [Op.in]: studentIds };
       } else {

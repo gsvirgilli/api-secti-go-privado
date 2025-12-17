@@ -247,7 +247,7 @@ class InstructorService {
 
     // Verifica se o instrutor possui turmas associadas
     const classCount = await InstructorClass.count({ 
-      where: { id_instrutor: id } 
+      where: { idInstrutor: id } 
     });
 
     if (classCount > 0) {
@@ -267,7 +267,7 @@ class InstructorService {
     await this.findById(id); // Valida se o instrutor existe
 
     const instructorClasses = await InstructorClass.findAll({
-      where: { id_instrutor: id },
+      where: { idInstrutor: id },
       include: [
         {
           model: Class,

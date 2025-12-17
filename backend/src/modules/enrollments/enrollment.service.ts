@@ -189,7 +189,7 @@ class EnrollmentService {
     try {
       // Buscar a matrícula
       const enrollment = await Enrollment.findOne({
-        where: { id_aluno, id_turma },
+        where: { idAluno: id_aluno, idTurma: id_turma },
         transaction
       });
 

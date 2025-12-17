@@ -324,7 +324,7 @@ class AttendanceService {
    */
   async getStudentStats(id_aluno: number, id_turma: number) {
     const attendances = await Attendance.findAll({
-      where: { id_aluno, id_turma }
+      where: { idAluno: id_aluno, idTurma: id_turma }
     });
 
     const total = attendances.length;
@@ -349,7 +349,7 @@ class AttendanceService {
   async getClassReport(id_turma: number, data_chamada: Date) {
     // Buscar todos os alunos matriculados na turma
     const enrollments = await Enrollment.findAll({
-      where: { id_turma },
+      where: { idTurma: id_turma },
       include: [{
         model: Student,
         as: 'aluno',
