@@ -168,12 +168,12 @@ class ClassService {
     // ✅ Buscar turmas com paginação - skip COUNT
     const turmas = await Class.findAll({
       where,
-      attributes: ['id', 'nome', 'turno', 'data_inicio', 'data_fim', 'id_curso', 'vagas', 'status', 'createdAt'],
+      attributes: ['id', 'nome', 'turno', 'dataInicio', 'dataFim', 'idCurso', 'vagas', 'status', 'createdAt'],
       include: [
         {
           model: Curso,
           as: 'curso',
-          attributes: ['id', 'nome', 'carga_horaria'],
+          attributes: ['id', 'nome', 'cargaHoraria'],
           required: false
         },
         {

@@ -350,8 +350,8 @@ class InstructorService {
     const totalInstructors = await Instructor.count();
     
     const instructorsWithClasses = await InstructorClass.findAll({
-      attributes: ['id_instrutor'],
-      group: ['id_instrutor']
+      attributes: ['idInstrutor'],
+      group: ['idInstrutor']
     });
 
     const totalWithClasses = instructorsWithClasses.length;

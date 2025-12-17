@@ -85,8 +85,8 @@ class AttendanceService {
     // Skip includes para performance, retornar apenas IDs
     const attendances = await Attendance.findAll({
       where,
-      attributes: ['id', 'id_aluno', 'id_turma', 'data_chamada', 'status', 'motivo_justificacao', 'id_usuario', 'createdAt', 'updatedAt'],
-      order: [['data_chamada', 'DESC'], ['id_aluno', 'ASC']],
+      attributes: ['id', 'idAluno', 'idTurma', 'dataChamada', 'status', 'motivoJustificacao', 'idUsuario', 'createdAt', 'updatedAt'],
+      order: [['dataChamada', 'DESC'], ['idAluno', 'ASC']],
       limit,
       offset
     });

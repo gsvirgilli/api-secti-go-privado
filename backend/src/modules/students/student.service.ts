@@ -101,7 +101,7 @@ class StudentService {
         {
           model: Class,
           as: 'turma',
-          attributes: ['id', 'nome', 'turno', 'id_curso'],
+          attributes: ['id', 'nome', 'turno', 'idCurso'],
           required: false,
           include: [
             {

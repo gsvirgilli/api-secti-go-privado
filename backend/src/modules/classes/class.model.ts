@@ -113,7 +113,7 @@ Class.init({
   underscored: true,
   indexes: [
     {
-      fields: ['id_curso']
+      fields: ['idCurso']
     },
     {
       fields: ['turno']

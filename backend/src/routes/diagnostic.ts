@@ -40,8 +40,8 @@ diagnosticRouter.get('/data-sync', async (req, res) => {
 
     // Listar matrículas
     const enrollments = await Enrollment.findAll({
-      attributes: ['id_aluno', 'id_turma', 'status'],
-      order: [['id_aluno', 'ASC']],
+      attributes: ['idAluno', 'idTurma', 'status'],
+      order: [['idAluno', 'ASC']],
       raw: true
     });
 
