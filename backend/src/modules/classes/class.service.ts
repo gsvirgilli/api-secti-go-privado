@@ -61,6 +61,54 @@ interface UpdateClassData {
  */
 class ClassService {
   /**
+   * Calcula o status automático da turma baseado nas datas
+   * Planejada: ainda não começou (data_inicio no futuro ou nula)
+   * Ativa: está entre data_inicio e data_fim
+   * Concluído: passou da data_fim
+   * Cancelada: mantém se já foi definida como cancelada
+   */
+  private calculateAutoStatus(
+    data_inicio: Date | null | undefined,
+    data_fim: Date | null | undefined,
+    currentStatus?: string
+  ): 'PLANEJADA' | 'ATIVA' | 'CONCLUÍDO' | 'CANCELADA' {
+    // Se status é cancelada, manter cancelada
+    if (currentStatus === 'CANCELADA') {
+      return 'CANCELADA';
+    }
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    // Se não tem datas, retorna PLANEJADA
+    if (!data_inicio || !data_fim) {
+      return 'PLANEJADA';
+    }
+
+    const dataInicio = new Date(data_inicio);
+    const dataFim = new Date(data_fim);
+    dataInicio.setHours(0, 0, 0, 0);
+    dataFim.setHours(0, 0, 0, 0);
+
+    // Se hoje é antes de data_inicio → Planejada
+    if (hoje < dataInicio) {
+      return 'PLANEJADA';
+    }
+
+    // Se hoje é entre data_inicio e data_fim (inclusive) → Ativa
+    if (hoje >= dataInicio && hoje <= dataFim) {
+      return 'ATIVA';
+    }
+
+    // Se hoje é depois de data_fim → Concluído
+    if (hoje > dataFim) {
+      return 'CONCLUÍDO';
+    }
+
+    return 'PLANEJADA';
+  }
+
+  /**
    * Lista todas as turmas com filtros opcionais e paginação
    * ✅ Otimizado: Skip COUNT, use índices, eager loading
    */
@@ -214,8 +262,14 @@ class ClassService {
       }
     }
 
-    // Criar turma
-    const turma = await Class.create(data as any);
+    // Calcular status automático baseado nas datas
+    const autoStatus = this.calculateAutoStatus(data.data_inicio, data.data_fim, data.status);
+
+    // Criar turma com status automático calculado
+    const turma = await Class.create({
+      ...data,
+      status: autoStatus
+    } as any);
 
     // Retornar com informações do curso
     return await this.findById(turma.id);
@@ -257,8 +311,24 @@ class ClassService {
       }
     }
 
-    // Atualizar turma
-    await turma.update(data);
+    // Calcular status automático baseado nas datas (se não foi explicitamente cancelada)
+    // Se o usuário enviou um status específico, usar esse (permitir override)
+    let finalStatus = data.status;
+    if (!data.status) {
+      // Calcular automático apenas se não foi especificado um status
+      finalStatus = this.calculateAutoStatus(dataInicio, dataFim, turma.status);
+    } else if (data.status !== 'CANCELADA') {
+      // Se enviou um status mas não é cancelada, ainda assim calcular baseado nas datas
+      // para garantir consistência
+      finalStatus = this.calculateAutoStatus(dataInicio, dataFim, data.status);
+    }
+    // Se é CANCELADA, mantém CANCELADA
+
+    // Atualizar turma com status calculado
+    await turma.update({
+      ...data,
+      status: finalStatus
+    });
 
     // Retornar com informações do curso
     return await this.findById(turma.id);
