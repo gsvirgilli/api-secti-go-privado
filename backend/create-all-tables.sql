@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
   role ENUM('ADMIN', 'INSTRUTOR', 'CANDIDATO', 'ALUNO') NOT NULL DEFAULT 'CANDIDATO',
   avatar_url VARCHAR(255),
   ativo BOOLEAN DEFAULT TRUE,
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_usuarios_email (email),
   INDEX idx_usuarios_role (role)
 );
@@ -30,8 +30,8 @@ CREATE TABLE IF NOT EXISTS cursos (
   carga_horaria INT,
   nivel ENUM('BASICO', 'INTERMEDIARIO', 'AVANCADO') DEFAULT 'BASICO',
   status ENUM('ATIVO', 'INATIVO', 'DESCONTINUADO') DEFAULT 'ATIVO',
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_cursos_status (status)
 );
 
@@ -48,8 +48,8 @@ CREATE TABLE IF NOT EXISTS turmas (
   id_curso INT NOT NULL,
   vagas INT DEFAULT 0,
   status ENUM('PLANEJADA', 'ATIVA', 'ENCERRADA', 'CANCELADA') DEFAULT 'PLANEJADA',
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (id_curso) REFERENCES cursos(id) ON DELETE RESTRICT,
   INDEX idx_turmas_curso (id_curso),
   INDEX idx_turmas_status (status)
@@ -70,8 +70,8 @@ CREATE TABLE IF NOT EXISTS instrutores (
   experiencia TEXT,
   status VARCHAR(50),
   ativo BOOLEAN DEFAULT TRUE,
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_instrutores_email (email),
   INDEX idx_instrutores_cpf (cpf)
 );
@@ -83,8 +83,8 @@ CREATE TABLE IF NOT EXISTS instrutor_turma (
   id INT PRIMARY KEY AUTO_INCREMENT,
   id_instrutor INT NOT NULL,
   id_turma INT NOT NULL,
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY unique_instrutor_turma (id_instrutor, id_turma),
   FOREIGN KEY (id_instrutor) REFERENCES instrutores(id) ON DELETE CASCADE,
   FOREIGN KEY (id_turma) REFERENCES turmas(id) ON DELETE CASCADE
@@ -163,8 +163,8 @@ CREATE TABLE IF NOT EXISTS candidatos (
   foto_3x4_url VARCHAR(255),
   
   -- Timestamps
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
   -- Índices
   FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE SET NULL,
@@ -194,8 +194,8 @@ CREATE TABLE IF NOT EXISTS alunos (
   usuario_id INT,
   turma_id INT,
   status ENUM('ativo', 'trancado', 'concluido', 'desistente') DEFAULT 'ativo',
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (candidato_id) REFERENCES candidatos(id) ON DELETE SET NULL,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
   FOREIGN KEY (turma_id) REFERENCES turmas(id) ON DELETE SET NULL,
@@ -212,8 +212,8 @@ CREATE TABLE IF NOT EXISTS matriculas (
   aluno_id INT NOT NULL,
   turma_id INT NOT NULL,
   status ENUM('ativo', 'trancado', 'concluido', 'cancelado') NOT NULL DEFAULT 'ativo',
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (aluno_id, turma_id),
   FOREIGN KEY (aluno_id) REFERENCES alunos(id) ON DELETE CASCADE,
   FOREIGN KEY (turma_id) REFERENCES turmas(id) ON DELETE CASCADE,
@@ -232,8 +232,8 @@ CREATE TABLE IF NOT EXISTS student_courses (
   data_inicio DATE NOT NULL,
   data_conclusao DATE,
   motivo_desistencia VARCHAR(255),
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES alunos(id) ON DELETE CASCADE,
   FOREIGN KEY (course_id) REFERENCES cursos(id) ON DELETE CASCADE,
   FOREIGN KEY (turma_id) REFERENCES turmas(id) ON DELETE SET NULL,
@@ -256,8 +256,8 @@ CREATE TABLE IF NOT EXISTS calendar_events (
   turma_id INT,
   curso_id INT,
   cor VARCHAR(7) DEFAULT '#3B82F6',
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (turma_id) REFERENCES turmas(id) ON DELETE CASCADE,
   FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE CASCADE,
   INDEX idx_calendar_events_data_inicio (data_inicio),
@@ -276,8 +276,8 @@ CREATE TABLE IF NOT EXISTS attendance (
   data_chamada DATE NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'PRESENTE',
   motivo_justificacao TEXT,
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (id_aluno) REFERENCES alunos(id) ON DELETE CASCADE,
   FOREIGN KEY (id_turma) REFERENCES turmas(id) ON DELETE CASCADE,
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE SET NULL,
@@ -297,8 +297,8 @@ CREATE TABLE IF NOT EXISTS presencas (
   data_aula DATE NOT NULL,
   presente BOOLEAN DEFAULT TRUE,
   observacoes VARCHAR(500),
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (aluno_id) REFERENCES alunos(id) ON DELETE CASCADE,
   FOREIGN KEY (turma_id) REFERENCES turmas(id) ON DELETE CASCADE,
   INDEX idx_presencas_aluno (aluno_id),
@@ -319,11 +319,11 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   descricao VARCHAR(500),
   ip_address VARCHAR(45),
   user_agent VARCHAR(500),
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
   INDEX idx_audit_usuario (usuario_id),
   INDEX idx_audit_tabela (tabela),
-  INDEX idx_audit_data (createdAt)
+  INDEX idx_audit_data (created_at)
 );
 
 -- ============================================================================
@@ -335,8 +335,8 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
   token VARCHAR(255) NOT NULL UNIQUE,
   expires_at DATETIME NOT NULL,
   usado BOOLEAN DEFAULT FALSE,
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
   INDEX idx_password_reset_usuario (usuario_id),
   INDEX idx_password_reset_token (token),
@@ -353,11 +353,11 @@ CREATE TABLE IF NOT EXISTS notifications (
   tipo ENUM('ALUNO', 'TURMA', 'INSTRUTOR', 'CALENDARIO', 'CANDIDATO') NOT NULL DEFAULT 'ALUNO',
   icone VARCHAR(50),
   lido BOOLEAN NOT NULL DEFAULT FALSE,
-  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_notifications_lido (lido),
   INDEX idx_notifications_tipo (tipo),
-  INDEX idx_notifications_data (createdAt)
+  INDEX idx_notifications_data (created_at)
 );
 
 -- ============================================================================
@@ -365,7 +365,7 @@ CREATE TABLE IF NOT EXISTS notifications (
 -- ============================================================================
 
 -- Usuário ADMIN
-INSERT IGNORE INTO usuarios (nome, email, senha_hash, role, createdAt, updatedAt)
+INSERT IGNORE INTO usuarios (nome, email, senha_hash, role, created_at, updated_at)
 VALUES (
   'Admin Sistema',
   'admin@example.com',
@@ -376,7 +376,7 @@ VALUES (
 );
 
 -- Cursos
-INSERT IGNORE INTO cursos (nome, descricao, carga_horaria, nivel, status, createdAt, updatedAt)
+INSERT IGNORE INTO cursos (nome, descricao, carga_horaria, nivel, status, created_at, updated_at)
 VALUES
   ('Desenvolvimento Web', 'Curso completo de desenvolvimento web com HTML, CSS, JavaScript e frameworks modernos', 120, 'INTERMEDIARIO', 'ATIVO', NOW(), NOW()),
   ('Banco de Dados', 'Fundamentos de banco de dados SQL e NoSQL com MySQL e MongoDB', 80, 'BASICO', 'ATIVO', NOW(), NOW()),
@@ -385,7 +385,7 @@ VALUES
   ('DevOps e Cloud', 'Containerização com Docker, Kubernetes, CI/CD e Cloud Computing', 110, 'AVANCADO', 'ATIVO', NOW(), NOW());
 
 -- Turmas
-INSERT IGNORE INTO turmas (nome, descricao, data_inicio, data_fim, turno, id_curso, vagas, status, createdAt, updatedAt)
+INSERT IGNORE INTO turmas (nome, descricao, data_inicio, data_fim, turno, id_curso, vagas, status, created_at, updated_at)
 VALUES
   ('Web - Turma A', 'Primeira turma de desenvolvimento web 2025', '2025-01-15', '2025-06-15', 'MANHA', 1, 30, 'PLANEJADA', NOW(), NOW()),
   ('Web - Turma B', 'Segunda turma de desenvolvimento web 2025', '2025-02-01', '2025-07-01', 'TARDE', 1, 30, 'PLANEJADA', NOW(), NOW()),
@@ -394,7 +394,7 @@ VALUES
   ('DevOps - Turma A', 'Turma de DevOps e Cloud 2025', '2025-03-01', '2025-08-01', 'TARDE', 5, 15, 'PLANEJADA', NOW(), NOW());
 
 -- Instrutores
-INSERT IGNORE INTO instrutores (nome, email, cpf, especialidade, telefone, endereco, data_nascimento, experiencia, status, ativo, createdAt, updatedAt)
+INSERT IGNORE INTO instrutores (nome, email, cpf, especialidade, telefone, endereco, data_nascimento, experiencia, status, ativo, created_at, updated_at)
 VALUES
   ('Carlos Silva', 'carlos@example.com', '12345678901', 'Web Development', '11999999999', 'Rua das Flores, 100, São Paulo', '1985-05-10', '10 anos de experiência em desenvolvimento web', 'ATIVO', TRUE, NOW(), NOW()),
   ('Maria Santos', 'maria@example.com', '98765432101', 'Banco de Dados', '11988888888', 'Av. Paulista, 1000, São Paulo', '1988-08-22', '12 anos de experiência em banco de dados', 'ATIVO', TRUE, NOW(), NOW()),
@@ -406,7 +406,7 @@ VALUES
   ('Fernanda Lima', 'fernanda.lima@example.com', '66677788901', 'UX/UI Design', '11987654332', 'Rua do Comércio, 200, São Paulo', '1991-04-08', '6 anos de experiência em Design', 'ATIVO', TRUE, NOW(), NOW());
 
 -- Associar instrutores às turmas
-INSERT IGNORE INTO instrutor_turma (id_instrutor, id_turma, createdAt, updatedAt)
+INSERT IGNORE INTO instrutor_turma (id_instrutor, id_turma, created_at, updated_at)
 VALUES
   (1, 1, NOW(), NOW()),
   (1, 2, NOW(), NOW()),
@@ -417,7 +417,7 @@ VALUES
 -- Candidatos (Processo Seletivo)
 INSERT IGNORE INTO candidatos (nome, cpf, email, telefone, data_nascimento, curso_id, turno, status, rg, sexo, deficiencia, 
   cep, rua, numero, complemento, bairro, cidade, estado, raca_cor, renda_mensal, pessoas_renda, tipo_residencia, 
-  goianas_ciencia, menor_idade, createdAt, updatedAt)
+  goianas_ciencia, menor_idade, created_at, updated_at)
 VALUES
   ('Alexandre Pereira', '45678901234', 'alexandre.pereira@candidate.com', '11999111111', '2003-05-12', 1, 'MANHA', 'PENDENTE', 
     '1234567', 'MASCULINO', 'NAO', '01310100', 'Avenida Paulista', '1900', 'Apto 101', 'Bela Vista', 'São Paulo', 'SP', 
@@ -452,7 +452,7 @@ VALUES
     'PARDO', 'ATE_1_SM', 6, 'CEDIDA', 'NAO', FALSE, NOW(), NOW());
 
 -- Alunos
-INSERT IGNORE INTO alunos (matricula, cpf, nome, email, telefone, data_nascimento, endereco, turma_id, status, createdAt, updatedAt)
+INSERT IGNORE INTO alunos (matricula, cpf, nome, email, telefone, data_nascimento, endereco, turma_id, status, created_at, updated_at)
 VALUES
   ('MAT2025001', '12345678900', 'João Silva', 'joao.silva@example.com', '11999999999', '2005-03-15', 'Rua A, 123, São Paulo', 1, 'ativo', NOW(), NOW()),
   ('MAT2025002', '98765432100', 'Maria Santos', 'maria.santos@example.com', '11988888888', '2004-07-22', 'Rua B, 456, São Paulo', 1, 'ativo', NOW(), NOW()),
