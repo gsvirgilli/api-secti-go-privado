@@ -12,16 +12,16 @@ class Candidate extends Model {
   declare cpf: string;
   declare email: string;
   declare telefone: string | null;
-  declare data_nascimento: Date | null;
+  declare dataNascimento: Date | null;
   declare status: 'PENDENTE' | 'APROVADO' | 'REPROVADO' | 'LISTA_ESPERA';
-  declare id_turma_desejada: number | null;
-  declare turma_id: number | null;
+  declare idTurmaDesejada: number | null;
+  declare turmaId: number | null;
   declare rg?: string | null;
   declare sexo?: string | null;
   declare deficiencia?: string | null;
   declare telefone2?: string | null;
   declare idade?: number | null;
-  declare nome_mae?: string | null;
+  declare nomeMae?: string | null;
   declare cep?: string | null;
   declare rua?: string | null;
   declare numero?: string | null;
@@ -29,29 +29,29 @@ class Candidate extends Model {
   declare bairro?: string | null;
   declare cidade?: string | null;
   declare estado?: string | null;
-  declare curso_id?: number | null;
+  declare cursoId?: number | null;
   declare turno?: string | null;
-  declare curso_id2?: number | null;
+  declare cursoId2?: number | null;
   declare turno2?: string | null;
-  declare local_curso?: string | null;
-  declare raca_cor?: string | null;
-  declare renda_mensal?: string | null;
-  declare pessoas_renda?: string | null;
-  declare tipo_residencia?: string | null;
-  declare itens_casa?: string | null;
-  declare goianas_ciencia?: string | null;
-  declare menor_idade?: boolean | null;
-  declare nome_responsavel?: string | null;
-  declare cpf_responsavel?: string | null;
-  declare rg_frente_url?: string | null;
-  declare rg_verso_url?: string | null;
-  declare cpf_aluno_url?: string | null;
+  declare localCurso?: string | null;
+  declare racaCor?: string | null;
+  declare rendaMensal?: string | null;
+  declare pessoasRenda?: string | null;
+  declare tipoResidencia?: string | null;
+  declare itensCasa?: string | null;
+  declare goianasCiencia?: string | null;
+  declare menoridade?: boolean | null;
+  declare nomeResponsavel?: string | null;
+  declare cpfResponsavel?: string | null;
+  declare rgFrenteUrl?: string | null;
+  declare rgVersoUrl?: string | null;
+  declare cpfAlunoUrl?: string | null;
   declare comprovante_endereco_url?: string | null;
-  declare identidade_responsavel_frente_url?: string | null;
-  declare identidade_responsavel_verso_url?: string | null;
-  declare cpf_responsavel_url?: string | null;
-  declare comprovante_escolaridade_url?: string | null;
-  declare foto_3x4_url?: string | null;
+  declare identidadeResponsavelFrenteUrl?: string | null;
+  declare identidadeResponsavelVersoUrl?: string | null;
+  declare cpfResponsavelUrl?: string | null;
+  declare comprovanteEscolaridadeUrl?: string | null;
+  declare foto3x4Url?: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -109,26 +109,29 @@ Candidate.init({
     type: DataTypes.STRING(20),
     allowNull: true,
   },
-  data_nascimento: {
+  dataNascimento: {
     type: DataTypes.DATEONLY,
     allowNull: true,
+    field: 'data_nascimento',
   },
   status: {
     type: DataTypes.ENUM('PENDENTE', 'APROVADO', 'REPROVADO', 'LISTA_ESPERA'),
     allowNull: false,
     defaultValue: 'PENDENTE',
   },
-  id_turma_desejada: {
+  idTurmaDesejada: {
     type: DataTypes.INTEGER,
     allowNull: true,
+    field: 'id_turma_desejada',
     references: {
       model: 'turmas',
       key: 'id',
     }
   },
-  turma_id: {
+  turmaId: {
     type: DataTypes.INTEGER,
     allowNull: true,
+    field: 'turma_id',
     references: {
       model: 'turmas',
       key: 'id',
@@ -156,9 +159,10 @@ Candidate.init({
     type: DataTypes.INTEGER,
     allowNull: true,
   },
-  nome_mae: {
+  nomeMae: {
     type: DataTypes.STRING(100),
     allowNull: true,
+    field: 'nome_mae',
   },
 
   // Endereço
@@ -192,9 +196,10 @@ Candidate.init({
   },
 
   // Curso desejado
-  curso_id: {
+  cursoId: {
     type: DataTypes.INTEGER,
     allowNull: true,
+    field: 'curso_id',
     references: {
       model: 'cursos',
       key: 'id',
@@ -206,9 +211,10 @@ Candidate.init({
   },
 
   // Curso - segunda opção
-  curso_id2: {
+  cursoId2: {
     type: DataTypes.INTEGER,
     allowNull: true,
+    field: 'curso_id2',
     references: {
       model: 'cursos',
       key: 'id',
@@ -218,90 +224,108 @@ Candidate.init({
     type: DataTypes.ENUM('MATUTINO', 'VESPERTINO', 'NOTURNO'),
     allowNull: true,
   },
-  local_curso: {
+  localCurso: {
     type: DataTypes.STRING(255),
     allowNull: true,
+    field: 'local_curso',
   },
 
   // Questionário Social
-  raca_cor: {
+  racaCor: {
     type: DataTypes.ENUM('BRANCO', 'PARDO', 'NEGRO', 'INDIGENA', 'AMARELO'),
     allowNull: true,
+    field: 'raca_cor',
   },
-  renda_mensal: {
+  rendaMensal: {
     type: DataTypes.ENUM('SEM_RENDA', 'ATE_MEIO_SM', 'ATE_1_SM', '1_A_2_SM', '2_A_3_SM', '3_A_4_SM', 'ACIMA_5_SM'),
     allowNull: true,
+    field: 'renda_mensal',
   },
-  pessoas_renda: {
+  pessoasRenda: {
     type: DataTypes.STRING(255),
     allowNull: true,
+    field: 'pessoas_renda',
   },
-  tipo_residencia: {
+  tipoResidencia: {
     type: DataTypes.ENUM('PROPRIA_QUITADA', 'PROPRIA_FINANCIADA', 'ALUGADA', 'HERDADA', 'CEDIDA'),
     allowNull: true,
+    field: 'tipo_residencia',
   },
-  itens_casa: {
+  itensCasa: {
     type: DataTypes.TEXT,
     allowNull: true,
+    field: 'itens_casa',
   },
 
   // Programa Goianas
-  goianas_ciencia: {
+  goianasCiencia: {
     type: DataTypes.ENUM('SIM', 'NAO'),
     allowNull: true,
+    field: 'goianas_ciencia',
   },
 
   // Responsável Legal
-  menor_idade: {
+  menoridade: {
     type: DataTypes.BOOLEAN,
     allowNull: true,
+    field: 'menor_idade',
     defaultValue: false,
   },
-  nome_responsavel: {
+  nomeResponsavel: {
     type: DataTypes.STRING(100),
     allowNull: true,
+    field: 'nome_responsavel',
   },
-  cpf_responsavel: {
+  cpfResponsavel: {
     type: DataTypes.STRING(11),
     allowNull: true,
+    field: 'cpf_responsavel',
   },
 
   // Documentos
-  rg_frente_url: {
+  rgFrenteUrl: {
     type: DataTypes.STRING(255),
     allowNull: true,
+    field: 'rg_frente_url',
   },
-  rg_verso_url: {
+  rgVersoUrl: {
     type: DataTypes.STRING(255),
     allowNull: true,
+    field: 'rg_verso_url',
   },
-  cpf_aluno_url: {
+  cpfAlunoUrl: {
     type: DataTypes.STRING(255),
     allowNull: true,
+    field: 'cpf_aluno_url',
   },
   comprovante_endereco_url: {
     type: DataTypes.STRING(255),
     allowNull: true,
   },
-  identidade_responsavel_frente_url: {
+  identidadeResponsavelFrenteUrl: {
     type: DataTypes.STRING(255),
     allowNull: true,
+    field: 'identidade_responsavel_frente_url',
   },
-  identidade_responsavel_verso_url: {
+  identidadeResponsavelVersoUrl: {
     type: DataTypes.STRING(255),
     allowNull: true,
+    field: 'identidade_responsavel_verso_url',
   },
-  cpf_responsavel_url: {
+  cpfResponsavelUrl: {
     type: DataTypes.STRING(255),
     allowNull: true,
+    field: 'cpf_responsavel_url',
   },
-  comprovante_escolaridade_url: {
+  comprovanteEscolaridadeUrl: {
     type: DataTypes.STRING(255),
     allowNull: true,
+    field: 'comprovante_escolaridade_url',
   },
-  foto_3x4_url: {
+  foto3x4Url: {
     type: DataTypes.STRING(255),
     allowNull: true,
+    field: 'foto_3x4_url',
   },
 }, {
   sequelize,
