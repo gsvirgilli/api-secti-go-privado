@@ -30,23 +30,23 @@ Student.init({
   },
   candidatoId: {
     type: DataTypes.INTEGER,
-    allowNull: true, // Permitir null para cadastro direto
+    allowNull: true,
     unique: true,
     references: {
       model: 'alunos',
       key: 'id'
     },
-    field: 'candidatoId'
+    field: 'candidato_id'
   },
   usuarioId: {
     type: DataTypes.INTEGER,
-    allowNull: true, // Permitir null para cadastro direto
+    allowNull: true,
     unique: true,
     references: {
       model: 'usuarios',
       key: 'id'
     },
-    field: 'usuarioId'
+    field: 'usuario_id'
   },
   matricula: {
     type: DataTypes.STRING(50),
@@ -84,7 +84,7 @@ Student.init({
   dataNascimento: {
     type: DataTypes.DATE,
     allowNull: true,
-    field: 'dataNascimento'
+    field: 'data_nascimento'
   },
   endereco: {
     type: DataTypes.STRING(200),
@@ -93,12 +93,12 @@ Student.init({
   },
   turmaId: {
     type: DataTypes.INTEGER,
-    allowNull: true, // Permitir null para cadastro direto
+    allowNull: true,
     references: {
       model: 'turmas',
       key: 'id'
     },
-    field: 'turmaId'
+    field: 'turma_id'
   },
   status: {
     type: DataTypes.ENUM('ativo', 'trancado', 'concluido', 'desistente'),
@@ -110,21 +110,18 @@ Student.init({
   sequelize,
   tableName: 'alunos',
   timestamps: true,
+  underscored: true,
   indexes: [
     {
       unique: true,
-      fields: ['matricula']
+      fields: ['candidato_id']
     },
     {
       unique: true,
-      fields: ['candidatoId']
+      fields: ['usuario_id']
     },
     {
-      unique: true,
-      fields: ['usuarioId']
-    },
-    {
-      fields: ['turmaId']
+      fields: ['turma_id']
     }
   ]
 });

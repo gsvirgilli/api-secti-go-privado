@@ -4,7 +4,7 @@ import { sequelize } from '../../config/database.js';
 export interface CourseAttributes {
   id: number;
   nome: string;
-  carga_horaria: number;
+  cargaHoraria: number;
   descricao?: string;
   nivel?: 'INICIANTE' | 'INTERMEDIARIO' | 'AVANCADO';
   status?: 'ATIVO' | 'INATIVO' | 'EM_DESENVOLVIMENTO';
@@ -14,7 +14,7 @@ export interface CourseAttributes {
 
 export interface CourseCreationAttributes {
   nome: string;
-  carga_horaria: number;
+  cargaHoraria: number;
   descricao?: string;
   nivel?: 'INICIANTE' | 'INTERMEDIARIO' | 'AVANCADO';
   status?: 'ATIVO' | 'INATIVO' | 'EM_DESENVOLVIMENTO';
@@ -23,7 +23,7 @@ export interface CourseCreationAttributes {
 class Course extends Model<CourseAttributes, CourseCreationAttributes> implements CourseAttributes {
   declare id: number;
   declare nome: string;
-  declare carga_horaria: number;
+  declare cargaHoraria: number;
   declare descricao?: string;
   
   // Timestamps automáticos
@@ -50,7 +50,7 @@ Course.init({
       }
     }
   },
-  carga_horaria: {
+  cargaHoraria: {
     type: DataTypes.INTEGER,
     allowNull: false,
     validate: {
@@ -62,7 +62,8 @@ Course.init({
         args: [1000],
         msg: 'Carga horária não pode exceder 1000 horas'
       }
-    }
+    },
+    field: 'cargaHoraria'
   },
   descricao: {
     type: DataTypes.TEXT,
