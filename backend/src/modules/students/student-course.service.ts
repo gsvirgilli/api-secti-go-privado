@@ -44,11 +44,11 @@ export class StudentCourseService {
 
     // Criar registro
     const studentCourse = await StudentCourse.create({
-      student_id: studentId,
-      course_id: courseId,
-      turma_id: turmaId,
+      studentId: studentId,
+      courseId: courseId,
+      turmaId: turmaId,
       status: 'Ativo',
-      data_inicio: new Date()
+      dataInicio: new Date()
     });
 
     return studentCourse;
@@ -115,7 +115,7 @@ export class StudentCourseService {
         {
           model: Class,
           as: 'turma',
-          attributes: ['id', 'nome', 'turno', 'data_inicio', 'data_fim']
+          attributes: ['id', 'nome', 'turno', 'dataInicio', 'dataFim']
         }
       ],
       order: [['createdAt', 'DESC']]
@@ -186,12 +186,12 @@ export class StudentCourseService {
         {
           model: Course,
           as: 'curso',
-          attributes: ['id', 'nome', 'descricao', 'carga_horaria', 'nivel']
+          attributes: ['id', 'nome', 'descricao', 'cargaHoraria', 'nivel']
         },
         {
           model: Class,
           as: 'turma',
-          attributes: ['id', 'nome', 'turno', 'data_inicio', 'data_fim', 'status']
+          attributes: ['id', 'nome', 'turno', 'dataInicio', 'dataFim', 'status']
         }
       ]
     });

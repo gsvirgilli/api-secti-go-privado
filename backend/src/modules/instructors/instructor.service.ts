@@ -95,7 +95,7 @@ class InstructorService {
     // Buscar instrutores com paginação (skip COUNT para evitar pool timeout)
     const data = await Instructor.findAll({
       where,
-      attributes: ['id', 'cpf', 'nome', 'email', 'telefone', 'endereco', 'data_nascimento', 'especialidade', 'experiencia', 'status', 'createdAt', 'updatedAt'],
+      attributes: ['id', 'cpf', 'nome', 'email', 'telefone', 'endereco', 'dataNascimento', 'especialidade', 'experiencia', 'status', 'createdAt', 'updatedAt'],
       include: [
         {
           model: Class,
@@ -229,7 +229,7 @@ class InstructorService {
     if (data.email !== undefined) instructor.email = data.email.toLowerCase();
     if (data.telefone !== undefined) instructor.telefone = data.telefone;
     if (data.endereco !== undefined) instructor.endereco = data.endereco;
-    if (data.data_nascimento !== undefined) instructor.data_nascimento = data.data_nascimento;
+    if (data.data_nascimento !== undefined) instructor.dataNascimento = data.data_nascimento;
     if (data.especialidade !== undefined) instructor.especialidade = data.especialidade;
     if (data.experiencia !== undefined) instructor.experiencia = data.experiencia;
     if (data.status !== undefined) instructor.status = data.status;

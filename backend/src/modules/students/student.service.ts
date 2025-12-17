@@ -96,7 +96,7 @@ class StudentService {
     // ✅ Buscar alunos com paginação - skip COUNT
     const data = await Student.findAll({
       where,
-      attributes: ['id', 'candidato_id', 'usuario_id', 'matricula', 'cpf', 'nome', 'email', 'telefone', 'turma_id', 'status', 'createdAt'],
+      attributes: ['id', 'candidatoId', 'usuarioId', 'matricula', 'cpf', 'nome', 'email', 'telefone', 'turmaId', 'status', 'createdAt'],
       include: [
         {
           model: Class,
@@ -135,7 +135,7 @@ class StudentService {
   async findByClassId(classId: number) {
     // Query otimizada para frequência - sem JOINs pesados
     const students = await Student.findAll({
-      where: { turma_id: classId },
+      where: { turmaId: classId },
       attributes: ['id', 'nome', 'cpf', 'matricula', 'email'],
       order: [['nome', 'ASC']]
     });
