@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { DataBot } from "@/components/ui/DataBot";
+import { formatCPF } from "@/lib/formatters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Download, TrendingUp, Users, Calendar, Filter, BarChart3, PieChart, LineChart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -263,7 +264,7 @@ const Reports = () => {
     if (selectedReports.includes('students')) {
       reportData = students.map(s => ({
         Nome: s.name,
-        CPF: s.cpf,
+        CPF: formatCPF(s.cpf),
         Email: s.email,
         Curso: s.course,
         Turma: s.class,
@@ -324,7 +325,7 @@ const Reports = () => {
           .filter(s => s.status === "Ativo")
           .map(s => ({
             Nome: s.name,
-            CPF: s.cpf,
+            CPF: formatCPF(s.cpf),
             Email: s.email,
             Telefone: s.phone,
             Curso: s.course,
@@ -376,7 +377,7 @@ const Reports = () => {
       case 'matriculas':
         reportData = students.map(s => ({
           Nome: s.name,
-          CPF: s.cpf,
+          CPF: formatCPF(s.cpf),
           Email: s.email,
           Curso: s.course,
           Turma: s.class,

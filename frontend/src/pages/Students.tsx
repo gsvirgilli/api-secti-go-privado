@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { DataBot } from "@/components/ui/DataBot";
+import { formatCPF } from "@/lib/formatters";
 import {
   Plus, Search, Trophy, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
   Users, TrendingUp, Calendar, AlertTriangle, CheckCircle, XCircle, Clock,
@@ -251,7 +252,7 @@ const Students = () => {
               )}
             </div>
             <h3 className="font-semibold text-lg text-foreground">{student.name}</h3>
-            <p className="text-sm text-muted-foreground">{student.cpf}</p>
+            <p className="text-sm text-muted-foreground">{formatCPF(student.cpf)}</p>
           </div>
           <div className="flex items-center gap-2">
             {getStatusIcon(student.status)}
@@ -471,7 +472,7 @@ const Students = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">{student.name}</TableCell>
-                        <TableCell>{student.cpf}</TableCell>
+                        <TableCell>{formatCPF(student.cpf)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {getStatusIcon(student.status)}

@@ -8,14 +8,7 @@ import Attendance from '../attendance/attendance.model.js';
 import Enrollment from '../enrollments/enrollment.model.js';
 import Candidate from '../Candidates/candidate.model.js';
 import { Op } from 'sequelize';
-
-// Função para formatar CPF
-const formatCPF = (cpf: string): string => {
-  if (!cpf) return '';
-  const cleanCPF = cpf.replace(/\D/g, '');
-  if (cleanCPF.length !== 11) return cpf;
-  return `${cleanCPF.substring(0, 3)}.${cleanCPF.substring(3, 6)}.${cleanCPF.substring(6, 9)}-${cleanCPF.substring(9)}`;
-};
+import { formatCPF } from '../../utils/formatters.js';
 import { AppError } from '../../utils/AppError.js';
 
 interface ReportFilters {

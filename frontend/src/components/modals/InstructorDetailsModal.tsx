@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { formatCPF } from "@/lib/formatters";
 
 interface InstructorDetailsModalProps {
   isOpen: boolean;
@@ -70,7 +71,7 @@ const InstructorDetailsModal = ({ isOpen, onClose, instructor }: InstructorDetai
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">CPF:</span>
-                  <span className="font-medium">{instructor.cpf}</span>
+                  <span className="font-medium">{formatCPF(instructor.cpf)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Data de nascimento:</span>
@@ -121,23 +122,23 @@ const InstructorDetailsModal = ({ isOpen, onClose, instructor }: InstructorDetai
             <div>
               <h3 className="text-lg font-semibold text-foreground mb-3">Configurações</h3>
               <div className="space-y-3">
-                <Button 
+                <Button
                   onClick={handleEditInstructor}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full justify-start text-primary hover:text-primary"
                 >
                   Editar informações
                 </Button>
-                <Button 
+                <Button
                   onClick={handleAssignClass}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full justify-start text-primary hover:text-primary"
                 >
                   Atribuir Turma
                 </Button>
-                <Button 
+                <Button
                   onClick={handleDeleteInstructor}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full justify-start text-destructive hover:text-destructive"
                 >
                   Excluir cadastro

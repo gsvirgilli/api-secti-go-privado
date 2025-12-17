@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Edit, FileText, Trash2, Plus } from "lucide-react";
+import { formatCPF } from "@/lib/formatters";
 import { StudentCoursesAPI } from "@/lib/api";
 import type { Student } from "@/types/appContext";
 import { useAppData } from "@/hooks/useAppData";
@@ -345,8 +346,8 @@ const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: Stu
                       key={course.id}
                       onClick={() => setSelectedCourseId(course.id)}
                       className={`w-full text-left p-2 rounded transition-colors ${selectedCourseId === course.id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'hover:bg-muted'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-muted'
                         }`}
                     >
                       <div className="font-medium text-sm">{course.title}</div>
