@@ -301,7 +301,7 @@ class CandidateService {
 
     // Verificar se ainda há vagas na turma
     const Student = (await import('../students/student.model.js')).default;
-    const alunosNaTurma = await Student.count({ where: { turmaId: turmaDisponível.id } });
+    const alunosNaTurma = await Student.count({ where: { turmaId: turmaDisponivel.id } });
     const vagasDisponiveis = turmaDisponivel.vagas - alunosNaTurma;
 
     if (vagasDisponiveis <= 0) {
