@@ -314,22 +314,31 @@ class ClassService {
     // Determinar o status final
     let finalStatus: 'PLANEJADA' | 'ATIVA' | 'ENCERRADA' | 'CANCELADA';
 
+    console.log('🔍 Backend - Dados recebidos para update:', { id, dataRecebida: data, statusRecebido: data.status });
+
     if (data.status === 'CANCELADA') {
       // Usuário explicitamente cancelou - respeitar e não sobrescrever
       finalStatus = 'CANCELADA';
+      console.log('✅ Status é CANCELADA - mantendo CANCELADA');
     } else if (data.status) {
       // Usuário enviou um status específico - usar esse
       finalStatus = data.status;
+      console.log('✅ Status enviado:', finalStatus);
     } else {
       // Usuário não enviou status - calcular automático baseado nas datas
       finalStatus = this.calculateAutoStatus(dataInicio, dataFim, turma.status);
+      console.log('✅ Calculando status automático:', finalStatus);
     }
+
+    console.log('📤 Status final a salvar:', { finalStatus, datosAAtualizar: { ...data, status: finalStatus } });
 
     // Atualizar turma com status calculado
     await turma.update({
       ...data,
       status: finalStatus
     });
+
+    console.log('💾 Turma atualizada no BD com status:', finalStatus);
 
     // Retornar com informações do curso
     return await this.findById(turma.id);
