@@ -209,14 +209,14 @@ CREATE TABLE IF NOT EXISTS alunos (
 -- 8. TABELA DE MATRÍCULAS
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS matriculas (
-  aluno_id INT NOT NULL,
-  turma_id INT NOT NULL,
+  id_aluno INT NOT NULL,
+  id_turma INT NOT NULL,
   status ENUM('ativo', 'trancado', 'concluido', 'cancelado') NOT NULL DEFAULT 'ativo',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (aluno_id, turma_id),
-  FOREIGN KEY (aluno_id) REFERENCES alunos(id) ON DELETE CASCADE,
-  FOREIGN KEY (turma_id) REFERENCES turmas(id) ON DELETE CASCADE,
+  PRIMARY KEY (id_aluno, id_turma),
+  FOREIGN KEY (id_aluno) REFERENCES alunos(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_turma) REFERENCES turmas(id) ON DELETE CASCADE,
   INDEX idx_matriculas_status (status)
 );
 
