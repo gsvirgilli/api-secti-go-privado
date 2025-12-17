@@ -218,6 +218,8 @@ const mapBackendStudent = (student: BackendStudent): Student => ({
   status: normalizeStatus(student.status),
   course: student.turma?.curso?.nome || '',
   class: buildStudentClassName(student.turma),
+  turma: student.turma?.nome || '',
+  turno: getClassScheduleLabel(student.turma?.turno),
   progress: 0,
   attendance: 0,
   grades: 0

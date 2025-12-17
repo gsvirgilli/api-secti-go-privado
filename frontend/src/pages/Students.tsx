@@ -460,6 +460,7 @@ const Students = () => {
                       <TableHead>Status</TableHead>
                       <TableHead>Curso</TableHead>
                       <TableHead>Turma</TableHead>
+                      <TableHead>Turno</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -485,7 +486,8 @@ const Students = () => {
                           </div>
                         </TableCell>
                         <TableCell>{student.course}</TableCell>
-                        <TableCell>{student.class}</TableCell>
+                        <TableCell>{student.turma || '-'}</TableCell>
+                        <TableCell>{student.turno || '-'}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center gap-2 justify-end">
                             <Button

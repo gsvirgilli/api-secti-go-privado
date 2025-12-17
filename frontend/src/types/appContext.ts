@@ -35,6 +35,8 @@ export interface Student {
   status: string; // Status geral calculado automaticamente
   course: string; // Curso principal (para compatibilidade)
   class: string; // Turma principal (para compatibilidade)
+  turma?: string; // Nome da turma separado
+  turno?: string; // Turno separado (Matutino, Vespertino, Noturno)
   progress: number;
   attendance: number;
   grades: number;
