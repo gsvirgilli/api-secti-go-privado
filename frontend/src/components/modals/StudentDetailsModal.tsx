@@ -110,127 +110,165 @@ const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: Stu
     }
   };
 
+  // Organizar cursos por status
+  const cursosAtivos = student.courses?.filter(c => c.status === 'Ativo') || [];
+  const cursosConcluidos = student.courses?.filter(c => c.status === 'Concluído') || [];
+  const cursosAbandondados = student.courses?.filter(c => c.status === 'Desistente') || [];
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl bg-card border-none">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl text-center text-foreground mb-4">
-            {student.name}
-          </DialogTitle>
+          <DialogTitle>Detalhes do Aluno</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Informações Pessoais */}
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-3">Informações pessoais</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Matrícula:</span>
-                  <span className="font-medium font-mono">{student.matricula || '-'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">CPF:</span>
-                  <span className="font-medium">{student.cpf}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Data de nascimento:</span>
-                  <span className="font-medium">{student.birthDate}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">E-mail:</span>
-                  <span className="font-medium">{student.email}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Telefone:</span>
-                  <span className="font-medium">{student.phone}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Endereço:</span>
-                  <span className="font-medium">{student.address}</span>
-                </div>
+        <div className="space-y-6">
+          {/* Dados Pessoais */}
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-3">Dados pessoais</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Nome:</span>
+                <span className="font-medium">{student.name}</span>
               </div>
-            </div>
-
-            <Separator />
-
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-3">Frequência e desempenho</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Percentual de presenças:</span>
-                  <span className="font-medium">{student.attendance}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Média de faltas por curso:</span>
-                  <span className="font-medium">2</span>
-                </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">E-mail:</span>
+                <span className="font-medium">{student.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Telefone:</span>
+                <span className="font-medium">{student.phone}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Endereço:</span>
+                <span className="font-medium">{student.address}</span>
               </div>
             </div>
           </div>
 
+          <Separator />
+
+          {/* Frequência e desempenho */}
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-3">Frequência e desempenho</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Percentual de presenças:</span>
+                <span className="font-medium">{student.attendance}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Média de faltas por curso:</span>
+                <span className="font-medium">2</span>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
           {/* Situação Acadêmica */}
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-3">Situação acadêmica</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Cursos concluídos:</span>
-                  <span className="font-medium">Informática</span>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-3">Situação acadêmica</h3>
+
+            <div className="space-y-4">
+              {/* Cursos em andamento */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-foreground">
+                    Cursos em andamento ({cursosAtivos.length})
+                  </h4>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowAddCourseModal(true)}
+                    className="h-7 text-xs"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Adicionar
+                  </Button>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Cursos em andamento:</span>
-                  <span className="font-medium">{student.course}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Turma atual:</span>
-                  <span className="font-medium">{student.class}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Média geral:</span>
-                  <span className="font-medium">{student.grades}</span>
-                </div>
+                {cursosAtivos.length > 0 ? (
+                  <div className="space-y-2">
+                    {cursosAtivos.map((course) => (
+                      <div key={course.id} className="flex items-center justify-between p-2 bg-blue-50 rounded text-xs border border-blue-200">
+                        <div className="flex-1">
+                          <span className="font-medium text-blue-900">{course.course?.nome || 'Curso'}</span>
+                          {course.turma_id && (
+                            <span className="text-blue-700 ml-2">- Turma {course.turma_id}</span>
+                          )}
+                        </div>
+                        <Badge className="bg-blue-500 text-white">
+                          {course.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">Nenhum curso em andamento</p>
+                )}
               </div>
 
-              {/* Seção de múltiplos cursos */}
-              {student.courses && student.courses.length > 0 ? (
-                <div className="mt-4 pt-4 border-t">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-semibold text-foreground">Cursos matriculado</h4>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setShowAddCourseModal(true)}
-                      className="h-7 text-xs"
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Adicionar
-                    </Button>
-                  </div>
+              {/* Cursos concluídos */}
+              {cursosConcluidos.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-foreground">
+                    Cursos concluídos ({cursosConcluidos.length})
+                  </h4>
                   <div className="space-y-2">
-                    {student.courses.map((course) => (
-                      <div key={course.id} className="flex items-center justify-between p-2 bg-muted rounded text-xs">
-                        <span className="font-medium">{course.course?.nome}</span>
-                        <Badge
-                          variant={course.status === 'Ativo' ? 'default' : 'secondary'}
-                          className={
-                            course.status === 'Ativo'
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : course.status === 'Concluído'
-                                ? 'bg-blue-100 text-blue-700'
-                                : 'bg-red-100 text-red-700'
-                          }
-                        >
+                    {cursosConcluidos.map((course) => (
+                      <div key={course.id} className="flex items-center justify-between p-2 bg-green-50 rounded text-xs border border-green-200">
+                        <div className="flex-1">
+                          <span className="font-medium text-green-900">{course.course?.nome || 'Curso'}</span>
+                          {course.turma_id && (
+                            <span className="text-green-700 ml-2">- Turma {course.turma_id}</span>
+                          )}
+                          {course.data_conclusao && (
+                            <span className="text-green-600 text-xs ml-2">
+                              ({new Date(course.data_conclusao).toLocaleDateString('pt-BR')})
+                            </span>
+                          )}
+                        </div>
+                        <Badge className="bg-green-500 text-white">
                           {course.status}
                         </Badge>
                       </div>
                     ))}
                   </div>
                 </div>
-              ) : (
-                <div className="mt-4 pt-4 border-t">
-                  <h4 className="text-sm font-semibold text-foreground mb-2">Cursos matriculados</h4>
-                  <p className="text-xs text-muted-foreground mb-3">Nenhum curso registrado ou dados ainda carregando...</p>
+              )}
+
+              {/* Cursos abandonados */}
+              {cursosAbandondados.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-foreground">
+                    Cursos abandonados ({cursosAbandondados.length})
+                  </h4>
+                  <div className="space-y-2">
+                    {cursosAbandondados.map((course) => (
+                      <div key={course.id} className="flex items-center justify-between p-2 bg-red-50 rounded text-xs border border-red-200">
+                        <div className="flex-1">
+                          <span className="font-medium text-red-900">{course.course?.nome || 'Curso'}</span>
+                          {course.turma_id && (
+                            <span className="text-red-700 ml-2">- Turma {course.turma_id}</span>
+                          )}
+                          {course.motivo_desistencia && (
+                            <span className="text-red-600 text-xs block mt-1">
+                              Motivo: {course.motivo_desistencia}
+                            </span>
+                          )}
+                        </div>
+                        <Badge className="bg-red-500 text-white">
+                          {course.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Se não tem cursos */}
+              {(!student.courses || student.courses.length === 0) && (
+                <div className="p-3 bg-gray-50 rounded border border-gray-200">
+                  <p className="text-xs text-muted-foreground mb-3">Nenhum curso registrado</p>
                   <Button
                     size="sm"
                     onClick={() => setShowAddCourseModal(true)}
@@ -241,46 +279,54 @@ const StudentDetailsModal = ({ isOpen, onClose, student, onEdit, onDelete }: Stu
                   </Button>
                 </div>
               )}
-            </div>
 
-            <Separator />
-
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-3">Configurações</h3>
-              <div className="space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-primary hover:text-primary"
-                  onClick={handleEdit}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar informações
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-primary hover:text-primary"
-                  onClick={handleGenerateReport}
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Gerar relatório individual
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-destructive hover:text-destructive"
-                  onClick={handleDelete}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir matrícula
-                </Button>
+              <div className="mt-4 pt-4 border-t space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Média geral:</span>
+                  <span className="font-medium">{student.grades || "—"}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex justify-center mt-6">
-          <Button onClick={onClose} variant="outline" className="px-8">
-            Voltar
-          </Button>
+          <Separator />
+
+          {/* Configurações */}
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-3">Configurações</h3>
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full justify-start text-primary hover:text-primary"
+                onClick={handleEdit}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Editar informações
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start text-primary hover:text-primary"
+                onClick={handleGenerateReport}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Gerar relatório individual
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start text-destructive hover:text-destructive"
+                onClick={handleDelete}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir matrícula
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex justify-center mt-6">
+            <Button onClick={onClose} variant="outline" className="px-8">
+              Voltar
+            </Button>
+          </div>
         </div>
 
         {/* Modal para Adicionar Curso */}
