@@ -91,6 +91,7 @@ class StudentService {
 
     // Importar Class para o include
     const Class = (await import('../classes/class.model.js')).default;
+    const Course = (await import('../courses/course.model.js')).default;
 
     // ✅ Buscar alunos com paginação - skip COUNT
     const data = await Student.findAll({
@@ -100,8 +101,16 @@ class StudentService {
         {
           model: Class,
           as: 'turma',
-          attributes: ['id', 'nome', 'turno'],
-          required: false
+          attributes: ['id', 'nome', 'turno', 'id_curso'],
+          required: false,
+          include: [
+            {
+              model: Course,
+              as: 'curso',
+              attributes: ['id', 'nome'],
+              required: false
+            }
+          ]
         }
       ],
       order: [['createdAt', 'DESC']],
