@@ -48,8 +48,16 @@ export class AuthService {
 
     // Validar senha
     const passwordStart = Date.now();
+    console.log('🔐 DEBUG - Verificando senha:');
+    console.log('  - Senha recebida (primeiros 5 chars):', senha ? senha.substring(0, 5) : 'NULL');
+    console.log('  - Hash no banco (primeiros 20 chars):', user.senha_hash ? user.senha_hash.substring(0, 20) : 'NULL');
+    console.log('  - Tipo do hash:', typeof user.senha_hash);
+    
     const isPasswordCorrect = await bcrypt.compare(senha, user.senha_hash);
     const passwordTime = Date.now() - passwordStart;
+    
+    console.log('  - Resultado do compare:', isPasswordCorrect);
+    console.log('  - Tempo de comparação:', passwordTime, 'ms');
     
     if (!isPasswordCorrect) {
       throw new (await import('../../utils/AppError.js')).AppError('Email ou senha inválidos.', 401);
