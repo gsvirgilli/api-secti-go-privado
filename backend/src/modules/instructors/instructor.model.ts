@@ -64,6 +64,7 @@ Instructor.init({
   sequelize,
   tableName: 'instrutores',
   timestamps: true,
+  underscored: true,
 });
 
 export default Instructor;
