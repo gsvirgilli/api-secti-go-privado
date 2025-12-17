@@ -64,14 +64,14 @@ class ClassService {
    * Calcula o status automático da turma baseado nas datas
    * Planejada: ainda não começou (data_inicio no futuro ou nula)
    * Ativa: está entre data_inicio e data_fim
-   * Concluído: passou da data_fim
+   * Encerrada: passou da data_fim
    * Cancelada: mantém se já foi definida como cancelada
    */
   private calculateAutoStatus(
     data_inicio: Date | null | undefined,
     data_fim: Date | null | undefined,
     currentStatus?: string
-  ): 'PLANEJADA' | 'ATIVA' | 'CONCLUÍDO' | 'CANCELADA' {
+  ): 'PLANEJADA' | 'ATIVA' | 'ENCERRADA' | 'CANCELADA' {
     // Se status é cancelada, manter cancelada
     if (currentStatus === 'CANCELADA') {
       return 'CANCELADA';
@@ -100,9 +100,9 @@ class ClassService {
       return 'ATIVA';
     }
 
-    // Se hoje é depois de data_fim → Concluído
+    // Se hoje é depois de data_fim → Encerrada
     if (hoje > dataFim) {
-      return 'CONCLUÍDO';
+      return 'ENCERRADA';
     }
 
     return 'PLANEJADA';
