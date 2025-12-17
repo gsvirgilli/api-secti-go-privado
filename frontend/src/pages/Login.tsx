@@ -122,14 +122,6 @@ const Login = () => {
                 </p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => navigate("/register")}
-              className="w-full max-w-xs rounded-2xl py-3 sm:py-4 lg:py-5 text-sm font-roboto font-semibold tracking-[0.01em] border-2 border-primary/40 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-500 hover:scale-105 shadow-lg hover:shadow-xl glow-effect relative overflow-hidden"
-              aria-label="Botão para criar nova conta"
-            >
-              <span className="relative z-10">CRIAR CONTA</span>
-            </Button>
           </div>
         </div>
       </div>

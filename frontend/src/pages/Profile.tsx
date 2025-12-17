@@ -346,10 +346,20 @@ const Profile = () => {
               <p className="text-muted-foreground">Gerencie suas informações pessoais e configurações</p>
             </div>
             {!isEditing ? (
-              <Button onClick={() => setIsEditing(true)} className="gap-2">
-                <Edit3 className="h-4 w-4" />
-                Editar Perfil
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => setIsEditing(true)} className="gap-2">
+                  <Edit3 className="h-4 w-4" />
+                  Editar Perfil
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/register")}
+                  className="gap-2"
+                >
+                  <User className="h-4 w-4" />
+                  Criar Conta
+                </Button>
+              </div>
             ) : (
               <div className="flex gap-2">
                 <Button onClick={handleSave} disabled={isSaving} className="gap-2">
