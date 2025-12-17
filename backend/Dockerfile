@@ -16,10 +16,12 @@ RUN npm cache clean --force && \
 # Copiar resto do código
 COPY . .
 
-# Verificar que zod foi instalado
-RUN test -f node_modules/zod/package.json || (echo "ERROR: zod not installed!" && exit 1) && \
-    ls -la node_modules/zod/
+# Build TypeScript
+RUN npm run build
 
-EXPOSE 3333
+# Verificar que zod foi instalado
+RUN test -f node_modules/zod/package.json || (echo "ERROR: zod not installed!" && exit 1)
+
+EXPOSE 3000
 
 CMD ["node", "--import", "tsx/esm", "src/server.ts"]
