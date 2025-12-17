@@ -124,8 +124,7 @@ CREATE TABLE IF NOT EXISTS candidatos (
   deficiencia ENUM('NAO', 'AUDITIVA', 'VISUAL', 'FISICA', 'INTELECTUAL', 'MULTIPLA'),
   telefone2 VARCHAR(20),
   idade INT,
-  nomeMae VARCHAR(100),
-  cidadeNascimento VARCHAR(100),
+  nome_mae VARCHAR(100),
   
   -- Endereço
   cep VARCHAR(8),
