@@ -129,7 +129,7 @@ class CandidateService {
 
     // Filtro por turma desejada
     if (filters.turma_id) {
-      where.turma_id = filters.turma_id;
+      where.turmaId = filters.turma_id;
     }
 
     // Buscar candidatos com paginação (skip COUNT para evitar pool timeout)
@@ -284,7 +284,7 @@ class CandidateService {
     }
 
     // Usar turma desejada do candidato OU turma selecionada na aprovação
-    const turmaId = turmaIdSelecionada || candidate.id_turma_desejada;
+    const turmaId = turmaIdSelecionada || candidate.idTurmaDesejada;
     
     if (!turmaId) {
       throw new Error('Candidato não possui turma desejada definida. Selecione uma turma para aprovar.');
@@ -301,7 +301,7 @@ class CandidateService {
 
     // Verificar se ainda há vagas na turma
     const Student = (await import('../students/student.model.js')).default;
-    const alunosNaTurma = await Student.count({ where: { turma_id: turmaDisponivel.id } });
+    const alunosNaTurma = await Student.count({ where: { turmaId: turmaDisponível.id } });
     const vagasDisponiveis = turmaDisponivel.vagas - alunosNaTurma;
 
     if (vagasDisponiveis <= 0) {
@@ -309,7 +309,7 @@ class CandidateService {
     }
     
     // Atualizar o candidato com a turma
-    await candidate.update({ turma_id: turmaId });
+    await candidate.update({ turmaId: turmaId });
 
     try {
       // Verificar se já existe aluno com este CPF (candidato já aprovado antes)
@@ -321,7 +321,7 @@ class CandidateService {
 
       if (existingStudent) {
         // Se o aluno já existe, apenas atualizar a turma
-        await existingStudent.update({ turma_id: turmaId });
+        await existingStudent.update({ turmaId: turmaId });
         student = existingStudent;
         usuario = await User.findByPk(existingStudent.usuario_id);
       } else {
@@ -357,7 +357,7 @@ class CandidateService {
           cpf: candidate.cpf,
           nome: candidate.nome,
           email: candidate.email,
-          turma_id: turmaId,
+          turmaId: turmaId,
           status: 'ativo'
         } as any);
 
@@ -427,13 +427,13 @@ class CandidateService {
     // Estatísticas por turma (lightweight - sem include pesado)
     const porTurma = await Candidate.findAll({
       attributes: [
-        'turma_id',
+        'turmaId',
         [Candidate.sequelize!.fn('COUNT', Candidate.sequelize!.col('Candidate.id')), 'quantidade']
       ],
       where: {
-        turma_id: { [Op.ne]: null }
+        turmaId: { [Op.ne]: null }
       },
-      group: ['Candidate.turma_id'],
+      group: ['Candidate.turmaId'],
       raw: true
     });
 
