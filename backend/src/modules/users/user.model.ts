@@ -65,6 +65,7 @@ User.init({
   sequelize,
   tableName: 'usuarios',
   timestamps: true,
+  underscored: true,
   indexes: [
     {
       fields: ['email'],

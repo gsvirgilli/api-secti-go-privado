@@ -110,6 +110,7 @@ Class.init({
   sequelize,
   tableName: 'turmas',
   timestamps: true,
+  underscored: true,
   indexes: [
     {
       fields: ['id_curso']

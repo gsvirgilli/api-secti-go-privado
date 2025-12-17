@@ -102,6 +102,7 @@ Course.init({
   sequelize,
   tableName: 'cursos',
   timestamps: true,
+  underscored: true,
 });
 
 // Associações serão configuradas em src/models/associations.ts
