@@ -1,25 +1,21 @@
-# Build stage
-FROM node:20-alpine AS builder
+FROM node:18-alpine
 
 WORKDIR /app
 
+# Copiar package.json primeiro para otimizar cache
 COPY frontend/package.json frontend/package-lock.json ./
 
+# Instalar dependências
 RUN npm install
 
-COPY frontend . 
+# Copiar código da aplicação
+COPY frontend .
 
-RUN npm run build
-
-# Serve stage
-FROM node:20-alpine
-
-RUN npm install -g serve
-
-WORKDIR /app
-
-COPY --from=builder /app/dist ./dist
-
+# Expor porta do frontend
 EXPOSE 3000
 
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# Variáveis de ambiente padrão
+ENV VITE_API_BASE_URL=http://localhost:5000/api
+
+# Comando de inicialização (Vite dev com suporte a variáveis de ambiente)
+CMD ["sh", "-c", "npm run dev -- --host 0.0.0.0 --port 3000"]

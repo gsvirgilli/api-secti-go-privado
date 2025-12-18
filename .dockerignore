@@ -1,0 +1,53 @@
+# Node modules (não precisa copiar para container)
+node_modules
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode
+.idea
+*.sublime-project
+*.sublime-workspace
+.env.local
+.env.*.local
+
+# Build outputs
+dist
+build
+.next
+out
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Arquivos de log
+*.log
+logs
+
+# Dados do MySQL (usar volume, não COPY)
+mysql_data
+*.sql
+
+# Scripts
+*.sh
+*.bat
+
+# Temp
+tmp
+temp
+.tmp

@@ -3,7 +3,11 @@ import { env } from './environment.js';
 
 // Detectar se estamos rodando testes e ajustar o host
 const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
-const databaseHost = isTest ? 'localhost' : env.DATABASE_HOST;
+
+// Usa a variável de ambiente DB_HOST se existir, senão usa DATABASE_HOST do env schema, senão 'localhost'
+const databaseHost = isTest 
+  ? 'localhost' 
+  : (process.env.DB_HOST || env.DATABASE_HOST || 'localhost');
 
 export const sequelize = new Sequelize(
   env.DATABASE_NAME,
@@ -15,10 +19,10 @@ export const sequelize = new Sequelize(
     dialect: 'mysql', 
     logging: isTest ? false : console.log,
     pool: {
-      max: 20,          // Aumentado: máximo de conexões simultâneas
+      max: 20,          // Máximo de conexões simultâneas
       min: 2,           // Mínimo de conexões
-      acquire: 60000,   // Aumentado para 60s: timeout para adquirir conexão (ms)
-      idle: 30000       // Aumentado para 30s: timeout para conexão ociosa (ms)
+      acquire: 60000,   // Timeout para adquirir conexão (ms)
+      idle: 30000       // Timeout para conexão ociosa (ms)
     }
   }
 );

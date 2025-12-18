@@ -7,8 +7,9 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const envSchema = z.object({
-  APP_PORT: z.coerce.number().default(3333),
+  APP_PORT: z.coerce.number().default(5000),
 
+  // Database configuration - suporta DB_HOST como variável alternativa
   DATABASE_HOST: z.string().default('localhost'),
   DATABASE_USER: z.string().default('root'),
   DATABASE_PASSWORD: z.string().default(''),

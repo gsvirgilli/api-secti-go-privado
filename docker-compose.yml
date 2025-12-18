@@ -1,51 +1,57 @@
-# A linha 'version' é obsoleta, pode ser removida
 services:
-  # Renomeei o serviço para 'api' para manter a consistência com os comandos exec, mas 'backend' também funciona
-  api:
-    container_name: app_backend
-    build: ./backend 
+  # Serviço de Banco de Dados MySQL
+  db:
+    image: mysql:8.0
+    container_name: app_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: devpass
+      MYSQL_DATABASE: defaultdb
+      MYSQL_USER: devuser
+      MYSQL_PASSWORD: devpass
     ports:
-      - "3333:3333"
-
+      - "3306:3306"
     volumes:
-      - ./backend:/usr/app
-      # Preserva node_modules instalado na imagem (evita que o bind mount do host o sobrescreva)
-      - /usr/app/node_modules
+      - ./mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pdevpass"]
+      timeout: 10s
+      retries: 5
+      interval: 10s
 
-    # Evita erro de permissão no entrypoint devido ao bind mount; executa via shell
-    entrypoint: ["sh", "./entrypoint.sh"]
-    command: ["npm", "run", "dev"]
-
+  # Serviço Backend (Node.js/Express)
+  back:
+    build: ./backend
+    container_name: app_backend
+    ports:
+      - "5000:5000"
+    environment:
+      APP_PORT: 5000
+      NODE_ENV: development
+      DATABASE_HOST: db
+      DATABASE_PORT: 3306
+      DATABASE_USER: devuser
+      DATABASE_PASSWORD: devpass
+      DATABASE_NAME: defaultdb
+      JWT_SECRET: api-secti-jwt-secret-2025-dev-local
+      JWT_EXPIRES_IN: 1d
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      - APP_PORT=3333
-      - JWT_SECRET=jwt_secret
-      - DATABASE_USER=sukatech_user
-      - DATABASE_PASSWORD=sukatech_password
-      - DATABASE_HOST=db
-      - DATABASE_PORT=3306
-      - DATABASE_NAME=sukatechdb
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3333/api/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  db:
-    image: mysql:8.0
-    container_name: sukatech_mysql
-    ports:
-      - "3307:3306" # Lembre-se que para acessar de fora, agora é a porta 3307
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 10s
-      retries: 5
-    environment:
-      - MYSQL_ROOT_PASSWORD=root_password_super_secreta
-      - MYSQL_DATABASE=sukatechdb
-      - MYSQL_USER=sukatech_user
-      - MYSQL_PASSWORD=sukatech_password
+    restart: always
     volumes:
-      - ./mysql_data:/var/lib/mysql
+      - ./backend:/usr/app
+      - /usr/app/node_modules
+
+  # Serviço Frontend (React/Vite)
+  front:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: app_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - back
+    restart: always
+    environment:
+      VITE_API_BASE_URL: http://localhost:5000/api

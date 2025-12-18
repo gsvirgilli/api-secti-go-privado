@@ -1,27 +1,21 @@
-FROM node:20-alpine
+FROM node:18-alpine
 
+# Instalar apenas ferramentas essenciais
 RUN apk add --no-cache curl
 
 WORKDIR /usr/app
 
-# Copiar apenas package files primeiro
+# Copiar package.json primeiro para otimizar cache
 COPY package.json package-lock.json .npmrc ./
 
-# Limpar cache de npm e reinstalar do zero
-RUN npm cache clean --force && \
-    rm -rf node_modules && \
-    npm install --legacy-peer-deps && \
-    npm install zod@4.1.12 --legacy-peer-deps --save
+# Instalar dependências
+RUN npm install --legacy-peer-deps
 
-# Copiar resto do código
+# Copiar código da aplicação
 COPY . .
 
-# Build TypeScript
-RUN npm run build
+# Expor porta do backend
+EXPOSE 5000
 
-# Verificar que zod foi instalado
-RUN test -f node_modules/zod/package.json || (echo "ERROR: zod not installed!" && exit 1)
-
-EXPOSE 3000
-
-CMD ["node", "--import", "tsx/esm", "src/server.ts"]
+# Comando de inicialização (tsx compila TypeScript on-the-fly)
+CMD ["npm", "run", "dev"]

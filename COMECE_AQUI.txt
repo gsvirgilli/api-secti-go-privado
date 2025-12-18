@@ -1,0 +1,143 @@
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║          BEM-VINDO AO SISTEMA SECTI - COMECE AQUI             ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+📌 VERSÃO 1.0 | DEZEMBRO 2025
+
+══════════════════════════════════════════════════════════════════
+
+🎯 VOCÊ QUER...
+
+   ⚡ Iniciar logo? (Windows)
+   └─> Duplo clique em: INICIAR_SISTEMA.bat
+       Depois leia: GUIA_RAPIDO.md
+
+   📖 Entender tudo antes? (Qualquer SO)
+   └─> Leia: README_SISTEMA.md (5 minutos)
+
+   ✓ Instalar em um PC novo da empresa?
+   └─> Leia: CHECKLIST_DEPLOY.md (passo-a-passo)
+
+   🐳 Entender Docker/Desenvolvimento?
+   └─> Leia: DOCKER_SETUP.md
+
+   💾 Entender como dados funcionam?
+   └─> Leia: DADOS_PERSISTENCIA.md
+
+══════════════════════════════════════════════════════════════════
+
+📊 ARQUIVOS IMPORTANTES
+
+   🟢 INICIAR_SISTEMA.bat      ← Clique para rodar (Windows)
+   ⏸️  PARAR_SISTEMA.bat       ← Clique para parar (Windows)
+   🔴 RESETAR_SISTEMA.bat      ← Clique para resetar (Windows)
+   📖 README_SISTEMA.md        ← Índice principal
+   ⚙️  .dockerignore          ← Config Docker
+
+══════════════════════════════════════════════════════════════════
+
+⚡ INÍCIO RÁPIDO (Windows)
+
+   1. Certifique-se que Docker Desktop está instalado:
+      https://www.docker.com/products/docker-desktop
+
+   2. Clique duas vezes em:
+      INICIAR_SISTEMA.bat
+
+   3. Aguarde ~15 segundos
+
+   4. Browser abrirá automaticamente
+
+   5. Faça login com:
+      Email: teste@example.com
+      Senha: Teste123!
+
+   ✅ Pronto! Sistema rodando!
+
+══════════════════════════════════════════════════════════════════
+
+🌐 ACESSOS
+
+   Frontend   → http://localhost:3000
+   Backend    → http://localhost:5000
+   API Docs   → http://localhost:5000/api-docs
+   MySQL      → localhost:3306
+
+══════════════════════════════════════════════════════════════════
+
+❓ DÚVIDAS?
+
+   📖 Leia: README_SISTEMA.md
+
+   Se aparecer erro, abra PowerShell/CMD na pasta do projeto
+   e execute:
+
+   docker compose logs -f back
+
+══════════════════════════════════════════════════════════════════
+
+📱 MOBILE/TABLET?
+
+   Seu celular pode acessar se estiver na mesma rede:
+
+   http://\[IP_DO_PC\]:3000
+
+   Para descobrir o IP:
+   Windows → ipconfig (procure por "IPv4 Address")
+   Linux   → ip addr (procure por inet 192.168.x.x)
+   Mac     → ifconfig (procure por inet)
+
+══════════════════════════════════════════════════════════════════
+
+✨ PRÓ-DICAS
+
+   💾 Criar atalho na Área de Trabalho:
+      Clique direito em INICIAR_SISTEMA.bat
+      → "Enviar para" → "Área de Trabalho"
+      Agora basta clicar no atalho para iniciar!
+
+   🔑 Auto-iniciar na ligar PC (Windows):
+      Abra Docker Desktop
+      → Settings → General
+      → Marque "Start Docker Desktop when you log in"
+
+   🐳 Ver logs ao vivo:
+      docker compose logs -f back
+
+══════════════════════════════════════════════════════════════════
+
+PRÓXIMAS VEZES
+
+   Windows:
+   └─> Clique no atalho da Área de Trabalho
+       (ou duplo clique em INICIAR_SISTEMA.bat)
+
+   Linux/Mac:
+   └─> docker compose up -d
+
+══════════════════════════════════════════════════════════════════
+
+🆘 ALGO DEU ERRADO?
+
+   1. Tente novamente
+   2. Se persistir, execute: RESETAR_SISTEMA.bat
+   3. Veja: CHECKLIST_DEPLOY.md → Seção "Troubleshooting"
+
+══════════════════════════════════════════════════════════════════
+
+📚 DOCUMENTAÇÃO COMPLETA
+
+   README_SISTEMA.md      ← Índice principal com links
+   GUIA_RAPIDO.md        ← Comece em 5 minutos
+   CHECKLIST_DEPLOY.md   ← Guia detalhado (43 minutos)
+   DOCKER_SETUP.md       ← Docker aprofundado
+   DADOS_PERSISTENCIA.md ← Como dados funcionam
+   ARQUIVOS_DEPLOY.md    ← O que foi criado
+
+══════════════════════════════════════════════════════════════════
+
+Desenvolvido com ❤️ | Sistema SECTI v1.0
+
+Bom desenvolvimento! 🚀

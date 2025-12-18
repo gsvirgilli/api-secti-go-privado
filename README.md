@@ -1,14 +1,5 @@
 # SUKATECH - Sistema de Controle de Cursos
 
-## Equipe
-| Nome | GitHub |
-| :--- | :--- |
-| Delvo | [@delvoresende1](https://github.com/delvoresende1) |
-| Guilherme Silva Virgilli | [@gsvirgilli](https://github.com/gsvirgilli) |
-| Joyce Beatriz | [@joycebeatriz](https://github.com/joycebeatriz) |
-| Mariana | [@landimariana](https://github.com/landimariana) |
-| Ubiratan | [@ubiratanpaniago](https://github.com/ubiratanpaniago) |
-
 ## Visão geral da Solução
 O Sukatech é um programa do Governo de Goiás que alia sustentabilidade e desenvolvimento social, oferecendo cursos gratuitos de tecnologia e recondicionamento de equipamentos eletrônicos. Este sistema visa facilitar o controle e gerenciamento dos cursos oferecidos pelo programa, proporcionando uma plataforma integrada para estudantes, instrutores e administradores.
 
